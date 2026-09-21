@@ -22,6 +22,46 @@ const histories = [
     ],
   ],
   [
+    "cross month bounds and restore a valid date",
+    "a = 2026-12-01",
+    [
+      [9, 2, "13", "a = 2026-13-01", false],
+      [9, 2, "00", "a = 2026-00-01", false],
+      [9, 2, "01", "a = 2026-01-01", true],
+    ],
+  ],
+  [
+    "cross day bounds and restore a valid date",
+    "a = 2026-01-31",
+    [
+      [12, 2, "32", "a = 2026-01-32", false],
+      [12, 2, "00", "a = 2026-01-00", false],
+      [12, 2, "01", "a = 2026-01-01", true],
+    ],
+  ],
+  [
+    "cross time element bounds and restore a valid time",
+    "a = 23:59:60",
+    [
+      [4, 2, "24", "a = 24:59:60", false],
+      [4, 2, "00", "a = 00:59:60", true],
+      [7, 2, "60", "a = 00:60:60", false],
+      [7, 2, "00", "a = 00:00:60", true],
+      [10, 2, "61", "a = 00:00:61", false],
+      [10, 2, "00", "a = 00:00:00", true],
+    ],
+  ],
+  [
+    "cross offset bounds and restore a valid date-time",
+    "a = 2026-01-01T00:00+23:59",
+    [
+      [21, 2, "24", "a = 2026-01-01T00:00+24:59", false],
+      [21, 2, "00", "a = 2026-01-01T00:00+00:59", true],
+      [24, 2, "60", "a = 2026-01-01T00:00+00:60", false],
+      [24, 2, "00", "a = 2026-01-01T00:00+00:00", true],
+    ],
+  ],
+  [
     "edit whitespace before dotted key separator",
     "a.b = true",
     [

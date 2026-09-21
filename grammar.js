@@ -1,6 +1,9 @@
 const sign = optional(choice("-", "+"));
 
-const digit = ($) => alias($._digit, $.digit);
+const digit = ($, rule = $._digit) => alias(rule, $.digit);
+
+const digits = (characters) =>
+  choice(...Array.from(characters, (character) => new RegExp(character)));
 
 const hexdig = ($) => alias($._hexdig, $.hexdig);
 
@@ -37,6 +40,8 @@ export default grammar({
     [$.key, $.dotted_key],
     [$.dotted_key],
     [$.unsigned_dec_int, $._digit],
+    [$._digit, $.time_hour],
+    [$._digit1_9, $.time_hour],
     [$.offset_date_time, $.local_date_time, $.local_date],
     [$.array_values],
     [$.inline_table_keyvals],
@@ -141,7 +146,7 @@ export default grammar({
     oct_int: ($) => seq("0o", separated(alias($._digit0_7, $.digit0_7))),
     bin_int: ($) => seq("0b", separated(alias($._digit0_1, $.digit0_1))),
     _digit: ($) => choice(/0/, $._digit1_9),
-    _digit1_9: () => /[1-9]/,
+    _digit1_9: () => digits("123456789"),
     _digit0_7: () => /[0-7]/,
     _digit0_1: () => /[01]/,
     _hexdig: ($) => choice($._digit, /[A-Fa-f]/),
@@ -160,12 +165,29 @@ export default grammar({
     date_time: ($) =>
       choice($.offset_date_time, $.local_date_time, $.local_date, $.local_time),
     date_fullyear: ($) => seq(...times(4, digit($))),
-    date_month: ($) => seq(...times(2, digit($))),
-    date_mday: ($) => seq(...times(2, digit($))),
+    date_month: ($) =>
+      choice(
+        seq(digit($, /0/), digit($, $._digit1_9)),
+        seq(digit($, /1/), digit($, digits("012"))),
+      ),
+    date_mday: ($) =>
+      choice(
+        seq(digit($, /0/), digit($, $._digit1_9)),
+        seq(digit($, digits("12")), digit($)),
+        seq(digit($, /3/), digit($, digits("01"))),
+      ),
     time_delim: ($) => choice("T", "t", alias($._space, " ")),
-    time_hour: ($) => seq(...times(2, digit($))),
-    time_minute: ($) => seq(...times(2, digit($))),
-    time_second: ($) => seq(...times(2, digit($))),
+    time_hour: ($) =>
+      choice(
+        seq(digit($, digits("01")), digit($)),
+        seq(digit($, /2/), digit($, digits("0123"))),
+      ),
+    time_minute: ($) => seq(digit($, digits("012345")), digit($)),
+    time_second: ($) =>
+      choice(
+        seq(digit($, digits("012345")), digit($)),
+        seq(digit($, /6/), digit($, /0/)),
+      ),
     time_secfrac: ($) => seq(".", repeat1(digit($))),
     time_numoffset: ($) =>
       seq(choice("+", "-"), $.time_hour, ":", $.time_minute),

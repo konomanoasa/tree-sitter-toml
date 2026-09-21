@@ -208,6 +208,11 @@
     "fields": {}
   },
   {
+    "type": "digit1_9",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "dotted_key",
     "named": true,
     "fields": {},
@@ -1229,10 +1234,6 @@
   },
   {
     "type": "digit0_7",
-    "named": true
-  },
-  {
-    "type": "digit1_9",
     "named": true
   },
   {

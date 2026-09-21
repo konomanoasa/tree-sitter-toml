@@ -82,8 +82,8 @@ static void test_quote_runs_preserve_content_and_closing_delimiters(void) {
     {6, false},
     {7, false},
   };
-  for (unsigned symbol = MLB_QUOTE; symbol <= MLL_QUOTE; symbol += 1) {
-    bool valid_symbols[MLL_QUOTE + 1] = {false};
+  for (unsigned symbol = MLB_QUOTE; symbol < TOKEN_COUNT; symbol += 1) {
+    bool valid_symbols[TOKEN_COUNT] = {false};
     valid_symbols[symbol] = true;
     for (
       size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); index += 1
@@ -128,8 +128,8 @@ static void test_disabled_and_recovery_scans_do_not_consume_source(void) {
 
 static void test_unrelated_characters_and_eof_are_not_quote_content(void) {
   const int32_t input[] = {'a', 0, 0x1f600, '"', '\''};
-  for (unsigned symbol = MLB_QUOTE; symbol <= MLL_QUOTE; symbol += 1) {
-    bool valid_symbols[MLL_QUOTE + 1] = {false};
+  for (unsigned symbol = MLB_QUOTE; symbol < TOKEN_COUNT; symbol += 1) {
+    bool valid_symbols[TOKEN_COUNT] = {false};
     valid_symbols[symbol] = true;
     for (
       size_t index = 0; index < sizeof(input) / sizeof(input[0]); index += 1

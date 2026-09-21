@@ -1,6 +1,6 @@
 #include "tree_sitter/parser.h"
 
-enum TokenType { MLB_QUOTE, MLL_QUOTE };
+enum TokenType { MLB_QUOTE, MLL_QUOTE, TOKEN_COUNT };
 
 void *tree_sitter_toml_external_scanner_create(void) {
   return NULL;

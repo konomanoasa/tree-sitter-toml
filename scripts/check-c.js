@@ -143,7 +143,7 @@ function checkExternalTokenOrder(clang, compilerArguments, variant, directory) {
     return `typedef char external_${index}[${enumerator} == ${index} ? 1 : -1];`;
   });
   assertions.push(
-    `typedef char external_count[MLL_QUOTE + 1 == ${grammar.externals.length} ? 1 : -1];`,
+    `typedef char external_count[TOKEN_COUNT == ${grammar.externals.length} ? 1 : -1];`,
   );
   const source = join(directory, `scanner-indices-${variant.name}.c`);
   writeFileSync(
