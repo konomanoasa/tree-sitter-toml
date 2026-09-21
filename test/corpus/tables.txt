@@ -1,0 +1,166 @@
+==================
+Standard table header with whitespace, quoted dotted segment, and comment
+==================
+[ a . "b.c" ] # header
+x = true
+---
+
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (dotted_key
+            (simple_key
+              (unquoted_key))
+            (simple_key
+              (quoted_key
+                (basic_string
+                  (basic_char
+                    (basic_unescaped))
+                  (basic_char
+                    (basic_unescaped))
+                  (basic_char
+                    (basic_unescaped)))))))))
+    (comment))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
+
+==================
+Array table headers with whitespace and dotted key
+==================
+[[a]]
+x = true
+[[ a . b ]]
+---
+
+(toml
+  (expression
+    (table
+      (array_table
+        key: (key
+          (simple_key
+            (unquoted_key))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (table
+      (array_table
+        key: (key
+          (dotted_key
+            (simple_key
+              (unquoted_key))
+            (simple_key
+              (unquoted_key))))))))
+
+==================
+Empty quoted table name
+==================
+[""]
+---
+
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (quoted_key
+              (basic_string))))))))
+
+==================
+Table header missing key
+:error
+==================
+[]
+---
+
+
+
+==================
+Array table header missing key
+:error
+==================
+[[]]
+---
+
+
+
+==================
+Newline in table header key
+:error
+==================
+[a.
+b]
+---
+
+
+
+==================
+Array table opening delimiter split by space
+:error
+==================
+[ [a]]
+---
+
+
+
+==================
+Array table closing delimiter split by space
+:error
+==================
+[[a] ]
+---
+
+
+
+==================
+Comment inside table header
+:error
+==================
+[a # comment
+]
+---
+
+
+
+==================
+Newline before table closing delimiter
+:error
+==================
+[a
+]
+---
+
+
+
+==================
+Extra closing bracket
+:error
+==================
+[a]]
+---
+
+
+
+==================
+Table header followed by key value pair
+:error
+==================
+[a] x=true
+---
+
+

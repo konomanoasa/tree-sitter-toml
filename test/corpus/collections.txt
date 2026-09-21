@@ -1,0 +1,420 @@
+==================
+Array owns leading layout, values, separators, and trailing comma
+==================
+a = [ true , false , ]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean))
+            (val
+              (boolean))))))))
+
+==================
+Array with comments and newlines around values and separators
+==================
+a = [
+# first
+true # value
+, # comma
+false # last
+,
+]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (newline)
+            (comment)
+            (newline)
+            (val
+              (boolean))
+            (comment)
+            (newline)
+            (comment)
+            (newline)
+            (val
+              (boolean))
+            (comment)
+            (newline))
+          (newline))))))
+
+==================
+Empty array with comment
+==================
+a = [# empty
+]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (comment)
+          (newline))))))
+
+==================
+Nested arrays with mixed values
+==================
+a = [[true], [1, "x", 07:32], []]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (array
+                (array_values
+                  (val
+                    (boolean)))))
+            (val
+              (array
+                (array_values
+                  (val
+                    (integer
+                      (dec_int
+                        (unsigned_dec_int
+                          (digit)))))
+                  (val
+                    (string
+                      (basic_string
+                        (basic_char
+                          (basic_unescaped)))))
+                  (val
+                    (date_time
+                      (local_time
+                        (partial_time
+                          (time_hour
+                            (digit)
+                            (digit))
+                          (time_minute
+                            (digit)
+                            (digit)))))))))
+            (val
+              (array))))))))
+
+==================
+Inline table owns key value pairs, separators, and trailing comma
+==================
+a = { x=true , y=false , }
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean)))
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean)))))))))
+
+==================
+Multiline inline table with comments, trailing comma, and multiline string
+==================
+a = {
+# entry
+x = true # value
+, y = """one
+two""", # comma
+}
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (newline)
+            (comment)
+            (newline)
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean)))
+            (comment)
+            (newline)
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (string
+                  (ml_basic_string
+                    (ml_basic_body
+                      (mlb_content
+                        (basic_char
+                          (basic_unescaped)))
+                      (mlb_content
+                        (basic_char
+                          (basic_unescaped)))
+                      (mlb_content
+                        (basic_char
+                          (basic_unescaped)))
+                      (mlb_content
+                        (newline))
+                      (mlb_content
+                        (basic_char
+                          (basic_unescaped)))
+                      (mlb_content
+                        (basic_char
+                          (basic_unescaped)))
+                      (mlb_content
+                        (basic_char
+                          (basic_unescaped)))))))))
+          (comment)
+          (newline))))))
+
+==================
+Empty inline table with comment
+==================
+a = {# empty
+}
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (comment)
+          (newline))))))
+
+==================
+Nested inline tables and arrays with dotted key
+==================
+a = {b.c = [{d = 1}, {d = 2}], e = {}}
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (dotted_key
+                  (simple_key
+                    (unquoted_key))
+                  (simple_key
+                    (unquoted_key))))
+              value: (val
+                (array
+                  (array_values
+                    (val
+                      (inline_table
+                        (inline_table_keyvals
+                          (keyval
+                            key: (key
+                              (simple_key
+                                (unquoted_key)))
+                            value: (val
+                              (integer
+                                (dec_int
+                                  (unsigned_dec_int
+                                    (digit)))))))))
+                    (val
+                      (inline_table
+                        (inline_table_keyvals
+                          (keyval
+                            key: (key
+                              (simple_key
+                                (unquoted_key)))
+                            value: (val
+                              (integer
+                                (dec_int
+                                  (unsigned_dec_int
+                                    (digit)))))))))))))
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (inline_table)))))))))
+
+==================
+Array missing separator
+:error
+==================
+a = [true false]
+---
+
+
+
+==================
+Array leading comma
+:error
+==================
+a = [,true]
+---
+
+
+
+==================
+Array only comma
+:error
+==================
+a = [,]
+---
+
+
+
+==================
+Array double comma
+:error
+==================
+a = [true,,false]
+---
+
+
+
+==================
+Unclosed array
+:error
+==================
+a = [true
+---
+
+
+
+==================
+Array comment consumes closing bracket
+:error
+==================
+a = [true # ]
+---
+
+
+
+==================
+Array adjacent numeric values
+:error
+==================
+a = [1 2]
+---
+
+
+
+==================
+Inline table missing separator
+:error
+==================
+a = {x=true y=false}
+---
+
+
+
+==================
+Inline table missing separator across newline
+:error
+==================
+a = {x=true
+y=false}
+---
+
+
+
+==================
+Inline table double comma
+:error
+==================
+a = {x=true,,}
+---
+
+
+
+==================
+Inline table leading comma
+:error
+==================
+a = {,x=true}
+---
+
+
+
+==================
+Inline table only comma
+:error
+==================
+a = {,}
+---
+
+
+
+==================
+Unclosed inline table
+:error
+==================
+a = {x=true
+---
+
+
+
+==================
+Newline between key and value in inline table
+:error
+==================
+a = {x=
+true}
+---
+
+
+
+==================
+Inline table comment consumes closing brace
+:error
+==================
+a = {x=true # }
+---
+
+

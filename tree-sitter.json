@@ -1,0 +1,30 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "toml",
+      "title": "TOML",
+      "scope": "source.toml",
+      "path": ".",
+      "file-types": ["toml"],
+      "injection-regex": "^toml$",
+      "highlights": "queries/highlights.scm"
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "Tree-sitter grammar for TOML.",
+    "links": {
+      "repository": "https://github.com/konomanoasa/tree-sitter-toml"
+    }
+  },
+  "bindings": {
+    "c": false,
+    "go": false,
+    "node": false,
+    "python": false,
+    "rust": false,
+    "swift": false
+  }
+}

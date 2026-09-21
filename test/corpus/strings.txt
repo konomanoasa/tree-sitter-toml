@@ -1,0 +1,386 @@
+==================
+Basic string with Unicode, tab, and every escape form
+==================
+a = "日本🌿	\b\t\n\f\r\e\"\\\x00\xFF\u0041\U0001F33F"
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (basic_string
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (escaped
+                (escape_seq_char)))
+            (basic_char
+              (escaped
+                (escape_seq_char)))
+            (basic_char
+              (escaped
+                (escape_seq_char)))
+            (basic_char
+              (escaped
+                (escape_seq_char)))
+            (basic_char
+              (escaped
+                (escape_seq_char)))
+            (basic_char
+              (escaped
+                (escape_seq_char)))
+            (basic_char
+              (escaped
+                (escape_seq_char)))
+            (basic_char
+              (escaped
+                (escape_seq_char)))
+            (basic_char
+              (escaped
+                (escape_seq_char
+                  (hexdig)
+                  (hexdig))))
+            (basic_char
+              (escaped
+                (escape_seq_char
+                  (hexdig)
+                  (hexdig))))
+            (basic_char
+              (escaped
+                (escape_seq_char
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig))))
+            (basic_char
+              (escaped
+                (escape_seq_char
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig))))))))))
+
+==================
+Empty strings of each kind
+==================
+a = ""
+b = ''
+c = """"""
+d = ''''''
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (basic_string)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (literal_string)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_basic_string)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_literal_string))))))
+
+==================
+Literal string keeps backslashes and quotation marks
+==================
+a = 'C:\x "y"'
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (literal_string
+            (literal_char)
+            (literal_char)
+            (literal_char)
+            (literal_char)
+            (literal_char)
+            (literal_char)
+            (literal_char)
+            (literal_char)))))))
+
+==================
+Multiline basic string trims only the newline after the opening delimiter
+==================
+a = """
+
+one "two" ""three"""""
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_basic_string
+            (newline)
+            (ml_basic_body
+              (mlb_content
+                (newline))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_quotes)
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_quotes)
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_quotes)
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_quotes))))))))
+
+==================
+Multiline basic string line continuations
+==================
+a = """one \
+ 	
+  two\
+"""
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_basic_string
+            (ml_basic_body
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (mlb_escaped_nl
+                  (newline)
+                  (newline)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (mlb_escaped_nl
+                  (newline))))))))))
+
+==================
+Multiline literal string with interior apostrophes and four closing apostrophes
+==================
+a = '''
+one ''two''''
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_literal_string
+            (newline)
+            (ml_literal_body
+              (mll_content
+                (literal_char))
+              (mll_content
+                (literal_char))
+              (mll_content
+                (literal_char))
+              (mll_content
+                (literal_char))
+              (mll_quotes)
+              (mll_content
+                (literal_char))
+              (mll_content
+                (literal_char))
+              (mll_content
+                (literal_char))
+              (mll_quotes))))))))
+
+==================
+Unclosed basic string
+:error
+==================
+a = "hello
+---
+
+
+
+==================
+Unclosed literal string
+:error
+==================
+a = 'hello
+---
+
+
+
+==================
+Newline in basic string
+:error
+==================
+a = "one
+two"
+---
+
+
+
+==================
+Newline in literal string
+:error
+==================
+a = 'one
+two'
+---
+
+
+
+==================
+Unknown escape
+:error
+==================
+a = "\q"
+---
+
+
+
+==================
+Short hex escape
+:error
+==================
+a = "\x0"
+---
+
+
+
+==================
+Invalid Unicode hex digit
+:error
+==================
+a = "\u00GG"
+---
+
+
+
+==================
+Six closing basic quotes
+:error
+==================
+a = """x""""""
+---
+
+
+
+==================
+Six closing literal quotes
+:error
+==================
+a = '''x''''''
+---
+
+
+
+==================
+Backslash followed by non whitespace before newline
+:error
+==================
+a = """one\ two
+"""
+---
+
+

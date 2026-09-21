@@ -1,0 +1,437 @@
+==================
+Local dates
+==================
+a = 2026-09-20
+b = 0001-01-01
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))))))))
+
+==================
+Local times with and without seconds and fraction
+==================
+a = 07:32
+b = 07:32:01.123456789
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_time
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_time
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit))
+              (time_second
+                (digit)
+                (digit))
+              (time_secfrac
+                (digit)
+                (digit)
+                (digit)
+                (digit)
+                (digit)
+                (digit)
+                (digit)
+                (digit)
+                (digit)))))))))
+
+==================
+Local date times with each delimiter
+==================
+a = 2026-09-20T07:32
+b = 2026-09-20t07:32:00
+c = 2026-09-20 07:32:00.5
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit))
+              (time_second
+                (digit)
+                (digit))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit))
+              (time_second
+                (digit)
+                (digit))
+              (time_secfrac
+                (digit)))))))))
+
+==================
+Offset date times with Z and numeric offsets
+==================
+a = 2026-09-20T07:32Z
+b = 2026-09-20t07:32:00.5z
+c = 2026-09-20 07:32:00-07:00
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (offset_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (full_time
+              (partial_time
+                (time_hour
+                  (digit)
+                  (digit))
+                (time_minute
+                  (digit)
+                  (digit)))
+              (time_offset)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (offset_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (full_time
+              (partial_time
+                (time_hour
+                  (digit)
+                  (digit))
+                (time_minute
+                  (digit)
+                  (digit))
+                (time_second
+                  (digit)
+                  (digit))
+                (time_secfrac
+                  (digit)))
+              (time_offset)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (offset_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (full_time
+              (partial_time
+                (time_hour
+                  (digit)
+                  (digit))
+                (time_minute
+                  (digit)
+                  (digit))
+                (time_second
+                  (digit)
+                  (digit)))
+              (time_offset
+                (time_numoffset
+                  (time_hour
+                    (digit)
+                    (digit))
+                  (time_minute
+                    (digit)
+                    (digit)))))))))))
+
+==================
+Local date followed by whitespace or comment
+==================
+a = 2026-09-20  
+b = 2026-09-20 # date
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))))))
+    (comment)))
+
+==================
+Date missing month digit
+:error
+==================
+a = 2026-9-20
+---
+
+
+
+==================
+Tab as date time delimiter
+:error
+==================
+a = 2026-09-20	07:32
+---
+
+
+
+==================
+Double space as date time delimiter
+:error
+==================
+a = 2026-09-20  07:32
+---
+
+
+
+==================
+Fraction without seconds
+:error
+==================
+a = 07:32.5
+---
+
+
+
+==================
+Local time with offset
+:error
+==================
+a = 07:32Z
+---
+
+
+
+==================
+Fraction without digits
+:error
+==================
+a = 07:32:00.
+---
+
+
+
+==================
+Incomplete offset
+:error
+==================
+a = 2026-09-20T07:32+07
+---
+
+

@@ -1,0 +1,295 @@
+==================
+Empty document
+==================
+
+---
+
+(toml)
+
+==================
+Whitespace only line before key value pair
+==================
+	 
+a = true
+---
+
+(toml
+  (expression)
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
+
+==================
+Comment with Unicode and tab at end of file
+==================
+# 日本語	🌿
+---
+
+(toml
+  (expression
+    (comment)))
+
+==================
+Key value pair with surrounding whitespace and trailing comment
+==================
+ a = true # note
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))
+    (comment)))
+
+==================
+Newlines separate expressions and empty lines create no node
+==================
+a = true
+
+ 
+# comment line
+b = false
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean))))
+  (newline)
+  (newline)
+  (expression)
+  (newline)
+  (expression
+    (comment))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
+
+==================
+Semantic conflicts are not syntax errors
+==================
+a = true
+a = false
+[a]
+[a]
+[[a]]
+b = {}
+b.c = 999999999999999999999999999999
+d = 2026-99-99T99:99:99Z
+e = "\uD800\U00110000"
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key))))))
+  (newline)
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key))))))
+  (newline)
+  (expression
+    (table
+      (array_table
+        key: (key
+          (simple_key
+            (unquoted_key))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          (simple_key
+            (unquoted_key))))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (offset_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (full_time
+              (partial_time
+                (time_hour
+                  (digit)
+                  (digit))
+                (time_minute
+                  (digit)
+                  (digit))
+                (time_second
+                  (digit)
+                  (digit)))
+              (time_offset)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (basic_string
+            (basic_char
+              (escaped
+                (escape_seq_char
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig))))
+            (basic_char
+              (escaped
+                (escape_seq_char
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig)
+                  (hexdig))))))))))
+
+==================
+Two key value pairs on one line
+:error
+==================
+a = true b = false
+---
+
+
+
+==================
+Missing value
+:error
+==================
+a =
+---
+
+
+
+==================
+Newline before value
+:error
+==================
+a =
+true
+---
+
+
+
+==================
+Newline before equals
+:error
+==================
+a
+= true
+---
+
+
+
+==================
+Empty bare key
+:error
+==================
+= true
+---
+
+

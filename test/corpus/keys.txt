@@ -1,0 +1,139 @@
+==================
+Bare keys with letters, digits, underscores, and dashes
+==================
+9_a-b = true
+1234 = false
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
+
+==================
+Quoted keys, empty and with escape
+==================
+"" = true
+'' = false
+"\x61" = true
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (basic_string))))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (literal_string))))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (basic_string
+              (basic_char
+                (escaped
+                  (escape_seq_char
+                    (hexdig)
+                    (hexdig))))))))
+      value: (val
+        (boolean)))))
+
+==================
+Dotted key with whitespace around dots and quoted segments
+==================
+a 	. "b.c" . 'd' = true
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          (simple_key
+            (quoted_key
+              (basic_string
+                (basic_char
+                  (basic_unescaped))
+                (basic_char
+                  (basic_unescaped))
+                (basic_char
+                  (basic_unescaped)))))
+          (simple_key
+            (quoted_key
+              (literal_string
+                (literal_char))))))
+      value: (val
+        (boolean)))))
+
+==================
+Non ASCII bare key
+:error
+==================
+日本 = true
+---
+
+
+
+==================
+Multiline string as key
+:error
+==================
+"""a""" = true
+---
+
+
+
+==================
+Dotted key missing segment
+:error
+==================
+a..b = true
+---
+
+
+
+==================
+Dotted key trailing dot
+:error
+==================
+a. = true
+---
+
+
+
+==================
+Newline in dotted key
+:error
+==================
+a.
+b = true
+---
+
+

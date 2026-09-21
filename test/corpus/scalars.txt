@@ -1,0 +1,381 @@
+==================
+Booleans
+==================
+a = true
+b = false
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
+
+==================
+Decimal integers with signs and underscores
+==================
+a = 0
+b = -0
+c = +1234
+d = 1_000_000
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              (digit)
+              (digit)
+              (digit)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit))))))))
+
+==================
+Hexadecimal, octal, and binary integers
+==================
+a = 0xDeAd_beef
+b = 0o07_55
+c = 0b10_01
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (hex_int
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (oct_int
+            (digit0_7)
+            (digit0_7)
+            (digit0_7)
+            (digit0_7))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (bin_int
+            (digit0_1)
+            (digit0_1)
+            (digit0_1)
+            (digit0_1)))))))
+
+==================
+Floats with fraction, exponent, and underscores
+==================
+a = -12.3_4e+0_2
+b = 1E-02
+c = 0.5
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit1_9)
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              (digit)
+              (digit)))
+          (exp
+            (float_exp_part
+              (zero_prefixable_int
+                (digit)
+                (digit))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (exp
+            (float_exp_part
+              (zero_prefixable_int
+                (digit)
+                (digit))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              (digit))))))))
+
+==================
+Special floats with optional sign
+==================
+a = +inf
+b = -nan
+c = nan
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (special_float)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (special_float)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (special_float))))))
+
+==================
+Uppercase boolean
+:error
+==================
+a = True
+---
+
+
+
+==================
+Decimal leading zero
+:error
+==================
+a = 01
+---
+
+
+
+==================
+Signed decimal leading zero
+:error
+==================
+a = -01
+---
+
+
+
+==================
+Trailing digit separator
+:error
+==================
+a = 1_
+---
+
+
+
+==================
+Consecutive digit separators
+:error
+==================
+a = 1__2
+---
+
+
+
+==================
+Signed hexadecimal integer
+:error
+==================
+a = +0x12
+---
+
+
+
+==================
+Uppercase base prefix
+:error
+==================
+a = 0X12
+---
+
+
+
+==================
+Separator after base prefix
+:error
+==================
+a = 0x_12
+---
+
+
+
+==================
+Invalid octal digit
+:error
+==================
+a = 0o8
+---
+
+
+
+==================
+Invalid binary digit
+:error
+==================
+a = 0b2
+---
+
+
+
+==================
+Space within number
+:error
+==================
+a = 1 2
+---
+
+
+
+==================
+Fraction missing integer part
+:error
+==================
+a = .1
+---
+
+
+
+==================
+Fraction missing digits
+:error
+==================
+a = 1.
+---
+
+
+
+==================
+Exponent missing digits
+:error
+==================
+a = 1e+
+---
+
+
+
+==================
+Float leading zero
+:error
+==================
+a = 01.2
+---
+
+
+
+==================
+Uppercase infinity
+:error
+==================
+a = INF
+---
+
+
