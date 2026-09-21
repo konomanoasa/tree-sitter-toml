@@ -1,6 +1,11 @@
 {
   "files": {
-    "includes": ["**", "!**/src/grammar.json", "!**/src/node-types.json"]
+    "includes": [
+      "**",
+      "!!**/target",
+      "!**/src/grammar.json",
+      "!**/src/node-types.json"
+    ]
   },
   "formatter": {
     "indentStyle": "space",

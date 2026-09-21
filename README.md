@@ -4,7 +4,7 @@
 [![npm](https://img.shields.io/npm/v/@konomanoasa/tree-sitter-toml)](https://www.npmjs.com/package/@konomanoasa/tree-sitter-toml)
 
 [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) grammar for
-TOML 1.1.0.
+Tom's Obvious Minimal Language 1.1.0.
 
 ## Installation
 
@@ -12,11 +12,20 @@ TOML 1.1.0.
 npm install @konomanoasa/tree-sitter-toml
 ```
 
+## Grammar
+
+| Grammar | Description | Rust constant |
+| --- | --- | --- |
+| `toml` | TOML 1.1.0 | `LANGUAGE` |
+
 ## Development
+
+Development requires Node.js 24.2.0 or later.
 
 ```sh
 npm install
-npm run parse -- script.toml
+npm run build
+npm test
 ```
 
 ## Specifications
