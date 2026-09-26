@@ -112,17 +112,33 @@ static void test_quote_runs_preserve_content_and_closing_delimiters(void) {
   }
 }
 
-static void test_disabled_and_recovery_scans_do_not_consume_source(void) {
+static void test_disabled_scans_do_not_consume_source(void) {
   const int32_t input[] = {'"', 'x'};
-  for (unsigned enabled = 0; enabled <= 1; enabled += 1) {
-    const bool valid_symbols[] = {enabled != 0, enabled != 0};
+  const bool valid_symbols[TOKEN_COUNT] = {false, false};
+  struct MockLexer mock;
+  init_mock_lexer(&mock, input, 2);
+  assert(
+    !tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid_symbols)
+  );
+  assert(mock.offset == 0);
+  assert(mock.mark == SIZE_MAX);
+}
+
+static void test_recovery_scans_supply_the_quote_of_the_delimiter(void) {
+  const bool valid_symbols[TOKEN_COUNT] = {true, true};
+  const struct {
+    int32_t quote;
+    unsigned symbol;
+  } cases[] = {{'"', MLB_QUOTE}, {'\'', MLL_QUOTE}};
+  for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); index += 1) {
+    const int32_t input[] = {cases[index].quote, 'x'};
     struct MockLexer mock;
     init_mock_lexer(&mock, input, 2);
     assert(
-      !tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid_symbols)
+      tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid_symbols)
     );
-    assert(mock.offset == 0);
-    assert(mock.mark == SIZE_MAX);
+    assert(mock.lexer.result_symbol == cases[index].symbol);
+    assert(mock.mark == 1);
   }
 }
 
@@ -158,7 +174,8 @@ static void test_unrelated_characters_and_eof_are_not_quote_content(void) {
 int main(void) {
   test_stateless_lifecycle_and_serialization();
   test_quote_runs_preserve_content_and_closing_delimiters();
-  test_disabled_and_recovery_scans_do_not_consume_source();
+  test_disabled_scans_do_not_consume_source();
+  test_recovery_scans_supply_the_quote_of_the_delimiter();
   test_unrelated_characters_and_eof_are_not_quote_content();
   return 0;
 }

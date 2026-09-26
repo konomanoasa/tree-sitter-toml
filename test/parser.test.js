@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { parse } from "./support/parser.js";
 
-const accepted = [
+const validCases = [
   [
     "CRLF separates expressions",
     "a = true\r\nb = false\r\n",
@@ -20,7 +20,7 @@ const accepted = [
   ],
 ];
 
-for (const [name, source, node] of accepted) {
+for (const [name, source, node] of validCases) {
   test(`toml: ${name}`, () => {
     const result = parse(source);
     assert.equal(result.hasError, false, result.cst);
@@ -108,7 +108,7 @@ test("toml: literal content and escape codes expose their original character ran
   );
 });
 
-const dateTimes = [
+const dateTimeCases = [
   ["lowest date elements", "0000-01-01"],
   ["highest date elements", "9999-12-31"],
   ["single-digit month and day", "2026-09-09"],
@@ -129,7 +129,7 @@ const dateTimes = [
   ["leap-second validation is left to the consumer", "2026-01-01T12:00:60Z"],
 ];
 
-for (const [name, value] of dateTimes) {
+for (const [name, value] of dateTimeCases) {
   test(`toml: ${name}`, () => {
     const result = parse(`a = ${value}`);
     assert.equal(result.hasError, false, result.cst);
@@ -148,7 +148,7 @@ test("toml: date-time digit restrictions preserve other numeric forms", () => {
   assert.equal(result.hasError, false, result.cst);
 });
 
-const rejected = [
+const invalidCases = [
   ["bare carriage return between expressions", "a = true\rb = false"],
   ["bare carriage return in multiline basic string", 'a = """one\rtwo"""'],
   ["bare carriage return in multiline literal string", "a = '''one\rtwo'''"],
@@ -177,9 +177,27 @@ const rejected = [
   ["negative offset minute above fifty-nine", "a = 2026-01-01T00:00-00:60"],
 ];
 
-for (const [name, source] of rejected) {
+for (const [name, source] of invalidCases) {
   test(`toml: ${name}`, () => {
     const result = parse(source);
     assert.equal(result.hasError, true, result.cst);
+  });
+}
+
+// Recovery shapes are not part of the contract, so these only require that
+// recovery happens; every parse also repeats, which is what must agree.
+const recoveryCases = [
+  ["quote run after a complete value", 'a = 1 """x"""'],
+  ["quote run without a keyval", 'x """ y'],
+  ["stray delimiter after a multiline basic string", 'a = """x""" """'],
+  ["stray delimiter after a multiline literal string", "a = '''x''', '''"],
+  ["quote pair as the whole document", '""'],
+];
+
+for (const [name, source] of recoveryCases) {
+  test(`toml: ${name} recovers through an ERROR node`, () => {
+    const result = parse(source);
+    assert.equal(result.hasError, true, result.cst);
+    assert.match(result.cst, /^\S+ +- +\S+ +•ERROR$/m);
   });
 }

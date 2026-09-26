@@ -33,14 +33,13 @@ bool tree_sitter_toml_external_scanner_scan(
   const bool *valid_symbols
 ) {
   (void)payload;
-  // Only error recovery marks both quote tokens valid at once.
-  if (valid_symbols[MLB_QUOTE] == valid_symbols[MLL_QUOTE]) {
+  const int32_t quote = lexer->lookahead;
+  if (quote != '"' && quote != '\'') {
     return false;
   }
-  const enum TokenType symbol =
-    valid_symbols[MLB_QUOTE] ? MLB_QUOTE : MLL_QUOTE;
-  const int32_t quote = symbol == MLB_QUOTE ? '"' : '\'';
-  if (lexer->lookahead != quote) {
+  // Error recovery marks both quote tokens valid; the delimiter selects one.
+  const enum TokenType symbol = quote == '"' ? MLB_QUOTE : MLL_QUOTE;
+  if (!valid_symbols[symbol]) {
     return false;
   }
   lexer->advance(lexer, false);

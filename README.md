@@ -1,6 +1,7 @@
 # tree-sitter-toml
 
 [![CI](https://github.com/konomanoasa/tree-sitter-toml/actions/workflows/ci.yaml/badge.svg)](https://github.com/konomanoasa/tree-sitter-toml/actions/workflows/ci.yaml)
+[![crates.io](https://img.shields.io/crates/v/konomanoasa-tree-sitter-toml)](https://crates.io/crates/konomanoasa-tree-sitter-toml)
 [![npm](https://img.shields.io/npm/v/@konomanoasa/tree-sitter-toml)](https://www.npmjs.com/package/@konomanoasa/tree-sitter-toml)
 
 [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) grammar for
@@ -12,15 +13,9 @@ Tom's Obvious Minimal Language 1.1.0.
 npm install @konomanoasa/tree-sitter-toml
 ```
 
-## Grammar
-
-| Grammar | Description | Rust constant |
-| --- | --- | --- |
-| `toml` | TOML 1.1.0 | `LANGUAGE` |
-
 ## Development
 
-Development requires Node.js 24.2.0 or later.
+Development uses Node.js 24 or later.
 
 ```sh
 npm install
