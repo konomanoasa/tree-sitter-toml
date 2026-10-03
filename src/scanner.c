@@ -7,6 +7,7 @@ enum TokenType {
   FLOAT_START,
   DATE_START,
   DATE_SPACE,
+  DATE_END,
   TIME_SECONDS_START,
   TIME_FRACTION_START,
   TIME_FRACTION_DIGITS_START,
@@ -20,6 +21,7 @@ enum TokenType {
   HEX_CONTINUATION,
   OCT_CONTINUATION,
   BIN_CONTINUATION,
+  NUMBER_END,
   UNEXPECTED_CHARACTER_START,
   DOT_SEPARATOR,
   EXPRESSION_END,
@@ -172,10 +174,11 @@ static bool number_digit(int32_t c, unsigned base) {
   const int32_t maximum[] = {'9', '9', '7', '1'};
   return base == 1 ? hex(c) : c >= '0' && c <= maximum[base];
 }
-static bool keyval_ahead(TSLexer *lexer) {
-  for (;;) {
+// `bare` continues a bare key whose first character is already consumed.
+static bool keyval_ahead(TSLexer *lexer, bool bare) {
+  for (;; bare = false) {
     int32_t quote = lexer->lookahead;
-    if (quote == '"' || quote == '\'') {
+    if (!bare && (quote == '"' || quote == '\'')) {
       lexer->advance(lexer, false);
       while (
         !lexer->eof(lexer) &&
@@ -193,11 +196,10 @@ static bool keyval_ahead(TSLexer *lexer) {
         return false;
       lexer->advance(lexer, false);
     } else {
-      if (!key_character(lexer->lookahead))
+      if (!bare && !key_character(lexer->lookahead))
         return false;
-      do {
+      while (key_character(lexer->lookahead))
         lexer->advance(lexer, false);
-      } while (key_character(lexer->lookahead));
     }
     while (space(lexer->lookahead))
       lexer->advance(lexer, false);
@@ -214,7 +216,15 @@ static bool emit(TSLexer *lexer, const bool *valid, enum TokenType token) {
   if (!valid[token])
     return false;
   lexer->result_symbol = token;
+  // Edits inside the final lookahead character must invalidate this token.
+  if (!lexer->eof(lexer))
+    lexer->advance(lexer, false);
   return true;
+}
+// A key glued to a number starts the next key/value pair when "=" follows it.
+static bool adjacent_keyval(TSLexer *lexer, const bool *valid, bool bare) {
+  return (valid[EXPRESSION_END] || valid[MISSING_INLINE_TABLE_SEPARATOR]) &&
+    keyval_ahead(lexer, bare);
 }
 static bool missing(TSLexer *lexer, const bool *valid, enum TokenType token) {
   return emit(
@@ -264,7 +274,7 @@ static bool escape(TSLexer *lexer, const bool *valid) {
       return false;
     appendable = lexer->eof(lexer);
   } else if (space(c) || line(c)) {
-    if (valid[MLB_QUOTE]) {
+    if (valid[MISSING_ML_BASIC_STRING_CLOSE]) {
       while (space(lexer->lookahead))
         lexer->advance(lexer, false);
       if (lexer->lookahead == '\n')
@@ -360,6 +370,7 @@ static bool scalar_start(TSLexer *lexer, const bool *valid) {
     bool base = false, floating = first == '.', date = false,
          initial_digits = true;
     unsigned length = 0;
+    int32_t previous = 0;
     while (!lexer->eof(lexer) && !scalar_boundary(lexer->lookahead)) {
       int32_t c = lexer->lookahead;
       if (length == 1 && first == '0' && (c == 'x' || c == 'o' || c == 'b'))
@@ -375,8 +386,13 @@ static bool scalar_start(TSLexer *lexer, const bool *valid) {
           (c == 'i' || c == 'n')) &&
         !(date && (c == 'T' || c == 't' || c == 'Z' || c == 'z'))
       ) {
-        bool assignment = keyval_ahead(lexer);
-        if (!assignment && (c == 'e' || c == 'E'))
+        bool assignment = keyval_ahead(lexer, false);
+        // A dash past the sign joins the letters after it in one invalid run.
+        if (
+          !assignment &&
+          (c == 'e' || c == 'E') &&
+          !(previous == '-' && length > 1)
+        )
           floating = true;
         return emit(
           lexer,
@@ -390,10 +406,6 @@ static bool scalar_start(TSLexer *lexer, const bool *valid) {
         !base &&
         (c ==
           '.' ||
-          c ==
-          'e' ||
-          c ==
-          'E' ||
           ((first == '+' || first == '-') &&
             length ==
             1 &&
@@ -406,6 +418,7 @@ static bool scalar_start(TSLexer *lexer, const bool *valid) {
         date = true;
       if (c < '0' || c > '9')
         initial_digits = false;
+      previous = c;
       lexer->advance(lexer, false);
       if (length < 5)
         length++;
@@ -471,7 +484,7 @@ bool tree_sitter_toml_external_scanner_scan(
   int32_t c = lexer->lookahead;
   lexer->mark_end(lexer);
   bool string_body = valid[INVALID_ESCAPE] ||
-    valid[MLL_QUOTE] ||
+    valid[MISSING_ML_LITERAL_STRING_CLOSE] ||
     valid[INVALID_MISSING_LITERAL_STRING_CLOSE];
   if (
     valid[EXPONENT_DIGITS_START] &&
@@ -547,20 +560,23 @@ bool tree_sitter_toml_external_scanner_scan(
       valid[TIME_SECOND_START])
   )
     return date_element(lexer, valid);
-  if (c == ' ' && valid[DATE_SPACE]) {
-    lexer->advance(lexer, false);
-    lexer->mark_end(lexer);
-    unsigned count = 0;
-    while (count < 2 && lexer->lookahead >= '0' && lexer->lookahead <= '9') {
+  if (valid[DATE_END]) {
+    if (c == 'T' || c == 't')
+      return false;
+    if (c == ' ') {
       lexer->advance(lexer, false);
-      count++;
+      unsigned count = 0;
+      while (count < 2 && lexer->lookahead >= '0' && lexer->lookahead <= '9') {
+        lexer->advance(lexer, false);
+        count++;
+      }
+      if (
+        (count == 2 && lexer->lookahead == ':') ||
+        (count > 0 && lexer->eof(lexer))
+      )
+        return emit(lexer, valid, DATE_SPACE);
     }
-    if (
-      (count == 2 && lexer->lookahead == ':') ||
-      (count > 0 && lexer->eof(lexer))
-    )
-      return emit(lexer, valid, DATE_SPACE);
-    return false;
+    return emit(lexer, valid, DATE_END);
   }
   if (
     (lexer->eof(lexer) ||
@@ -581,14 +597,18 @@ bool tree_sitter_toml_external_scanner_scan(
     for (unsigned base = 0; base < 4; base++) {
       if (!valid[continuations[base]])
         continue;
+      if (c == '_') {
+        lexer->advance(lexer, false);
+        if (number_digit(lexer->lookahead, base))
+          return emit(lexer, valid, continuations[base]);
+      }
+      // The end marker keeps this lookahead inside the number for reparsing.
       if (
-        (valid[EXPRESSION_END] || valid[MISSING_INLINE_TABLE_SEPARATOR]) &&
         !number_digit(c, base) &&
         key_character(c) &&
-        keyval_ahead(lexer)
+        adjacent_keyval(lexer, valid, c == '_')
       )
-        return emit(lexer, valid, EXPRESSION_END) ||
-          emit(lexer, valid, MISSING_INLINE_TABLE_SEPARATOR);
+        return emit(lexer, valid, NUMBER_END);
       if (
         base ==
         0 &&
@@ -633,8 +653,12 @@ bool tree_sitter_toml_external_scanner_scan(
     return true;
   if (c == '.' && emit(lexer, valid, UNEXPECTED_TIME_FRACTION))
     return true;
-  if ((c == 'e' || c == 'E') && emit(lexer, valid, EXPONENT_START))
-    return true;
+  if ((c == 'e' || c == 'E') && valid[EXPONENT_START]) {
+    if (adjacent_keyval(lexer, valid, false))
+      return emit(lexer, valid, EXPRESSION_END) ||
+        emit(lexer, valid, MISSING_INLINE_TABLE_SEPARATOR);
+    return emit(lexer, valid, EXPONENT_START);
+  }
   if (c == '.' && emit(lexer, valid, FLOAT_FRACTION_START))
     return true;
   if (
@@ -737,12 +761,6 @@ bool tree_sitter_toml_external_scanner_scan(
   ) {
     return take(lexer, valid, INVALID_KEY_CHARACTER);
   }
-  if (line(c)) {
-    if (missing(lexer, valid, INVALID_MISSING_BASIC_STRING_CLOSE))
-      return true;
-    if (missing(lexer, valid, INVALID_MISSING_LITERAL_STRING_CLOSE))
-      return true;
-  }
   if (c == '\r' && valid[INVALID_LINE_ENDING]) {
     lexer->advance(lexer, false);
     if (lexer->lookahead == '\n')
@@ -806,14 +824,6 @@ bool tree_sitter_toml_external_scanner_scan(
     return true;
   if (c == ']' && missing(lexer, valid, INVALID_MISSING_INLINE_TABLE_CLOSE))
     return true;
-  if (end || scalar_boundary(c)) {
-    if (missing(lexer, valid, INVALID_MISSING_DIGITS))
-      return true;
-    if (missing(lexer, valid, INVALID_MISSING_DATE_SEPARATOR))
-      return true;
-    if (missing(lexer, valid, INVALID_MISSING_TIME_SEPARATOR))
-      return true;
-  }
   if (end || c == '#' || c == ']' || c == '}' || c == ',') {
     if (missing(lexer, valid, INVALID_MISSING_VALUE))
       return true;
@@ -865,7 +875,6 @@ bool tree_sitter_toml_external_scanner_scan(
     missing(lexer, valid, INVALID_MISSING_ASSIGNMENT_OPERATOR)
   )
     return true;
-  bool time_delimiter = !spaced && valid[DATE_SPACE] && (c == 'T' || c == 't');
   bool number_continuation = !spaced &&
     !scalar_boundary(c) &&
     (valid[INVALID_DEC_DIGIT] ||
@@ -877,17 +886,7 @@ bool tree_sitter_toml_external_scanner_scan(
       valid[OCT_CONTINUATION] ||
       valid[BIN_CONTINUATION]);
   if (
-    !end &&
-    c !=
-    ',' &&
-    c !=
-    ']' &&
-    c !=
-    '}' &&
-    c !=
-    '#' &&
-    !time_delimiter &&
-    !number_continuation
+    !end && c != ',' && c != ']' && c != '}' && c != '#' && !number_continuation
   ) {
     if (
       emit(lexer, valid, MISSING_ARRAY_SEPARATOR) ||
@@ -915,11 +914,10 @@ bool tree_sitter_toml_external_scanner_scan(
       control(c) ||
       (valid[EXPRESSION_END] &&
         !spaced &&
-        !time_delimiter &&
         !number_continuation &&
         (c == '"' || c == '\'' || !scalar_boundary(c))))
   ) {
-    if ((key_char || c == '"' || c == '\'') && keyval_ahead(lexer))
+    if ((key_char || c == '"' || c == '\'') && keyval_ahead(lexer, false))
       return emit(lexer, valid, EXPRESSION_END);
     return emit(lexer, valid, UNEXPECTED_CHARACTER_START);
   }
@@ -936,11 +934,7 @@ bool tree_sitter_toml_external_scanner_scan(
   if (
     valid[EXPRESSION_END] &&
     (end ||
-      (c !=
-        '#' &&
-        (spaced ||
-          scalar_boundary(c) ||
-          (!number_continuation && !time_delimiter))))
+      (c != '#' && (spaced || scalar_boundary(c) || !number_continuation)))
   )
     return emit(lexer, valid, EXPRESSION_END);
   if (!end && emit(lexer, valid, MISSING_NEWLINE))

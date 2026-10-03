@@ -216,7 +216,7 @@ function testCorpus(arguments_) {
       "test-corpus deletes its isolated copy; --update, --debug-graph, and --open-log would lose their output.",
     );
   }
-  const testRoot = mkdtempSync(join(root, `.${packageName}-test-`));
+  const testRoot = mkdtempSync(join(tmpdir(), `${packageName}-test-`));
   let runner;
 
   try {

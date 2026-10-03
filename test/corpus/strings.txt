@@ -646,3 +646,39 @@ b = '''='''
             (ml_literal_body
               (mll_content
                 (literal_char)))))))))
+
+==================
+Line continuation and equals sign after two content quotes
+==================
+a = """""\
+"""
+b = '''''='''
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_basic_string
+            (ml_basic_body
+              (mlb_quotes)
+              (mlb_content
+                (mlb_escaped_nl
+                  (newline)))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_literal_string
+            (ml_literal_body
+              (mll_quotes)
+              (mll_content
+                (literal_char)))))))))

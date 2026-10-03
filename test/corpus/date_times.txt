@@ -723,3 +723,82 @@ a = 9999-12-31T23:59:60-23:59
                   (time_minute
                     (digit)
                     (digit)))))))))))
+
+==================
+Space after local date before a token that is not a time
+==================
+a = 2026-09-20 x
+b = 2026-09-20 12 # c
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit))))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_value)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit))))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_value))))
+    (comment)))

@@ -168,6 +168,7 @@ const separated = ($, leaf, base) =>
       issue($, `invalid_${base}_digit`),
     ),
     repeat(underscored($, leaf, base)),
+    optional($._number_end),
   );
 
 const layout = ($) => optional($._ws_comment_newline);
@@ -244,7 +245,7 @@ const multiline = ($, delimiter, body, kind) =>
   );
 
 const quotes = (quote, mark) =>
-  prec.right(seq(alias(quote, mark), optional(alias(quote, mark))));
+  seq(alias(quote, mark), optional(alias(quote, mark)));
 
 const multilineBody = (content, quotes) =>
   choice(
@@ -270,6 +271,7 @@ export default grammar({
     $._float_start,
     $._date_start,
     $._date_space,
+    $._date_end,
     $._time_seconds_start,
     $._time_fraction_start,
     $._time_fraction_digits_start,
@@ -283,6 +285,7 @@ export default grammar({
     $._hex_continuation,
     $._oct_continuation,
     $._bin_continuation,
+    $._number_end,
     $._unexpected_character_start,
     $._dot_separator,
     $._expression_end,
@@ -332,8 +335,7 @@ export default grammar({
           optional($._comment),
         ),
       ),
-    _ws: ($) => prec.right(repeat1(choice($._space, /\t/))),
-    _space: () => / /,
+    _ws: () => /[ \t]+/,
     newline: () => /\r?\n/,
     _comment: ($) =>
       choice(
@@ -481,19 +483,25 @@ export default grammar({
         ),
       ),
     unsigned_dec_int: ($) =>
-      choice(
-        digit($),
-        seq(
-          digit($, /0/),
-          $._dec_continuation,
-          issue($, "invalid_dec_digit"),
-          repeat(underscored($, digit($), "dec")),
+      seq(
+        choice(
+          digit($),
+          seq(
+            digit($, /0/),
+            $._dec_continuation,
+            issue($, "invalid_dec_digit"),
+            repeat(underscored($, digit($), "dec")),
+          ),
+          seq(
+            issue($, "leading_zero"),
+            repeat1(underscored($, digit($), "dec")),
+          ),
+          seq(
+            alias($._digit1_9, $.digit1_9),
+            repeat1(underscored($, digit($), "dec")),
+          ),
         ),
-        seq(issue($, "leading_zero"), repeat1(underscored($, digit($), "dec"))),
-        seq(
-          alias($._digit1_9, $.digit1_9),
-          repeat1(underscored($, digit($), "dec")),
-        ),
+        optional($._number_end),
       ),
     hex_int: ($) =>
       seq("0x", choice(separated($, hexdig($), "hex"), absent($, "digits"))),
@@ -570,7 +578,7 @@ export default grammar({
     date_fullyear: ($) => seq($._date_fullyear_start, ...times(4, digit($))),
     date_month: ($) => dateElement($, "date_month"),
     date_mday: ($) => dateElement($, "date_mday"),
-    time_delim: ($) => choice("T", "t", alias($._date_space, " ")),
+    time_delim: ($) => choice("T", "t", seq($._date_space, " ")),
     time_hour: ($) => dateElement($, "time_hour"),
     time_minute: ($) => dateElement($, "time_minute"),
     time_second: ($) => dateElement($, "time_second"),
@@ -629,7 +637,7 @@ export default grammar({
         $.time_delim,
         choice($.partial_time, absent($, "digits")),
       ),
-    local_date: ($) => $.full_date,
+    local_date: ($) => seq($.full_date, $._date_end),
     local_time: ($) =>
       seq($.partial_time, optional(issue($, "unexpected_time_offset"))),
     array: ($) =>

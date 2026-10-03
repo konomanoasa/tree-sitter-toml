@@ -225,6 +225,9 @@ static void test_scalar_markers_preserve_source_and_real_terminators(void) {
     {{'1', '2', ':', '3', '4'}, 5, DATE_START, 0},
     {{'t', 'r', 'u'}, 3, INCOMPLETE_VALUE, 3},
     {{'t', 'r', 'u', ']'}, 4, INVALID_VALUE, 3},
+    {{'4', '+', 'e'}, 3, FLOAT_START, 0},
+    {{'-', 'e', '5'}, 3, FLOAT_START, 0},
+    {{'4', '-', 'e'}, 3, INTEGER_START, 0},
   };
   bool valid[TOKEN_COUNT] = {false};
   valid[INTEGER_START] = valid[FLOAT_START] = valid[DATE_START] = true;
@@ -253,6 +256,87 @@ static void test_long_date_elements_do_not_overflow_lookahead(void) {
   assert(mock.offset == sizeof(input) / sizeof(input[0]));
 }
 
+static void test_date_end_and_space_markers_are_zero_width(void) {
+  const struct {
+    int32_t input[4];
+    size_t length;
+    bool accepted;
+    enum TokenType token;
+  } cases[] = {
+    {{' ', '0', '7', ':'}, 4, true, DATE_SPACE},
+    {{' ', '7'}, 2, true, DATE_SPACE},
+    {{' ', '0', '7', 'x'}, 4, true, DATE_END},
+    {{' ', 'x'}, 2, true, DATE_END},
+    {{' '}, 1, true, DATE_END},
+    {{'\t'}, 1, true, DATE_END},
+    {{'x'}, 1, true, DATE_END},
+    {{0}, 0, true, DATE_END},
+    {{'T'}, 1, false, DATE_END},
+    {{'t'}, 1, false, DATE_END},
+  };
+  bool valid[TOKEN_COUNT] = {false};
+  valid[DATE_SPACE] = valid[DATE_END] = true;
+  for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
+    struct MockLexer mock;
+    init_mock_lexer(&mock, cases[index].input, cases[index].length);
+    assert(
+      tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid) ==
+      cases[index].accepted
+    );
+    if (cases[index].accepted) {
+      assert(mock.lexer.result_symbol == cases[index].token);
+      assert(mock.mark == 0);
+    }
+  }
+}
+
+static void test_number_end_requires_an_adjacent_assignment(void) {
+  const struct {
+    int32_t input[4];
+    size_t length;
+    bool expression;
+    enum TokenType token;
+  } cases[] = {
+    {{'x', '=', '2'}, 3, true, NUMBER_END},
+    {{'_', 'x', '=', '2'}, 4, true, NUMBER_END},
+    {{'_', '=', '2'}, 3, true, NUMBER_END},
+    {{'_', '2', '=', '3'}, 4, true, DEC_CONTINUATION},
+    {{'x', '2'}, 2, true, DEC_CONTINUATION},
+    {{'x', '=', '2'}, 3, false, DEC_CONTINUATION},
+  };
+  for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
+    bool valid[TOKEN_COUNT] = {false};
+    valid[DEC_CONTINUATION] = valid[NUMBER_END] = true;
+    valid[EXPRESSION_END] = cases[index].expression;
+    struct MockLexer mock;
+    init_mock_lexer(&mock, cases[index].input, cases[index].length);
+    assert(tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+    assert(mock.lexer.result_symbol == cases[index].token);
+    assert(mock.mark == 0);
+  }
+}
+
+static void test_exponent_start_yields_to_an_adjacent_assignment(void) {
+  const struct {
+    int32_t input[4];
+    size_t length;
+    enum TokenType token;
+  } cases[] = {
+    {{'e', '5'}, 2, EXPONENT_START},
+    {{'e', '=', '5'}, 3, EXPRESSION_END},
+    {{'e', ' ', '=', '5'}, 4, EXPRESSION_END},
+  };
+  bool valid[TOKEN_COUNT] = {false};
+  valid[EXPONENT_START] = valid[EXPRESSION_END] = true;
+  for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
+    struct MockLexer mock;
+    init_mock_lexer(&mock, cases[index].input, cases[index].length);
+    assert(tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+    assert(mock.lexer.result_symbol == cases[index].token);
+    assert(mock.mark == 0);
+  }
+}
+
 int main(void) {
   test_stateless_lifecycle_and_serialization();
   test_quote_runs_preserve_content_and_closing_delimiters();
@@ -264,5 +348,8 @@ int main(void) {
   test_nul_is_a_character_and_eof_is_not_consumed();
   test_scalar_markers_preserve_source_and_real_terminators();
   test_long_date_elements_do_not_overflow_lookahead();
+  test_date_end_and_space_markers_are_zero_width();
+  test_number_end_requires_an_adjacent_assignment();
+  test_exponent_start_yields_to_an_adjacent_assignment();
   return 0;
 }

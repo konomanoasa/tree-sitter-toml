@@ -679,6 +679,33 @@ const boundaryCases = [
     'a="""x""""""',
     [["expression", "invalid_syntax", "invalid_character", 11, 12]],
   ],
+  [
+    "space after a date before a stray key starts another expression",
+    "a=2026-01-01 x",
+    [
+      ["toml", "invalid_syntax", "missing_newline", 13, 13],
+      ["keyval", "incomplete_syntax", "missing_assignment_operator", 14, 14],
+      ["keyval", "incomplete_syntax", "missing_value", 14, 14],
+    ],
+  ],
+  [
+    "dash before an exponent letter stays in the integer",
+    "a=4-e2",
+    [["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 5]],
+  ],
+  [
+    "dash run after a sign keeps the exponent letter",
+    "a=--e",
+    [["dec_int", "invalid_syntax", "invalid_number", 3, 5]],
+  ],
+  [
+    "digit separator before a stray equals sign stays in the number",
+    "a=1_2=3",
+    [
+      ["val", "invalid_syntax", "invalid_character", 5, 6],
+      ["expression", "invalid_syntax", "invalid_character", 6, 7],
+    ],
+  ],
 ];
 for (const [name, source, expected] of [...cases, ...boundaryCases]) {
   test(`toml issues: ${name}`, () => {

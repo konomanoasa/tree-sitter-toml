@@ -546,6 +546,66 @@ const histories = [
     ],
   ],
   [
+    "edit another line after a date followed by a spaced stray key",
+    "a=2026-01-01 x\nb=1",
+    [
+      {
+        byte: 17,
+        deleteBytes: 1,
+        insert: "2",
+        source: "a=2026-01-01 x\nb=2",
+        valid: false,
+      },
+    ],
+  ],
+  [
+    "complete and break a time after a date and a space",
+    "a=2026-01-01 0x:32",
+    [
+      {
+        byte: 14,
+        deleteBytes: 1,
+        insert: "7",
+        source: "a=2026-01-01 07:32",
+        valid: true,
+      },
+      {
+        byte: 14,
+        deleteBytes: 1,
+        insert: "x",
+        source: "a=2026-01-01 0x:32",
+        valid: false,
+      },
+    ],
+  ],
+  [
+    "edit the integer part before a fraction glued to an assignment",
+    "a = 1.5e = 1",
+    [
+      {
+        byte: 4,
+        deleteBytes: 1,
+        insert: "2",
+        source: "a = 2.5e = 1",
+        valid: false,
+      },
+    ],
+  ],
+  [
+    "remove the assignment glued to a number in an inline table",
+    ":{t +0a=",
+    [
+      {
+        byte: 8,
+        deleteBytes: 0,
+        insert: " ",
+        source: ":{t +0a= ",
+        valid: false,
+      },
+      { byte: 7, deleteBytes: 2, insert: "", source: ":{t +0a", valid: false },
+    ],
+  ],
+  [
     "extend and restore the longest multiline closing prefix",
     'a="""x"""""',
     [
@@ -606,6 +666,74 @@ for (const [name, initial, steps] of histories) {
       const fresh = parse(expected);
       assert.deepEqual(incremental.nodes, fresh.nodes, expected);
     }
+  });
+}
+
+const lookaheadByteEdits = [
+  {
+    name: "two-byte character after an integer",
+    source: "a=1 é\n",
+    byte: 5,
+    expected: Buffer.concat([
+      Buffer.from("a=1 "),
+      Buffer.from([0xc3]),
+      Buffer.from("\n"),
+    ]),
+    issues: [["expression", "invalid_syntax", "invalid_character", 4, 5]],
+  },
+  {
+    name: "two-byte character after a date",
+    source: "a=2020-01-01 é\n",
+    byte: 14,
+    expected: Buffer.concat([
+      Buffer.from("a=2020-01-01 "),
+      Buffer.from([0xc3]),
+      Buffer.from("\n"),
+    ]),
+    issues: [["expression", "invalid_syntax", "invalid_character", 13, 14]],
+  },
+  {
+    name: "three-byte character after an array",
+    source: "a=[] あ\n",
+    byte: 7,
+    expected: Buffer.concat([
+      Buffer.from("a=[] "),
+      Buffer.from([0xe3, 0x81]),
+      Buffer.from("\n"),
+    ]),
+    issues: [
+      ["expression", "invalid_syntax", "invalid_character", 5, 6],
+      ["expression", "invalid_syntax", "invalid_character", 6, 7],
+    ],
+  },
+  {
+    name: "four-byte character after a string",
+    source: 'a="x" 😀\n',
+    byte: 9,
+    expected: Buffer.concat([
+      Buffer.from('a="x" '),
+      Buffer.from([0xf0, 0x9f, 0x98]),
+      Buffer.from("\n"),
+    ]),
+    issues: [
+      ["expression", "invalid_syntax", "invalid_character", 6, 7],
+      ["expression", "invalid_syntax", "invalid_character", 7, 8],
+      ["expression", "invalid_syntax", "invalid_character", 8, 9],
+    ],
+  },
+];
+
+for (const { name, source, byte, expected, issues } of lookaheadByteEdits) {
+  test(`toml: deleting the final byte of a ${name} preserves fresh parsing`, () => {
+    const edits = [{ byte, deleteBytes: 1, insert: "" }];
+    assert.deepEqual(applyEdits(source, edits), expected);
+    const fresh = parse(expected);
+    assert.equal(fresh.hasError, false, fresh.cst);
+    assert.deepEqual(fresh.issues, issues);
+    const incremental = parse(source, edits);
+    assert.equal(incremental.hasError, false, incremental.cst);
+    assert.deepEqual(incremental.issues, issues);
+    assert.deepEqual(incremental.nodes, fresh.nodes);
   });
 }
 

@@ -584,3 +584,50 @@ a = INF
         issue: (syntax_issue
           (invalid_syntax
             (invalid_value)))))))
+
+==================
+Dash before exponent letter stays in the integer
+==================
+a = 4-e2
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))
+
+==================
+Digit separator before a stray equals sign stays in the integer
+==================
+a = 1_2=3
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              (digit))))
+        issue: (syntax_issue
+          (invalid_syntax
+            (invalid_character)))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
