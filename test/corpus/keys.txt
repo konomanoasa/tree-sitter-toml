@@ -94,46 +94,125 @@ a 	. "b.c" . 'd' = true
 
 ==================
 Non ASCII bare key
-:error
 ==================
 日本 = true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          issue: (syntax_issue
+            (invalid_syntax
+              (invalid_key_character)))
+          issue: (syntax_issue
+            (invalid_syntax
+              (invalid_key_character)))))
+      value: (val
+        (boolean)))))
 
 ==================
 Multiline string as key
-:error
 ==================
 """a""" = true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (basic_string))))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      value: (val
+        (string
+          (basic_string
+            (basic_char
+              (basic_unescaped)))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (basic_string))))
+      value: (val
+        (boolean)))))
 
 ==================
 Dotted key missing segment
-:error
 ==================
 a..b = true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))
+          (simple_key
+            (unquoted_key))))
+      value: (val
+        (boolean)))))
 
 ==================
 Dotted key trailing dot
-:error
 ==================
 a. = true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))))
+      value: (val
+        (boolean)))))
 
 ==================
 Newline in dotted key
-:error
 ==================
 a.
 b = true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_value)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))

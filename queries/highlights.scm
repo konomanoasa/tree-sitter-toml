@@ -1,4 +1,10 @@
-(comment) @comment
+(comment
+  !issue) @comment
+
+(comment_text) @comment
+
+(incomplete_value
+  (digit) @number)
 
 (unquoted_key) @property
 
@@ -220,3 +226,26 @@
 
 (time_second
   (digit) @string.special)
+
+[
+  (invalid_date_time
+    (digit) @string.special)
+  (incomplete_date_time
+    (digit) @string.special)
+]
+
+(integer
+  (dec_int
+    (unsigned_dec_int
+      (syntax_issue
+        (invalid_syntax
+          (invalid_number
+            (digit) @number))))))
+
+(float_int_part
+  (dec_int
+    (unsigned_dec_int
+      (syntax_issue
+        (invalid_syntax
+          (invalid_number
+            (digit) @number.float))))))

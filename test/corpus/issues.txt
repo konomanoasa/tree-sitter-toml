@@ -1,0 +1,600 @@
+==================
+Signed special float prefix at EOF
+==================
+a = +in
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (special_float
+            issue: (syntax_issue
+              (incomplete_syntax
+                (incomplete_value)))))))))
+
+==================
+Short appendable hour after date
+==================
+a = 2026-01-01T0
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (partial_time
+              (time_hour
+                issue: (syntax_issue
+                  (incomplete_syntax
+                    (incomplete_date_time
+                      (digit)))))
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_time_separator)))
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_digits))))))))))
+
+==================
+Short unappendable hour after date
+==================
+a = 2026-01-01T9
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (partial_time
+              (time_hour
+                issue: (syntax_issue
+                  (invalid_syntax
+                    (invalid_date_time
+                      (digit)))))
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_time_separator)))
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_digits))))))))))
+
+==================
+Invalid bare key preserves normal fragments
+==================
+a🌿b = 1
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)
+          issue: (syntax_issue
+            (invalid_syntax
+              (invalid_key_character)))
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
+==================
+Dotted key missing first segment
+==================
+.a = 1
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))
+          (simple_key
+            (unquoted_key))))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
+==================
+Partial array table closing delimiter at EOF
+==================
+[[a]
+---
+
+(toml
+  (expression
+    (table
+      (array_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (incomplete_syntax
+            (incomplete_delimiter)))))))
+
+==================
+Nested arrays missing both closings
+==================
+a = [[1
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (array
+                (array_values
+                  (val
+                    (integer
+                      (dec_int
+                        (unsigned_dec_int
+                          (digit))))))
+                issue: (syntax_issue
+                  (incomplete_syntax
+                    (missing_array_close))))))
+          issue: (syntax_issue
+            (incomplete_syntax
+              (missing_array_close))))))))
+
+==================
+Incomplete Unicode escape and string closing
+==================
+a = "\u12
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (basic_string
+            issue: (syntax_issue
+              (incomplete_syntax
+                (incomplete_escape)))
+            issue: (syntax_issue
+              (incomplete_syntax
+                (missing_basic_string_close)))))))))
+
+==================
+Extra header key preserves key structure
+==================
+[a b]
+---
+
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (unexpected_key
+              (key
+                (simple_key
+                  (unquoted_key))))))))))
+
+==================
+Invalid sign in fraction preserves following digits
+==================
+a=2.+0_2
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit)
+              (digit))))))))
+
+==================
+Repeated decimal point stays inside fraction
+==================
+a=1.2.3
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              (digit)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))
+
+==================
+Local time offset retains its structure
+==================
+a=12:34+01:00
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_time
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit)))
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_time_offset
+                  (time_offset
+                    (time_numoffset
+                      (time_hour
+                        (digit)
+                        (digit))
+                      (time_minute
+                        (digit)
+                        (digit)))))))))))))
+
+==================
+Extra separator retains later array values
+==================
+a=[,1,,2]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))))))))
+
+==================
+Adjacent junk stays after a complete value
+==================
+a=[1]x
+b=1979-05-27x
+c=truex
+---
+
+(toml
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (array
+          (array_values
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))))))
+    (syntax_issue
+      (invalid_syntax
+        (invalid_character))))
+  (newline)
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))))))
+    (syntax_issue
+      (invalid_syntax
+        (invalid_character))))
+  (newline)
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (boolean)))
+    (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
+==================
+Adjacent assignments retain both real keys
+==================
+a=[1]x=2
+b=1979-05-27y=3
+c=1z=4
+---
+
+(toml
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (array
+          (array_values
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit))))))))))
+  (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  (newline)
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit))))))))
+  (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  (newline)
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
+==================
+Malformed exponents remain in their numeric owners
+==================
+a=0ee
+b=[0ee]
+c={d=0e+e}
+---
+
+(toml
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (exp
+            (float_exp_part
+              (zero_prefixable_int
+                (syntax_issue
+                  (invalid_syntax
+                    (invalid_number))))))))))
+  (newline)
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (array
+          (array_values
+            (val
+              (float
+                (float_int_part
+                  (dec_int
+                    (unsigned_dec_int
+                      (digit))))
+                (exp
+                  (float_exp_part
+                    (zero_prefixable_int
+                      (syntax_issue
+                        (invalid_syntax
+                          (invalid_number)))))))))))))
+  (newline)
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              (key
+                (simple_key
+                  (unquoted_key)))
+              (val
+                (float
+                  (float_int_part
+                    (dec_int
+                      (unsigned_dec_int
+                        (digit))))
+                  (exp
+                    (float_exp_part
+                      (zero_prefixable_int
+                        (syntax_issue
+                          (invalid_syntax
+                            (invalid_number)))))))))))))))
+
+==================
+Unfinished leading-zero digits retain each digit
+==================
+a=0100
+---
+
+(toml
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (syntax_issue
+          (incomplete_syntax
+            (incomplete_value
+              (digit)
+              (digit)
+              (digit)
+              (digit))))))))

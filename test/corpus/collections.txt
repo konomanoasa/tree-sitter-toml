@@ -284,137 +284,380 @@ a = {b.c = [{d = 1}, {d = 2}], e = {}}
 
 ==================
 Array missing separator
-:error
 ==================
 a = [true false]
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_array_separator)))
+            (val
+              (boolean))))))))
 
 ==================
 Array leading comma
-:error
 ==================
 a = [,true]
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (boolean))))))))
 
 ==================
 Array only comma
-:error
 ==================
 a = [,]
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))))))))
 
 ==================
 Array double comma
-:error
 ==================
 a = [true,,false]
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean))
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (boolean))))))))
 
 ==================
 Unclosed array
-:error
 ==================
 a = [true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean)))
+          issue: (syntax_issue
+            (incomplete_syntax
+              (missing_array_close))))))))
 
 ==================
 Array comment consumes closing bracket
-:error
 ==================
 a = [true # ]
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean)))
+          (comment)
+          issue: (syntax_issue
+            (incomplete_syntax
+              (missing_array_close))))))))
 
 ==================
 Array adjacent numeric values
-:error
 ==================
 a = [1 2]
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_array_separator)))
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))))))))
 
 ==================
 Inline table missing separator
-:error
 ==================
 a = {x=true y=false}
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean)))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_inline_table_separator)))
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean)))))))))
 
 ==================
 Inline table missing separator across newline
-:error
 ==================
 a = {x=true
 y=false}
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean)))
+            (newline)
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_inline_table_separator)))
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean)))))))))
 
 ==================
 Inline table double comma
-:error
 ==================
 a = {x=true,,}
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean)))
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))))))))
 
 ==================
 Inline table leading comma
-:error
 ==================
 a = {,x=true}
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean)))))))))
 
 ==================
 Inline table only comma
-:error
 ==================
 a = {,}
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))))))))
 
 ==================
 Unclosed inline table
-:error
 ==================
 a = {x=true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean))))
+          issue: (syntax_issue
+            (incomplete_syntax
+              (missing_inline_table_close))))))))
 
 ==================
 Newline between key and value in inline table
-:error
 ==================
 a = {x=
 true}
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              issue: (syntax_issue
+                (invalid_syntax
+                  (missing_value))))
+            (newline)
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_inline_table_separator)))
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              issue: (syntax_issue
+                (invalid_syntax
+                  (missing_assignment_operator)))
+              issue: (syntax_issue
+                (invalid_syntax
+                  (missing_value))))))))))
 
 ==================
 Inline table comment consumes closing brace
-:error
 ==================
 a = {x=true # }
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (boolean))))
+          (comment)
+          issue: (syntax_issue
+            (incomplete_syntax
+              (missing_inline_table_close))))))))

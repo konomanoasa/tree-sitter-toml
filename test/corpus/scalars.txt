@@ -238,144 +238,349 @@ c = nan
 
 ==================
 Uppercase boolean
-:error
 ==================
 a = True
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        issue: (syntax_issue
+          (invalid_syntax
+            (invalid_value)))))))
 
 ==================
-Decimal leading zero
-:error
+Leading-zero digits at EOF retain an unfinished value
 ==================
 a = 01
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        issue: (syntax_issue
+          (incomplete_syntax
+            (incomplete_value
+              (digit)
+              (digit))))))))
 
 ==================
 Signed decimal leading zero
-:error
 ==================
 a = -01
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number
+                    (digit))))
+              (digit))))))))
 
 ==================
 Trailing digit separator
-:error
 ==================
 a = 1_
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (incomplete_number))))))))))
 
 ==================
 Consecutive digit separators
-:error
 ==================
 a = 1__2
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))
 
 ==================
 Signed hexadecimal integer
-:error
 ==================
 a = +0x12
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit)
+              (digit))))))))
 
 ==================
 Uppercase base prefix
-:error
 ==================
 a = 0X12
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit)
+              (digit))))))))
 
 ==================
 Separator after base prefix
-:error
 ==================
 a = 0x_12
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (hex_int
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_number)))
+            (hexdig)
+            (hexdig)))))))
 
 ==================
 Invalid octal digit
-:error
 ==================
 a = 0o8
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (oct_int
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_number)))))))))
 
 ==================
 Invalid binary digit
-:error
 ==================
 a = 0b2
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (bin_int
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_number)))))))))
 
 ==================
 Space within number
-:error
 ==================
 a = 1 2
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (incomplete_syntax
+          (missing_assignment_operator)))
+      issue: (syntax_issue
+        (incomplete_syntax
+          (missing_value))))))
 
 ==================
 Fraction missing integer part
-:error
 ==================
 a = .1
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_digits)))
+          (frac
+            (zero_prefixable_int
+              (digit))))))))
 
 ==================
 Fraction missing digits
-:error
 ==================
 a = 1.
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            issue: (syntax_issue
+              (incomplete_syntax
+                (missing_digits)))))))))
 
 ==================
 Exponent missing digits
-:error
 ==================
 a = 1e+
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (exp
+            (float_exp_part
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_digits))))))))))
 
 ==================
 Float leading zero
-:error
 ==================
 a = 01.2
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                issue: (syntax_issue
+                  (invalid_syntax
+                    (invalid_number
+                      (digit))))
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              (digit))))))))
 
 ==================
 Uppercase infinity
-:error
 ==================
 a = INF
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        issue: (syntax_issue
+          (invalid_syntax
+            (invalid_value)))))))

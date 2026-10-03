@@ -249,47 +249,113 @@ e = "\uD800\U00110000"
 
 ==================
 Two key value pairs on one line
-:error
 ==================
 a = true b = false
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
 
 ==================
 Missing value
-:error
 ==================
 a =
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (incomplete_syntax
+          (missing_value))))))
 
 ==================
 Newline before value
-:error
 ==================
 a =
 true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_value)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (incomplete_syntax
+          (missing_assignment_operator)))
+      issue: (syntax_issue
+        (incomplete_syntax
+          (missing_value))))))
 
 ==================
 Newline before equals
-:error
 ==================
 a
 = true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_value)))))
+  (newline)
+  (expression
+    (keyval
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_key)))
+      value: (val
+        (boolean)))))
 
 ==================
 Empty bare key
-:error
 ==================
 = true
 ---
 
-
+(toml
+  (expression
+    (keyval
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_key)))
+      value: (val
+        (boolean)))))

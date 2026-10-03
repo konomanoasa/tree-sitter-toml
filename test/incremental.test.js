@@ -4,6 +4,15 @@ import { applyEdits, parse } from "./support/parser.js";
 
 const histories = [
   [
+    "insert an invalid numeric suffix inside an unclosed array",
+    "a=[1 ",
+    [
+      { byte: 4, deleteBytes: 0, insert: "a", source: "a=[1a ", valid: false },
+      { byte: 4, deleteBytes: 1, insert: "", source: "a=[1 ", valid: false },
+      { byte: 5, deleteBytes: 0, insert: "]", source: "a=[1 ]", valid: true },
+    ],
+  ],
+  [
     "replace scalar categories",
     "a = true",
     [
@@ -503,6 +512,73 @@ const histories = [
       },
     ],
   ],
+  [
+    "recover a suffix into an adjacent assignment and restore it",
+    "a=[1]",
+    [
+      { byte: 5, deleteBytes: 0, insert: "x", source: "a=[1]x", valid: false },
+      {
+        byte: 6,
+        deleteBytes: 0,
+        insert: "=2",
+        source: "a=[1]x=2",
+        valid: false,
+      },
+      {
+        byte: 5,
+        deleteBytes: 0,
+        insert: "\n",
+        source: "a=[1]\nx=2",
+        valid: true,
+      },
+      { byte: 5, deleteBytes: 1, insert: "", source: "a=[1]x=2", valid: false },
+      { byte: 6, deleteBytes: 2, insert: "", source: "a=[1]x", valid: false },
+      { byte: 5, deleteBytes: 1, insert: "", source: "a=[1]", valid: true },
+    ],
+  ],
+  [
+    "repair and restore malformed exponent digits",
+    "a=0e",
+    [
+      { byte: 4, deleteBytes: 0, insert: "e", source: "a=0ee", valid: false },
+      { byte: 4, deleteBytes: 1, insert: "5", source: "a=0e5", valid: true },
+      { byte: 4, deleteBytes: 1, insert: "", source: "a=0e", valid: false },
+    ],
+  ],
+  [
+    "extend and restore the longest multiline closing prefix",
+    'a="""x"""""',
+    [
+      {
+        byte: 11,
+        deleteBytes: 0,
+        insert: '"',
+        source: 'a="""x""""""',
+        valid: false,
+      },
+      {
+        byte: 12,
+        deleteBytes: 0,
+        insert: '"=2',
+        source: 'a="""x"""""""=2',
+        valid: false,
+      },
+      {
+        byte: 12,
+        deleteBytes: 3,
+        insert: "",
+        source: 'a="""x""""""',
+        valid: false,
+      },
+      {
+        byte: 11,
+        deleteBytes: 1,
+        insert: "",
+        source: 'a="""x"""""',
+        valid: true,
+      },
+    ],
+  ],
 ];
 
 for (const [name, initial, steps] of histories) {
@@ -525,16 +601,10 @@ for (const [name, initial, steps] of histories) {
       );
       edits.push(edit);
       const incremental = parse(initial, edits);
-      assert.equal(
-        incremental.hasError,
-        !valid,
-        `${expected}\n${incremental.cst}`,
-      );
-      if (valid) {
-        const fresh = parse(expected);
-        assert.equal(fresh.hasError, false, fresh.cst);
-        assert.equal(incremental.cst, fresh.cst, expected);
-      }
+      assert.equal(incremental.hasError, false, incremental.cst);
+      assert.equal(incremental.issues.length === 0, valid, incremental.cst);
+      const fresh = parse(expected);
+      assert.deepEqual(incremental.nodes, fresh.nodes, expected);
     }
   });
 }
@@ -560,6 +630,10 @@ const restorationSources = [
     "restore every character around Unicode and CRLF",
     '["日本"]\r\na = "🌿\\xFF"\r\n',
   ],
+  [
+    "restore exponent after reusing a fractional subtree",
+    "a = -12.3_4e+0_2\nb = 1E-02\nc = 0.5",
+  ],
 ];
 
 for (const [name, source] of restorationSources) {
@@ -569,6 +643,15 @@ for (const [name, source] of restorationSources) {
     let position = 0;
     for (const character of source) {
       const length = Buffer.byteLength(character);
+      const removed = applyEdits(source, [
+        { byte: position, deleteBytes: length, insert: "" },
+      ]);
+      assert.deepEqual(
+        parse(source, [{ byte: position, deleteBytes: length, insert: "" }])
+          .nodes,
+        parse(removed).nodes,
+        `deleting byte ${position}`,
+      );
       const restored = parse(source, [
         { byte: position, deleteBytes: length, insert: "" },
         { byte: position, deleteBytes: 0, insert: character },
@@ -584,7 +667,7 @@ for (const [name, source] of restorationSources) {
   });
 }
 
-test("toml: fixed-seed generated histories restore valid source structure", () => {
+test("toml: fixed-seed generated histories preserve every intermediate source structure", () => {
   let state = 0x6e34ab19;
   const next = (maximum) => {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
@@ -609,10 +692,102 @@ test("toml: fixed-seed generated histories restore valid source structure", () =
         });
         restores.unshift({ byte, deleteBytes: 0, insert: removed });
       }
-      const restored = parse(source, [...edits, ...restores]);
+      const history = [...edits, ...restores];
+      for (let count = 1; count <= history.length; count++) {
+        const prefix = history.slice(0, count);
+        const current = applyEdits(source, prefix);
+        const description = JSON.stringify({
+          seed: "0x6e34ab19",
+          source,
+          prefix,
+        });
+        try {
+          assert.deepEqual(
+            parse(source, prefix).nodes,
+            parse(current).nodes,
+            description,
+          );
+        } catch (error) {
+          throw new Error(description, { cause: error });
+        }
+      }
+      const restored = parse(source, history);
       const description = JSON.stringify({ source, edits, restores });
       assert.equal(restored.hasError, false, description);
       assert.equal(restored.cst, fresh.cst, description);
+    }
+  }
+});
+
+test("toml: fixed-seed generated histories with insertions preserve issue recovery", () => {
+  let state = 0x9e3779b9;
+  const next = (limit) => {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return (state >>> 0) % limit;
+  };
+  const inserts = [
+    " ",
+    "\n",
+    "\r",
+    "\t",
+    ",",
+    "_",
+    "[",
+    "]",
+    "{",
+    "}",
+    "'",
+    '"',
+    "+",
+    "-",
+    "0",
+    "1",
+    ":",
+    ".",
+    "#",
+    "=",
+    "\\",
+    "t",
+    "e",
+    "a",
+  ];
+  for (const source of [
+    "a=[1,\n2]",
+    "a={b=1,\n2=3}",
+    "a=2026-01-01T12:34:56.12+01:00",
+    'a=["x",0x1]',
+    "a={b=[1],c={d=2}}",
+    '[["a".b]]\nx=true\n',
+  ]) {
+    for (let sample = 0; sample < 12; sample++) {
+      let current = source;
+      const edits = [];
+      for (let step = 0; step < 8; step++) {
+        const byte = next(current.length + 1);
+        const deleteBytes =
+          next(3) === 0 ? 0 : Math.min(1 + next(3), current.length - byte);
+        const insert =
+          deleteBytes && next(3) === 0 ? "" : inserts[next(inserts.length)];
+        edits.push({ byte, deleteBytes, insert });
+        current = applyEdits(current, [edits.at(-1)]).toString();
+        const description = JSON.stringify({
+          seed: "0x9e3779b9",
+          source,
+          edits,
+          current,
+        });
+        const fresh = parse(current);
+        const incremental = parse(source, edits);
+        assert.equal(fresh.hasError, false, `${description}\n${fresh.cst}`);
+        assert.equal(
+          incremental.hasError,
+          false,
+          `${description}\n${incremental.cst}`,
+        );
+        assert.deepEqual(incremental.nodes, fresh.nodes, description);
+      }
     }
   }
 });

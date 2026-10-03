@@ -71,6 +71,70 @@ function applyEdits(source, edits) {
   return bytes;
 }
 
+function publicNodes(cst, bytes) {
+  const starts = [0];
+  for (const [index, byte] of bytes.entries()) {
+    if (byte === 10) starts.push(index + 1);
+  }
+  const nodes = [];
+  const ancestors = [];
+  for (const line of cst.split("\n")) {
+    const position = /^([0-9]+):([0-9]+) +- +([0-9]+):([0-9]+) +/.exec(line);
+    if (!position) continue;
+    const body = line.slice(position[0].length);
+    const match =
+      /^(([a-z_0-9]+): )?•?([a-z_0-9]+|ERROR|MISSING|"([^"\\]|\\.)*")/.exec(
+        body,
+      );
+    if (!match) continue;
+    const depth = position[0].length + (body.startsWith("•") ? 1 : 0);
+    while (ancestors.length && ancestors.at(-1).depth >= depth) ancestors.pop();
+    const parent = ancestors.at(-1)?.index ?? null;
+    if (match[3] === "ERROR" || match[3] === "MISSING") {
+      ancestors.push({ depth, index: parent });
+      continue;
+    }
+    const named = !match[3].startsWith('"');
+    const start = starts[Number(position[1])] + Number(position[2]);
+    const end = starts[Number(position[3])] + Number(position[4]);
+    nodes.push({
+      kind: named ? match[3] : JSON.parse(match[3]),
+      named,
+      field: match[2] ?? null,
+      parent,
+      start,
+      end,
+    });
+    ancestors.push({ depth, index: nodes.length - 1 });
+  }
+  return nodes;
+}
+
+function issues(nodes, cst) {
+  return nodes.flatMap((node, index) => {
+    if (node.kind !== "syntax_issue") return [];
+    const outcome = nodes[index + 1];
+    const reason = nodes[index + 2];
+    assert.equal(node.field, "issue", cst);
+    assert.equal(outcome.parent, index);
+    assert.equal(reason.parent, index + 1);
+    assert.ok(["invalid_syntax", "incomplete_syntax"].includes(outcome.kind));
+    assert.deepEqual(
+      [outcome.start, outcome.end, reason.start, reason.end],
+      [node.start, node.end, node.start, node.end],
+    );
+    return [
+      [
+        nodes[node.parent].kind,
+        outcome.kind,
+        reason.kind,
+        node.start,
+        node.end,
+      ],
+    ];
+  });
+}
+
 // The CLI exit status misses hidden missing tokens; use the root --cst marker.
 // Repeat unchanged inputs on one parser to check determinism, including recovery.
 function parse(source, edits = []) {
@@ -118,7 +182,13 @@ function parse(source, edits = []) {
       [row, bytes.length - bytes.lastIndexOf(10) - 1],
       "root must reach the edited source end",
     );
-    return { cst, hasError: /^\S+\s+-\s+\S+\s+•/.test(cst) };
+    const nodes = publicNodes(cst, bytes);
+    return {
+      cst,
+      nodes,
+      issues: issues(nodes, cst),
+      hasError: /^\S+\s+-\s+\S+\s+•/.test(cst),
+    };
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

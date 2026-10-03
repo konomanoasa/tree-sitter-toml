@@ -184,6 +184,119 @@ function assertCommand(arguments_) {
 
 const finalCaptureCases = [
   {
+    name: "invalid escape leaves surrounding string characters intact",
+    source: 'a = "x\\qy"',
+    captures: [
+      [0, 1, "property"],
+      [2, 3, "operator"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 6, "string"],
+      [8, 9, "string"],
+      [9, 10, "punctuation.delimiter"],
+    ],
+  },
+  {
+    name: "UTF8 invalid key character separates normal key fragments",
+    source: "a🌿b=1",
+    captures: [
+      [0, 1, "property"],
+      [5, 6, "property"],
+      [6, 7, "operator"],
+      [7, 8, "number"],
+    ],
+  },
+  {
+    name: "comment fragments exclude a control character",
+    source: "# x\0y\n",
+    captures: [
+      [0, 3, "comment"],
+      [4, 5, "comment"],
+    ],
+  },
+  {
+    name: "digits inside numeric and date reasons retain their classification",
+    source: "a=[01,2026-13-01]",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 3, "punctuation.bracket"],
+      [3, 5, "number"],
+      [5, 6, "punctuation.delimiter"],
+      [6, 16, "string.special"],
+      [16, 17, "punctuation.bracket"],
+    ],
+  },
+  {
+    name: "unfinished numeric value preserves each digit capture",
+    source: "a=07",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 4, "number"],
+    ],
+  },
+  {
+    name: "missing separator has no captured source",
+    source: "a=[1 2]",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 3, "punctuation.bracket"],
+      [3, 4, "number"],
+      [5, 6, "number"],
+      [6, 7, "punctuation.bracket"],
+    ],
+  },
+  {
+    name: "incomplete header preserves real key and delimiter captures",
+    source: "[a b",
+    captures: [
+      [0, 1, "punctuation.bracket"],
+      [1, 2, "property"],
+      [3, 4, "property"],
+    ],
+  },
+  {
+    name: "incomplete string preserves its opening and content",
+    source: 'a = "x',
+    captures: [
+      [0, 1, "property"],
+      [2, 3, "operator"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 6, "string"],
+    ],
+  },
+  {
+    name: "missing inline value preserves real closing delimiter",
+    source: "a={b=}",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 3, "punctuation.bracket"],
+      [3, 4, "property"],
+      [4, 5, "operator"],
+      [5, 6, "punctuation.bracket"],
+    ],
+  },
+  {
+    name: "time fraction inside an issue retains its normal leaves",
+    source: "a=12:34.5",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 9, "string.special"],
+    ],
+  },
+  {
+    name: "incomplete special float preserves only its real sign capture",
+    source: "a=+in",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 3, "number.float"],
+    ],
+  },
+  {
     name: "basic strings, escapes and comments",
     source: 'key = "v\\x20\\""  # note\n',
     captures: [

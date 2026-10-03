@@ -24,6 +24,7 @@ for (const [name, source, node] of validCases) {
   test(`toml: ${name}`, () => {
     const result = parse(source);
     assert.equal(result.hasError, false, result.cst);
+    assert.deepEqual(result.issues, [], result.cst);
     assert.match(result.cst, node);
   });
 }
@@ -120,6 +121,7 @@ const dateTimeCases = [
   ["hour in the teens and fractional leap second", "19:59:60.5"],
   ["hour in the twenties without seconds", "20:00"],
   ["local date-time with highest elements", "9999-12-31T23:59:60"],
+  ["lowercase date-time delimiters", "2026-01-01t12:34z"],
   ["zero positive offset", "2026-01-01T00:00+00:00"],
   ["zero negative offset", "2026-01-01T00:00-00:00"],
   ["highest positive offset", "2026-01-01T00:00:00+23:59"],
@@ -131,13 +133,20 @@ const dateTimeCases = [
 
 for (const [name, value] of dateTimeCases) {
   test(`toml: ${name}`, () => {
-    const result = parse(`a = ${value}`);
-    assert.equal(result.hasError, false, result.cst);
-    assert.match(result.cst, /\bdate_time\b/);
-    assert.deepEqual(
-      [...result.cst.matchAll(/\bdigit `([0-9])`/g)].map((match) => match[1]),
-      value.match(/[0-9]/g),
-    );
+    for (const source of [
+      `a = ${value}`,
+      `a = [${value}]`,
+      `a = {b = ${value}}`,
+    ]) {
+      const result = parse(source);
+      assert.equal(result.hasError, false, result.cst);
+      assert.deepEqual(result.issues, [], result.cst);
+      assert.match(result.cst, /\bdate_time\b/);
+      assert.deepEqual(
+        [...result.cst.matchAll(/\bdigit `([0-9])`/g)].map((match) => match[1]),
+        value.match(/[0-9]/g),
+      );
+    }
   });
 }
 
@@ -180,12 +189,12 @@ const invalidCases = [
 for (const [name, source] of invalidCases) {
   test(`toml: ${name}`, () => {
     const result = parse(source);
-    assert.equal(result.hasError, true, result.cst);
+    assert.equal(result.hasError, false, result.cst);
+    assert.ok(result.issues.length > 0, result.cst);
   });
 }
 
-// Recovery shapes are not part of the contract, so these only require that
-// recovery happens; every parse also repeats, which is what must agree.
+// Explicit issues retain the source facts through malformed expressions.
 const recoveryCases = [
   ["quote run after a complete value", 'a = 1 """x"""'],
   ["quote run without a keyval", 'x """ y'],
@@ -195,9 +204,9 @@ const recoveryCases = [
 ];
 
 for (const [name, source] of recoveryCases) {
-  test(`toml: ${name} recovers through an ERROR node`, () => {
+  test(`toml: ${name} preserves structure with explicit issues`, () => {
     const result = parse(source);
-    assert.equal(result.hasError, true, result.cst);
-    assert.match(result.cst, /^\S+ +- +\S+ +•ERROR$/m);
+    assert.equal(result.hasError, false, result.cst);
+    assert.ok(result.issues.length > 0, result.cst);
   });
 }

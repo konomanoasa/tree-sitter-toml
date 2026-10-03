@@ -294,93 +294,355 @@ one ''two''''
 
 ==================
 Unclosed basic string
-:error
 ==================
 a = "hello
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (basic_string
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            issue: (syntax_issue
+              (incomplete_syntax
+                (missing_basic_string_close)))))))))
 
 ==================
 Unclosed literal string
-:error
 ==================
 a = 'hello
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (literal_string
+            (literal_char)
+            (literal_char)
+            (literal_char)
+            (literal_char)
+            (literal_char)
+            issue: (syntax_issue
+              (incomplete_syntax
+                (missing_literal_string_close)))))))))
 
 ==================
 Newline in basic string
-:error
 ==================
 a = "one
 two"
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (basic_string
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_basic_string_close))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      value: (val
+        (string
+          (basic_string
+            issue: (syntax_issue
+              (incomplete_syntax
+                (missing_basic_string_close)))))))))
 
 ==================
 Newline in literal string
-:error
 ==================
 a = 'one
 two'
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (literal_string
+            (literal_char)
+            (literal_char)
+            (literal_char)
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_literal_string_close))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      value: (val
+        (string
+          (literal_string
+            issue: (syntax_issue
+              (incomplete_syntax
+                (missing_literal_string_close)))))))))
 
 ==================
 Unknown escape
-:error
 ==================
 a = "\q"
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (basic_string
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_escape)))))))))
 
 ==================
 Short hex escape
-:error
 ==================
 a = "\x0"
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (basic_string
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_escape)))))))))
 
 ==================
 Invalid Unicode hex digit
-:error
 ==================
 a = "\u00GG"
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (basic_string
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_escape)))
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))))))))
 
 ==================
 Six closing basic quotes
-:error
 ==================
 a = """x""""""
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_basic_string
+            (ml_basic_body
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_quotes))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Six closing literal quotes
-:error
 ==================
 a = '''x''''''
 ---
 
-
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_literal_string
+            (ml_literal_body
+              (mll_content
+                (literal_char))
+              (mll_quotes))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Backslash followed by non whitespace before newline
-:error
 ==================
 a = """one\ two
 """
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_basic_string
+            (ml_basic_body
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_escape)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (newline)))))))))
 
+==================
+Equals signs inside strings and quoted keys
+==================
+"=" = "x=y"
+'=' = '='
+a = """=
+="""
+b = '''='''
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (basic_string
+              (basic_char
+                (basic_unescaped))))))
+      value: (val
+        (string
+          (basic_string
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped))
+            (basic_char
+              (basic_unescaped)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (literal_string
+              (literal_char)))))
+      value: (val
+        (string
+          (literal_string
+            (literal_char))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_basic_string
+            (ml_basic_body
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))
+              (mlb_content
+                (newline))
+              (mlb_content
+                (basic_char
+                  (basic_unescaped)))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (string
+          (ml_literal_string
+            (ml_literal_body
+              (mll_content
+                (literal_char)))))))))

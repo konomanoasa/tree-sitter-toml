@@ -83,84 +83,202 @@ Empty quoted table name
 
 ==================
 Table header missing key
-:error
 ==================
 []
 ---
 
-
+(toml
+  (expression
+    (table
+      (std_table
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_key)))))))
 
 ==================
 Array table header missing key
-:error
 ==================
 [[]]
 ---
 
-
+(toml
+  (expression
+    (table
+      (array_table
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_key)))))))
 
 ==================
 Newline in table header key
-:error
 ==================
 [a.
 b]
 ---
 
-
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (dotted_key
+            (simple_key
+              (unquoted_key))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_key)))))
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_std_table_close))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_value))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Array table opening delimiter split by space
-:error
 ==================
 [ [a]]
 ---
 
-
+(toml
+  (expression
+    (table
+      (std_table
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_std_table_close))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Array table closing delimiter split by space
-:error
 ==================
 [[a] ]
 ---
 
-
+(toml
+  (expression
+    (table
+      (array_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (invalid_delimiter)))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Comment inside table header
-:error
 ==================
 [a # comment
 ]
 ---
 
-
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_std_table_close)))))
+    (comment))
+  (newline)
+  (expression
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Newline before table closing delimiter
-:error
 ==================
 [a
 ]
 ---
 
-
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_std_table_close))))))
+  (newline)
+  (expression
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Extra closing bracket
-:error
 ==================
 [a]]
 ---
 
-
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Table header followed by key value pair
-:error
 ==================
 [a] x=true
 ---
 
-
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
