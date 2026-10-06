@@ -3,7 +3,7 @@
 
 (comment_text) @comment
 
-(incomplete_value
+(invalid_value
   (digit) @number)
 
 (unquoted_key) @property
@@ -227,12 +227,8 @@
 (time_second
   (digit) @string.special)
 
-[
-  (invalid_date_time
-    (digit) @string.special)
-  (incomplete_date_time
-    (digit) @string.special)
-]
+(invalid_date_time
+  (digit) @string.special)
 
 (integer
   (dec_int

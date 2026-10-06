@@ -349,7 +349,18 @@
   {
     "type": "escape_seq_char",
     "named": true,
-    "fields": {},
+    "fields": {
+      "issue": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "syntax_issue",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": false,
@@ -364,10 +375,21 @@
   {
     "type": "escaped",
     "named": true,
-    "fields": {},
+    "fields": {
+      "issue": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "syntax_issue",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": false,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "escape_seq_char",
@@ -626,41 +648,6 @@
     "fields": {}
   },
   {
-    "type": "incomplete_date_time",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "digit",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "incomplete_delimiter",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "incomplete_escape",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "incomplete_line_ending",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "incomplete_number",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "incomplete_syntax",
     "named": true,
     "fields": {},
@@ -669,27 +656,27 @@
       "required": true,
       "types": [
         {
-          "type": "incomplete_date_time",
+          "type": "invalid_date_time",
           "named": true
         },
         {
-          "type": "incomplete_delimiter",
+          "type": "invalid_delimiter",
           "named": true
         },
         {
-          "type": "incomplete_escape",
+          "type": "invalid_escape",
           "named": true
         },
         {
-          "type": "incomplete_line_ending",
+          "type": "invalid_line_ending",
           "named": true
         },
         {
-          "type": "incomplete_number",
+          "type": "invalid_number",
           "named": true
         },
         {
-          "type": "incomplete_value",
+          "type": "invalid_value",
           "named": true
         },
         {
@@ -746,21 +733,6 @@
         },
         {
           "type": "missing_value",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "incomplete_value",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "digit",
           "named": true
         }
       ]
@@ -887,9 +859,24 @@
     "fields": {}
   },
   {
-    "type": "invalid_escape",
+    "type": "invalid_encoding",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "invalid_escape",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "escaped",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "invalid_key_character",
@@ -934,6 +921,10 @@
         },
         {
           "type": "invalid_delimiter",
+          "named": true
+        },
+        {
+          "type": "invalid_encoding",
           "named": true
         },
         {
@@ -1042,7 +1033,17 @@
   {
     "type": "invalid_value",
     "named": true,
-    "fields": {}
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "digit",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "key",

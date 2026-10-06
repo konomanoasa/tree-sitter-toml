@@ -7,6 +7,45 @@ Empty document
 (toml)
 
 ==================
+Contiguous forbidden bare key characters preserve normal key fragments
+==================
+a@@b=1
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)
+          issue: (syntax_issue
+            (invalid_syntax
+              (invalid_key_character)))
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
+==================
+Unfinished boolean keeps the value reason at EOF
+==================
+a=tru
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        issue: (syntax_issue
+          (incomplete_syntax
+            (invalid_value)))))))
+
+==================
 Whitespace only line before key value pair
 ==================
 	 
@@ -84,7 +123,7 @@ b = false
         (boolean)))))
 
 ==================
-Semantic conflicts are not syntax errors
+Semantic conflicts and Unicode scalar restrictions remain distinct
 ==================
 a = true
 a = false
@@ -228,24 +267,28 @@ e = "\uD800\U00110000"
       value: (val
         (string
           (basic_string
-            (basic_char
-              (escaped
-                (escape_seq_char
-                  (hexdig)
-                  (hexdig)
-                  (hexdig)
-                  (hexdig))))
-            (basic_char
-              (escaped
-                (escape_seq_char
-                  (hexdig)
-                  (hexdig)
-                  (hexdig)
-                  (hexdig)
-                  (hexdig)
-                  (hexdig)
-                  (hexdig)
-                  (hexdig))))))))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_escape
+                  (escaped
+                    (escape_seq_char
+                      (hexdig)
+                      (hexdig)
+                      (hexdig)
+                      (hexdig))))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_escape
+                  (escaped
+                    (escape_seq_char
+                      (hexdig)
+                      (hexdig)
+                      (hexdig)
+                      (hexdig)
+                      (hexdig)
+                      (hexdig)
+                      (hexdig)
+                      (hexdig))))))))))))
 
 ==================
 Two key value pairs on one line

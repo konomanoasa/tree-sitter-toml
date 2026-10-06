@@ -15,7 +15,7 @@ a = +in
           (special_float
             issue: (syntax_issue
               (incomplete_syntax
-                (incomplete_value)))))))))
+                (invalid_value)))))))))
 
 ==================
 Short appendable hour after date
@@ -49,7 +49,7 @@ a = 2026-01-01T0
               (time_hour
                 issue: (syntax_issue
                   (incomplete_syntax
-                    (incomplete_date_time
+                    (invalid_date_time
                       (digit)))))
               issue: (syntax_issue
                 (incomplete_syntax
@@ -158,7 +158,7 @@ Partial array table closing delimiter at EOF
             (unquoted_key)))
         issue: (syntax_issue
           (incomplete_syntax
-            (incomplete_delimiter)))))))
+            (invalid_delimiter)))))))
 
 ==================
 Nested arrays missing both closings
@@ -207,7 +207,7 @@ a = "\u12
           (basic_string
             issue: (syntax_issue
               (incomplete_syntax
-                (incomplete_escape)))
+                (invalid_escape)))
             issue: (syntax_issue
               (incomplete_syntax
                 (missing_basic_string_close)))))))))
@@ -593,8 +593,92 @@ a=0100
       (val
         (syntax_issue
           (incomplete_syntax
-            (incomplete_value
+            (invalid_value
               (digit)
               (digit)
               (digit)
+              (digit))))))))
+
+==================
+Numeric junk preserves an adjacent key-value pair
+==================
+a=1?key=2
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
+==================
+Repeated decimal point before the first fractional digit stays in the fraction
+==================
+a=1..5
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))
+
+==================
+Fraction junk retains assignment text until a normal digit appears
+==================
+a=1.?key=2
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
               (digit))))))))

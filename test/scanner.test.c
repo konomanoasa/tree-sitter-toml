@@ -6,22 +6,36 @@
 
 #include "../src/scanner.c"
 
+#ifdef TREE_SITTER_REUSE_ALLOCATOR
+void *(*ts_current_malloc)(size_t) = malloc;
+void *(*ts_current_calloc)(size_t, size_t) = calloc;
+void *(*ts_current_realloc)(void *, size_t) = realloc;
+void (*ts_current_free)(void *) = free;
+#endif
+
 struct MockLexer {
   TSLexer lexer;
   const int32_t *input;
   size_t length;
   size_t offset;
   size_t mark;
+  size_t advances;
 };
 
 static void mock_advance(TSLexer *lexer, bool skip) {
   (void)skip;
   struct MockLexer *mock = (struct MockLexer *)lexer;
+  mock->advances++;
   if (mock->offset < mock->length) {
     mock->offset += 1;
   }
   lexer->lookahead =
     mock->offset < mock->length ? mock->input[mock->offset] : 0;
+}
+
+static bool mock_included_range_start(const TSLexer *lexer) {
+  (void)lexer;
+  return false;
 }
 
 static void mock_mark_end(TSLexer *lexer) {
@@ -43,6 +57,7 @@ init_mock_lexer(struct MockLexer *mock, const int32_t *input, size_t length) {
         .result_symbol = UINT16_MAX,
         .advance = mock_advance,
         .mark_end = mock_mark_end,
+        .is_at_included_range_start = mock_included_range_start,
         .eof = mock_eof,
       },
     .input = input,
@@ -51,9 +66,9 @@ init_mock_lexer(struct MockLexer *mock, const int32_t *input, size_t length) {
   };
 }
 
-static void test_stateless_lifecycle_and_serialization(void) {
+static void test_lifecycle_and_serialization(void) {
   void *scanner = tree_sitter_toml_external_scanner_create();
-  assert(scanner == NULL);
+  assert(scanner != NULL);
   char buffer[TREE_SITTER_SERIALIZATION_BUFFER_SIZE];
   memset(buffer, 0x5a, sizeof(buffer));
   assert(tree_sitter_toml_external_scanner_serialize(scanner, buffer) == 0);
@@ -61,11 +76,15 @@ static void test_stateless_lifecycle_and_serialization(void) {
     assert(buffer[index] == 0x5a);
   }
   tree_sitter_toml_external_scanner_deserialize(scanner, NULL, 0);
-  tree_sitter_toml_external_scanner_deserialize(
-    scanner,
-    buffer,
-    sizeof(buffer)
-  );
+  ((struct Scanner *)scanner)->rejected_key = REJECTED_KEY;
+  ((struct Scanner *)scanner)->word_continuation = true;
+  assert(tree_sitter_toml_external_scanner_serialize(scanner, buffer) == 1);
+  tree_sitter_toml_external_scanner_deserialize(scanner, NULL, 0);
+  assert(((struct Scanner *)scanner)->rejected_key == NO_REJECTED_KEY);
+  assert(!((struct Scanner *)scanner)->word_continuation);
+  tree_sitter_toml_external_scanner_deserialize(scanner, buffer, 1);
+  assert(((struct Scanner *)scanner)->rejected_key == REJECTED_KEY);
+  assert(((struct Scanner *)scanner)->word_continuation);
   tree_sitter_toml_external_scanner_destroy(scanner);
 }
 
@@ -98,7 +117,7 @@ static void test_quote_runs_preserve_content_and_closing_delimiters(void) {
         init_mock_lexer(&mock, input, cases[index].length + suffix);
         assert(
           tree_sitter_toml_external_scanner_scan(
-            NULL,
+            &(struct Scanner){0},
             &mock.lexer,
             valid_symbols
           ) == cases[index].accepted
@@ -117,9 +136,11 @@ static void test_disabled_scans_do_not_consume_source(void) {
   const bool valid_symbols[TOKEN_COUNT] = {false, false};
   struct MockLexer mock;
   init_mock_lexer(&mock, input, 2);
-  assert(
-    !tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid_symbols)
-  );
+  assert(!tree_sitter_toml_external_scanner_scan(
+    &(struct Scanner){0},
+    &mock.lexer,
+    valid_symbols
+  ));
   assert(mock.offset == 0);
   assert(mock.mark == 0);
 }
@@ -134,9 +155,11 @@ static void test_quote_tokens_select_the_matching_delimiter(void) {
     const int32_t input[] = {cases[index].quote, 'x'};
     struct MockLexer mock;
     init_mock_lexer(&mock, input, 2);
-    assert(
-      tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid_symbols)
-    );
+    assert(tree_sitter_toml_external_scanner_scan(
+      &(struct Scanner){0},
+      &mock.lexer,
+      valid_symbols
+    ));
     assert(mock.lexer.result_symbol == cases[index].symbol);
     assert(mock.mark == 1);
   }
@@ -156,7 +179,7 @@ static void test_unrelated_characters_and_eof_are_not_quote_content(void) {
       struct MockLexer mock;
       init_mock_lexer(&mock, input + index, 1);
       assert(!tree_sitter_toml_external_scanner_scan(
-        NULL,
+        &(struct Scanner){0},
         &mock.lexer,
         valid_symbols
       ));
@@ -164,9 +187,11 @@ static void test_unrelated_characters_and_eof_are_not_quote_content(void) {
     }
     struct MockLexer mock;
     init_mock_lexer(&mock, NULL, 0);
-    assert(
-      !tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid_symbols)
-    );
+    assert(!tree_sitter_toml_external_scanner_scan(
+      &(struct Scanner){0},
+      &mock.lexer,
+      valid_symbols
+    ));
     assert(mock.offset == 0);
   }
 }
@@ -178,7 +203,11 @@ static void test_recovery_sentinel_does_not_emit_issue_tokens(void) {
   const int32_t input[] = {'"', 'x'};
   struct MockLexer mock;
   init_mock_lexer(&mock, input, 2);
-  assert(!tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+  assert(!tree_sitter_toml_external_scanner_scan(
+    &(struct Scanner){0},
+    &mock.lexer,
+    valid
+  ));
   assert(mock.offset == 0);
 }
 
@@ -189,11 +218,19 @@ static void test_missing_value_distinguishes_eof_from_line_boundary(void) {
   const int32_t input[] = {'\n'};
   struct MockLexer mock;
   init_mock_lexer(&mock, input, 0);
-  assert(tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+  assert(tree_sitter_toml_external_scanner_scan(
+    &(struct Scanner){0},
+    &mock.lexer,
+    valid
+  ));
   assert(mock.lexer.result_symbol == INCOMPLETE_MISSING_VALUE);
   assert(mock.mark == 0);
   init_mock_lexer(&mock, input, 1);
-  assert(tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+  assert(tree_sitter_toml_external_scanner_scan(
+    &(struct Scanner){0},
+    &mock.lexer,
+    valid
+  ));
   assert(mock.lexer.result_symbol == INVALID_MISSING_VALUE);
   assert(mock.mark == 0);
 }
@@ -204,11 +241,19 @@ static void test_nul_is_a_character_and_eof_is_not_consumed(void) {
   const int32_t input[] = {0};
   struct MockLexer mock;
   init_mock_lexer(&mock, input, 1);
-  assert(tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+  assert(tree_sitter_toml_external_scanner_scan(
+    &(struct Scanner){0},
+    &mock.lexer,
+    valid
+  ));
   assert(mock.lexer.result_symbol == INVALID_CHARACTER);
   assert(mock.mark == 1);
   init_mock_lexer(&mock, input, 0);
-  assert(!tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+  assert(!tree_sitter_toml_external_scanner_scan(
+    &(struct Scanner){0},
+    &mock.lexer,
+    valid
+  ));
   assert(mock.offset == 0);
 }
 
@@ -228,6 +273,10 @@ static void test_scalar_markers_preserve_source_and_real_terminators(void) {
     {{'4', '+', 'e'}, 3, FLOAT_START, 0},
     {{'-', 'e', '5'}, 3, FLOAT_START, 0},
     {{'4', '-', 'e'}, 3, INTEGER_START, 0},
+    {{'4', '-', '=', 'e'}, 4, INTEGER_START, 0},
+    {{'4', '=', '-', 'e'}, 4, INTEGER_START, 0},
+    {{'4', '-', '_', 'e'}, 4, INTEGER_START, 0},
+    {{'4', '+', '_', 'e'}, 4, FLOAT_START, 0},
   };
   bool valid[TOKEN_COUNT] = {false};
   valid[INTEGER_START] = valid[FLOAT_START] = valid[DATE_START] = true;
@@ -235,7 +284,11 @@ static void test_scalar_markers_preserve_source_and_real_terminators(void) {
   for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
     struct MockLexer mock;
     init_mock_lexer(&mock, cases[index].input, cases[index].length);
-    assert(tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+    assert(tree_sitter_toml_external_scanner_scan(
+      &(struct Scanner){0},
+      &mock.lexer,
+      valid
+    ));
     assert(mock.lexer.result_symbol == cases[index].token);
     assert(mock.mark == cases[index].end);
   }
@@ -250,7 +303,11 @@ static void test_long_date_elements_do_not_overflow_lookahead(void) {
     valid[INCOMPLETE_DATE_MONTH] = true;
   struct MockLexer mock;
   init_mock_lexer(&mock, input, sizeof(input) / sizeof(input[0]));
-  assert(tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+  assert(tree_sitter_toml_external_scanner_scan(
+    &(struct Scanner){0},
+    &mock.lexer,
+    valid
+  ));
   assert(mock.lexer.result_symbol == INVALID_DATE_MONTH);
   assert(mock.mark == 0);
   assert(mock.offset == sizeof(input) / sizeof(input[0]));
@@ -280,8 +337,11 @@ static void test_date_end_and_space_markers_are_zero_width(void) {
     struct MockLexer mock;
     init_mock_lexer(&mock, cases[index].input, cases[index].length);
     assert(
-      tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid) ==
-      cases[index].accepted
+      tree_sitter_toml_external_scanner_scan(
+        &(struct Scanner){0},
+        &mock.lexer,
+        valid
+      ) == cases[index].accepted
     );
     if (cases[index].accepted) {
       assert(mock.lexer.result_symbol == cases[index].token);
@@ -310,7 +370,11 @@ static void test_number_end_requires_an_adjacent_assignment(void) {
     valid[EXPRESSION_END] = cases[index].expression;
     struct MockLexer mock;
     init_mock_lexer(&mock, cases[index].input, cases[index].length);
-    assert(tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+    assert(tree_sitter_toml_external_scanner_scan(
+      &(struct Scanner){0},
+      &mock.lexer,
+      valid
+    ));
     assert(mock.lexer.result_symbol == cases[index].token);
     assert(mock.mark == 0);
   }
@@ -331,14 +395,63 @@ static void test_exponent_start_yields_to_an_adjacent_assignment(void) {
   for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
     struct MockLexer mock;
     init_mock_lexer(&mock, cases[index].input, cases[index].length);
-    assert(tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid));
+    assert(tree_sitter_toml_external_scanner_scan(
+      &(struct Scanner){0},
+      &mock.lexer,
+      valid
+    ));
     assert(mock.lexer.result_symbol == cases[index].token);
     assert(mock.mark == 0);
   }
 }
 
+static void test_rejected_dotted_keys_do_not_repeat_suffix_lookahead(void) {
+  int32_t input[385];
+  input[0] = 'x';
+  for (size_t index = 1; index < sizeof(input) / sizeof(input[0]); index++)
+    input[index] = index % 3 == 1 ? ' ' : index % 3 == 2 ? '.' : 'x';
+  const size_t length = sizeof(input) / sizeof(input[0]);
+  const bool marker[TOKEN_COUNT] = {
+    [UNEXPECTED_CHARACTER_START] = true,
+    [UNEXPECTED_CHARACTER_CONTINUATION] = true,
+    [EXPRESSION_END] = true,
+  };
+  const bool characters[TOKEN_COUNT] = {[UNEXPECTED_CHARACTER] = true};
+  struct MockLexer mock;
+  struct Scanner scanner = {0};
+  init_mock_lexer(&mock, input, length);
+  size_t position = 0, advances = 0;
+  while (position < length) {
+    mock.offset = position;
+    mock.lexer.lookahead = input[position];
+    mock.advances = 0;
+    assert(
+      tree_sitter_toml_external_scanner_scan(&scanner, &mock.lexer, marker)
+    );
+    assert(
+      mock.lexer.result_symbol ==
+      UNEXPECTED_CHARACTER_START ||
+      mock.lexer.result_symbol == UNEXPECTED_CHARACTER_CONTINUATION
+    );
+    advances += mock.advances;
+    position = mock.mark;
+    mock.offset = position;
+    mock.lexer.lookahead = input[position];
+    mock.advances = 0;
+    assert(
+      tree_sitter_toml_external_scanner_scan(&scanner, &mock.lexer, characters)
+    );
+    assert(mock.lexer.result_symbol == UNEXPECTED_CHARACTER);
+    assert(mock.mark > position);
+    advances += mock.advances;
+    position = mock.mark;
+  }
+  assert(advances < length * 4);
+}
+
 int main(void) {
-  test_stateless_lifecycle_and_serialization();
+  test_lifecycle_and_serialization();
+  test_rejected_dotted_keys_do_not_repeat_suffix_lookahead();
   test_quote_runs_preserve_content_and_closing_delimiters();
   test_disabled_scans_do_not_consume_source();
   test_quote_tokens_select_the_matching_delimiter();

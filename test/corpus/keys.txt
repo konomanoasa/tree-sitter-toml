@@ -103,12 +103,9 @@ Non ASCII bare key
     (keyval
       key: (key
         (simple_key
-          issue: (syntax_issue
-            (invalid_syntax
-              (invalid_key_character)))
-          issue: (syntax_issue
-            (invalid_syntax
-              (invalid_key_character)))))
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_key_character)))))
       value: (val
         (boolean)))))
 

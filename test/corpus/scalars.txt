@@ -268,7 +268,7 @@ a = 01
       value: (val
         issue: (syntax_issue
           (incomplete_syntax
-            (incomplete_value
+            (invalid_value
               (digit)
               (digit))))))))
 
@@ -313,7 +313,7 @@ a = 1_
               (digit1_9)
               issue: (syntax_issue
                 (incomplete_syntax
-                  (incomplete_number))))))))))
+                  (invalid_number))))))))))
 
 ==================
 Consecutive digit separators

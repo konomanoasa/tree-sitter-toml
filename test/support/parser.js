@@ -26,7 +26,6 @@ after(() => {
   runner?.close();
 });
 
-// --time separates per-file CSTs; exclude its timings from comparisons.
 function trees(stdout, path) {
   const parsed = [];
   let lines = [];
@@ -135,8 +134,6 @@ function issues(nodes, cst) {
   });
 }
 
-// The CLI exit status misses hidden missing tokens; use the root --cst marker.
-// Repeat unchanged inputs on one parser to check determinism, including recovery.
 function parse(source, edits = []) {
   const directory = mkdtempSync(join(runtime, "input-"));
   try {
@@ -144,6 +141,8 @@ function parse(source, edits = []) {
     writeFileSync(path, source);
     const args = [
       "parse",
+      "--encoding",
+      "utf8",
       "--cst",
       "--time",
       "--lib-path",
@@ -174,7 +173,7 @@ function parse(source, edits = []) {
     const cst = parsed[0];
     const root =
       /^[0-9]+:[0-9]+ +- +([0-9]+):([0-9]+) +•?(toml|ERROR)( |\n|$)/.exec(cst);
-    assert.notEqual(root, null, cst);
+    assert.ok(root, cst);
     let row = 0;
     for (const byte of bytes) if (byte === 10) row += 1;
     assert.deepEqual(
@@ -187,6 +186,7 @@ function parse(source, edits = []) {
       cst,
       nodes,
       issues: issues(nodes, cst),
+      // CLI status misses hidden missing tokens.
       hasError: /^\S+\s+-\s+\S+\s+•/.test(cst),
     };
   } finally {

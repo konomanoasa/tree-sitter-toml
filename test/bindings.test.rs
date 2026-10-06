@@ -105,3 +105,88 @@ fn inserting_and_removing_nul_preserves_structure_and_parser_reuse() {
   tree = parser.parse(original, Some(&tree)).unwrap();
   assert_eq!(public_nodes(&tree), public_nodes(&original_tree));
 }
+
+#[test]
+fn long_invalid_runs_preserve_normal_digits_and_recovery_boundaries() {
+  let mut parser = Parser::new();
+  parser.set_language(&grammar::LANGUAGE.into()).unwrap();
+  let count = 8192;
+  for (source, reason, issues, digits) in [
+    (
+      format!("a={}", "1x".repeat(count)),
+      "invalid_number",
+      count,
+      count,
+    ),
+    (
+      format!("a={}", "1x2e".repeat(count)),
+      "invalid_number",
+      count * 2,
+      count * 2,
+    ),
+    (
+      format!("a={}", "1x2.".repeat(count)),
+      "invalid_number",
+      count * 2,
+      count * 2,
+    ),
+    (
+      format!("a=true{}", "x.".repeat(count)),
+      "invalid_character",
+      1,
+      0,
+    ),
+    (
+      format!("a=truex{}", " .x".repeat(count)),
+      "invalid_character",
+      count + 1,
+      0,
+    ),
+    (
+      format!("a=1?{}", "x.".repeat(count)),
+      "invalid_number",
+      1,
+      1,
+    ),
+    (
+      format!("a=1?{}", "x1.".repeat(count)),
+      "invalid_number",
+      count + 1,
+      count + 1,
+    ),
+    (
+      format!("a={}1", "=\0".repeat(count)),
+      "invalid_character",
+      1,
+      1,
+    ),
+    (
+      format!("[a{}]", "{},".repeat(count)),
+      "invalid_character",
+      1,
+      0,
+    ),
+  ] {
+    let tree = parser.parse(&source, None).unwrap();
+    assert_eq!(tree.root_node().byte_range(), 0..source.len());
+    let nodes = public_nodes(&tree);
+    assert_eq!(
+      nodes
+        .iter()
+        .filter(|node| node.kind == "syntax_issue")
+        .count(),
+      issues
+    );
+    assert_eq!(
+      nodes.iter().filter(|node| node.kind == reason).count(),
+      issues
+    );
+    assert_eq!(
+      nodes
+        .iter()
+        .filter(|node| matches!(node.kind.as_str(), "digit" | "digit1_9"))
+        .count(),
+      digits
+    );
+  }
+}
