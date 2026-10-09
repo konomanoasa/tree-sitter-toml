@@ -682,3 +682,220 @@ a=1.?key=2
                 (invalid_syntax
                   (invalid_number)))
               (digit))))))))
+==================
+Completed boolean retains an equals suffix in its expression
+==================
+a=true=2
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
+==================
+Zero stays a normal digit before an invalid separator at EOF
+==================
+a=0_
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number))))))))))
+==================
+Inline junk preserves real simple and incomplete dotted keys
+==================
+a={b=1 ;c=2 .x=3}
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (integer
+                  (dec_int
+                    (unsigned_dec_int
+                      (digit))))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_character)))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_inline_table_separator)))
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (integer
+                  (dec_int
+                    (unsigned_dec_int
+                      (digit))))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_inline_table_separator)))
+            (keyval
+              key: (key
+                (dotted_key
+                  issue: (syntax_issue
+                    (invalid_syntax
+                      (missing_key)))
+                  (simple_key
+                    (unquoted_key))))
+              value: (val
+                (integer
+                  (dec_int
+                    (unsigned_dec_int
+                      (digit))))))))))))
+
+==================
+Following dotted keys retain missing middle and last segments
+==================
+a=1 x..y=2 z.=3
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))
+          (simple_key
+            (unquoted_key))))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
+==================
+Following inline dotted keys retain an empty quoted segment and missing segments
+==================
+a={b=1 .""..=2}
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              key: (key
+                (simple_key
+                  (unquoted_key)))
+              value: (val
+                (integer
+                  (dec_int
+                    (unsigned_dec_int
+                      (digit))))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_inline_table_separator)))
+            (keyval
+              key: (key
+                (dotted_key
+                  issue: (syntax_issue
+                    (invalid_syntax
+                      (missing_key)))
+                  (simple_key
+                    (quoted_key
+                      (basic_string)))
+                  issue: (syntax_issue
+                    (invalid_syntax
+                      (missing_key)))
+                  issue: (syntax_issue
+                    (invalid_syntax
+                      (missing_key)))))
+              value: (val
+                (integer
+                  (dec_int
+                    (unsigned_dec_int
+                      (digit))))))))))))
+
+==================
+Equals inside numeric junk preserves the following digit in the same integer
+==================
+a=1?=2
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))

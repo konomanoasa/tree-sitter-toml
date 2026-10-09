@@ -429,25 +429,10 @@ a = 2026-09-20	07:32
                 (digit))
               (date_mday
                 (digit)
-                (digit))))))))
-  issue: (syntax_issue
-    (invalid_syntax
-      (missing_newline)))
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)
-          issue: (syntax_issue
-            (invalid_syntax
-              (invalid_key_character)))
-          (unquoted_key)))
-      issue: (syntax_issue
-        (incomplete_syntax
-          (missing_assignment_operator)))
-      issue: (syntax_issue
-        (incomplete_syntax
-          (missing_value))))))
+                (digit)))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Double space as date time delimiter
@@ -475,25 +460,10 @@ a = 2026-09-20  07:32
                 (digit))
               (date_mday
                 (digit)
-                (digit))))))))
-  issue: (syntax_issue
-    (invalid_syntax
-      (missing_newline)))
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)
-          issue: (syntax_issue
-            (invalid_syntax
-              (invalid_key_character)))
-          (unquoted_key)))
-      issue: (syntax_issue
-        (incomplete_syntax
-          (missing_assignment_operator)))
-      issue: (syntax_issue
-        (incomplete_syntax
-          (missing_value))))))
+                (digit)))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Fraction without seconds
@@ -751,21 +721,10 @@ b = 2026-09-20 12 # c
                 (digit))
               (date_mday
                 (digit)
-                (digit))))))))
-  issue: (syntax_issue
-    (invalid_syntax
-      (missing_newline)))
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_assignment_operator)))
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_value)))))
+                (digit)))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character))))
   (newline)
   (expression
     (keyval
@@ -786,19 +745,8 @@ b = 2026-09-20 12 # c
                 (digit))
               (date_mday
                 (digit)
-                (digit))))))))
-  issue: (syntax_issue
-    (invalid_syntax
-      (missing_newline)))
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_assignment_operator)))
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_value))))
+                (digit)))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))
     (comment)))

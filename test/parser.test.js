@@ -272,21 +272,74 @@ test("toml issues: real digits and delimiters remain inside their reason and own
   );
 });
 
-test("toml issues: separator-only lists leave trailing layout with the container", () => {
-  for (const [source, list, container] of [
-    ["a=[,\n]", "array_values", "array"],
-    ["a={,\n}", "inline_table_keyvals", "inline_table"],
+test("toml issues: unexpected separators leave trailing layout with the container", () => {
+  for (const { source, list, container, separator, values, newline } of [
+    {
+      source: "a=[,\n]",
+      list: "array_values",
+      container: "array",
+      separator: [3, 4],
+      values: [3, 4],
+      newline: [4, 5],
+    },
+    {
+      source: "a={,\n}",
+      list: "inline_table_keyvals",
+      container: "inline_table",
+      separator: [3, 4],
+      values: [3, 4],
+      newline: [4, 5],
+    },
+    {
+      source: "a=[1,,\n]",
+      list: "array_values",
+      container: "array",
+      separator: [5, 6],
+      values: [3, 6],
+      newline: [6, 7],
+    },
   ]) {
     const result = parse(source);
     assert.equal(result.hasError, false, result.cst);
     assert.deepEqual(result.issues, [
-      [list, "invalid_syntax", "unexpected_separator", 3, 4],
+      [list, "invalid_syntax", "unexpected_separator", ...separator],
     ]);
-    const values = result.nodes.find((node) => node.kind === list);
-    assert.deepEqual([values.start, values.end], [3, 4]);
-    const newline = result.nodes.find((node) => node.kind === "newline");
-    assert.equal(result.nodes[newline.parent].kind, container);
-    assert.deepEqual([newline.start, newline.end], [4, 5]);
+    const node = result.nodes.find((node) => node.kind === list);
+    assert.deepEqual([node.start, node.end], values);
+    const layout = result.nodes.find((node) => node.kind === "newline");
+    assert.equal(result.nodes[layout.parent].kind, container);
+    assert.deepEqual([layout.start, layout.end], newline);
+  }
+});
+
+test("toml issues: an unexpected separator reason has no child node", () => {
+  const result = parse("a=[,1]");
+  assert.equal(result.hasError, false, result.cst);
+  assert.deepEqual(result.issues, [
+    ["array_values", "invalid_syntax", "unexpected_separator", 3, 4],
+  ]);
+  const reason = result.nodes.findIndex(
+    (node) => node.kind === "unexpected_separator",
+  );
+  assert.deepEqual(
+    result.nodes.filter((node) => node.parent === reason),
+    [],
+  );
+});
+
+test("toml: lists own leading whitespace before every kind of first item", () => {
+  for (const [source, list, range] of [
+    ["a=[ []]", "array_values", [3, 6]],
+    ["a=[ {}]", "array_values", [3, 6]],
+    ["a=[ }]", "array_values", [3, 5]],
+    ["a={ [1]}", "inline_table_keyvals", [3, 7]],
+    ["a={ =1}", "inline_table_keyvals", [3, 6]],
+    ["a={ .b=1}", "inline_table_keyvals", [3, 8]],
+  ]) {
+    const result = parse(source);
+    assert.equal(result.hasError, false, result.cst);
+    const node = result.nodes.find((node) => node.kind === list);
+    assert.deepEqual([node.start, node.end], range, result.cst);
   }
 });
 
@@ -331,6 +384,13 @@ for (const [name, prefix, suffix, owner] of [
   ["multiline basic string", 'a="""x', 'y"""', "ml_basic_body"],
   ["multiline literal string", "a='''x", "y'''", "ml_literal_body"],
   ["value", "a=", " ", "val"],
+  ["document after a complete value", "a=true", "", "expression"],
+  [
+    "inline table after a complete value",
+    "a={b=true",
+    "}",
+    "inline_table_keyvals",
+  ],
   ["decimal digits", "a=12", "3", "unsigned_dec_int"],
   ["hexadecimal digits", "a=0xA", "B", "hex_int"],
   ["octal digits", "a=0o1", "2", "oct_int"],

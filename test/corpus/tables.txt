@@ -110,6 +110,24 @@ Array table header missing key
             (missing_key)))))))
 
 ==================
+Spaced table header key with a missing first segment
+==================
+[ .a]
+---
+
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (dotted_key
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_key)))
+            (simple_key
+              (unquoted_key))))))))
+
+==================
 Newline in table header key
 ==================
 [a.
@@ -282,3 +300,54 @@ Table header followed by key value pair
           (unquoted_key)))
       value: (val
         (boolean)))))
+
+==================
+A standard table header follows a completed value without a newline
+==================
+a=1 [b]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))))))
+
+==================
+An empty header immediately follows a completed array
+==================
+a=[][]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (table
+      (std_table
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_key)))))))

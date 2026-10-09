@@ -4,6 +4,46 @@ import { applyEdits, parse } from "./support/parser.js";
 
 const histories = [
   {
+    name: "delete a quote after a key that follows rejected fraction junk",
+    initial: '=.1_.5 x="',
+    steps: [
+      {
+        byte: 9,
+        deleteBytes: 1,
+        insert: "",
+        source: "=.1_.5 x=",
+        valid: false,
+      },
+    ],
+  },
+  {
+    name: "break the keyval after a reused unmatched closing",
+    initial: "a={b=1]yyy=2}",
+    steps: [
+      {
+        byte: 12,
+        deleteBytes: 0,
+        insert: "x",
+        source: "a={b=1]yyy=2x}",
+        valid: false,
+      },
+      {
+        byte: 12,
+        deleteBytes: 1,
+        insert: "",
+        source: "a={b=1]yyy=2}",
+        valid: false,
+      },
+      {
+        byte: 10,
+        deleteBytes: 1,
+        insert: ":",
+        source: "a={b=1]yyy:2}",
+        valid: false,
+      },
+    ],
+  },
+  {
     name: "insert an invalid numeric suffix inside an unclosed array",
     initial: "a=[1 ",
     steps: [
@@ -652,6 +692,33 @@ const histories = [
       },
     ],
   },
+  {
+    name: "edit after a glued inline key, then break the key",
+    initial: '={x y =""_. e = .c\n',
+    steps: [
+      {
+        byte: 15,
+        deleteBytes: 2,
+        insert: "{",
+        source: '={x y =""_. e ={c\n',
+        valid: false,
+      },
+      {
+        byte: 16,
+        deleteBytes: 2,
+        insert: "",
+        source: '={x y =""_. e ={',
+        valid: false,
+      },
+      {
+        byte: 11,
+        deleteBytes: 3,
+        insert: "=1",
+        source: '={x y =""_.=1={',
+        valid: false,
+      },
+    ],
+  },
   ...["Z", "-"].map((offset) => ({
     name: `edit an inline key, then break the key glued to time offset ${offset}`,
     initial: `a={b=1,c=07:32${offset} .y=`,
@@ -765,6 +832,10 @@ for (const { name, source, byte, expected, issues } of lookaheadByteEdits) {
 
 const restorationSources = [
   [
+    "restore every character around unmatched and enclosing closing delimiters",
+    "a=[1}]\nb={c=1]}\nd=[{e=1]\nf={g=[2}",
+  ],
+  [
     "restore every character around collection comments",
     "a = [true, # tail\n]\nb = {c = false, # tail\n}",
   ],
@@ -787,6 +858,14 @@ const restorationSources = [
   [
     "restore exponent after reusing a fractional subtree",
     "a = -12.3_4e+0_2\nb = 1E-02\nc = 0.5",
+  ],
+  [
+    "restore every character around value suffixes and recovered assignments",
+    "a=true=2\nb={c=1 ;d=2 .e=3}\nf=0_",
+  ],
+  [
+    "restore every character around missing dotted segments and invalid numeric runs",
+    "a=1 x..y=2\nb={c=truex.=2}\nd=1?=2",
   ],
 ];
 
@@ -1156,13 +1235,11 @@ const boundaryCases = [
     ],
   ],
   [
-    "space terminates a base prefix before another expression",
+    "space terminates a base prefix before unassigned trailing digits",
     "a=0x 1",
     [
       ["hex_int", "invalid_syntax", "missing_digits", 4, 4],
-      ["toml", "invalid_syntax", "missing_newline", 5, 5],
-      ["keyval", "incomplete_syntax", "missing_assignment_operator", 6, 6],
-      ["keyval", "incomplete_syntax", "missing_value", 6, 6],
+      ["expression", "invalid_syntax", "invalid_character", 5, 6],
     ],
   ],
   [
@@ -1749,13 +1826,9 @@ const boundaryCases = [
     [["expression", "invalid_syntax", "invalid_character", 11, 12]],
   ],
   [
-    "space after a date before a stray key starts another expression",
+    "space after a date does not turn trailing junk into a key",
     "a=2026-01-01 x",
-    [
-      ["toml", "invalid_syntax", "missing_newline", 13, 13],
-      ["keyval", "incomplete_syntax", "missing_assignment_operator", 14, 14],
-      ["keyval", "incomplete_syntax", "missing_value", 14, 14],
-    ],
+    [["expression", "invalid_syntax", "invalid_character", 13, 14]],
   ],
   [
     "dash before an exponent letter stays in the integer",
@@ -1768,12 +1841,9 @@ const boundaryCases = [
     [["dec_int", "invalid_syntax", "invalid_number", 3, 5]],
   ],
   [
-    "digit separator before a stray equals sign stays in the number",
+    "stray equals suffix follows the complete numeric value",
     "a=1_2=3",
-    [
-      ["val", "invalid_syntax", "invalid_character", 5, 6],
-      ["expression", "invalid_syntax", "invalid_character", 6, 7],
-    ],
+    [["expression", "invalid_syntax", "invalid_character", 5, 7]],
   ],
   [
     "dash run keeps an exponent letter after other numeric junk",
@@ -1870,6 +1940,24 @@ const recoveryCases = [
     "array word junk retains assignment-like text in the number",
     "a=[1x?e=2]",
     [["unsigned_dec_int", "invalid_syntax", "invalid_number", 4, 8]],
+  ],
+  [
+    "array exponent keeps assignment-like text in its required digits",
+    "a=[1ex=2]",
+    [["zero_prefixable_int", "invalid_syntax", "invalid_number", 5, 7]],
+  ],
+  [
+    "array exponent keeps assignment-like text after its digits",
+    "a=[1e5x=2]",
+    [["zero_prefixable_int", "invalid_syntax", "invalid_number", 6, 8]],
+  ],
+  [
+    "a value after junk still yields to an adjacent assignment",
+    "a==1e=2",
+    [
+      ["val", "invalid_syntax", "invalid_character", 2, 3],
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+    ],
   ],
   [
     "inline numeric word junk preserves a confirmed key",
@@ -2042,6 +2130,30 @@ const recoveryCases = [
     source,
     [["zero_prefixable_int", "invalid_syntax", "invalid_number", 4, 5]],
   ]),
+  ...[
+    ["a=1.?e=2", "zero_prefixable_int", 4, 7],
+    ["a=1.?e5", "zero_prefixable_int", 4, 6],
+    ["a=-?e5", "dec_int", 3, 5],
+  ].map(([source, owner, start, end]) => [
+    `an exponent letter before the first required digit stays in the run: ${source}`,
+    source,
+    [[owner, "invalid_syntax", "invalid_number", start, end]],
+  ]),
+  ...["a=0_ ", "a=0_e5"].map((source) => [
+    `a zero followed by a separator without a digit is not a leading zero: ${source}`,
+    source,
+    [["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 4]],
+  ]),
+  [
+    "a zero stays normal before an invalid separator at EOF",
+    "a=0_",
+    [["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 4]],
+  ],
+  [
+    "a key after a zero and a separator yields to a confirmed assignment",
+    "a=0_x=1",
+    [["toml", "invalid_syntax", "missing_newline", 3, 3]],
+  ],
 
   [
     "adjacent date delimiter becomes a key",
@@ -2096,11 +2208,11 @@ const recoveryCases = [
     [["expression", "invalid_syntax", "invalid_character", 6, 11]],
   ],
   [
-    "expression junk stops before a confirmed key",
+    "a completed boolean keeps a whole dotted key with a missing middle segment",
     "a=truex..key=2",
     [
-      ["expression", "invalid_syntax", "invalid_character", 6, 9],
-      ["toml", "invalid_syntax", "missing_newline", 9, 9],
+      ["toml", "invalid_syntax", "missing_newline", 6, 6],
+      ["dotted_key", "invalid_syntax", "missing_key", 8, 8],
     ],
   ],
   [
@@ -2189,10 +2301,375 @@ const recoveryCases = [
     [[owner, "invalid_syntax", "invalid_number", 5, end]],
   ]),
 ];
+const valueBoundaryCases = [
+  [
+    "a spaced dotted key keeps its missing middle segment",
+    "a=1 x..y=2",
+    [
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+      ["dotted_key", "invalid_syntax", "missing_key", 6, 6],
+    ],
+  ],
+  [
+    "a spaced dotted key keeps its missing last segment",
+    "a=1 x.=2",
+    [
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+      ["dotted_key", "invalid_syntax", "missing_key", 6, 6],
+    ],
+  ],
+  [
+    "numeric junk yields to a dotted key with a missing middle segment",
+    "a=1?x..y=2",
+    [
+      ["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 4],
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+      ["dotted_key", "invalid_syntax", "missing_key", 6, 6],
+    ],
+  ],
+  [
+    "an empty quoted segment establishes a dotted key with missing segments",
+    'a=1 .""..=2',
+    [
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+      ["dotted_key", "invalid_syntax", "missing_key", 4, 4],
+      ["dotted_key", "invalid_syntax", "missing_key", 8, 8],
+      ["dotted_key", "invalid_syntax", "missing_key", 9, 9],
+    ],
+  ],
+  [
+    "spaces between missing segments preserve the whole dotted key",
+    "a=1 x . . y . =2",
+    [
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+      ["dotted_key", "invalid_syntax", "missing_key", 8, 8],
+      ["dotted_key", "invalid_syntax", "missing_key", 14, 14],
+    ],
+  ],
+  [
+    "an inline dotted key keeps its missing middle segment",
+    "a={b=1 x..y=2}",
+    [
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        7,
+        7,
+      ],
+      ["dotted_key", "invalid_syntax", "missing_key", 9, 9],
+    ],
+  ],
+  [
+    "a glued inline dotted key keeps its missing last segment",
+    "a={b=truex.=2}",
+    [
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        9,
+        9,
+      ],
+      ["dotted_key", "invalid_syntax", "missing_key", 11, 11],
+    ],
+  ],
+  [
+    "dots without a real segment remain document junk",
+    "a=1 ..=2",
+    [["expression", "invalid_syntax", "invalid_character", 4, 8]],
+  ],
+  [
+    "a dot without a real segment remains inline junk",
+    "a={b=1 .=2}",
+    [["inline_table_keyvals", "invalid_syntax", "invalid_character", 7, 10]],
+  ],
+  [
+    "an equals sign inside numeric junk keeps the following digit in the number",
+    "a=1?=2",
+    [["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 5]],
+  ],
+  [
+    "an inline equals sign inside numeric junk keeps the following digit in the number",
+    "a={b=1?=2}",
+    [["unsigned_dec_int", "invalid_syntax", "invalid_number", 6, 8]],
+  ],
+  [
+    "a completed boolean keeps an equals suffix outside its value",
+    "a=true=2",
+    [["expression", "invalid_syntax", "invalid_character", 6, 8]],
+  ],
+  [
+    "a completed string keeps an equals suffix outside its value",
+    'a="x"=2',
+    [["expression", "invalid_syntax", "invalid_character", 5, 7]],
+  ],
+  [
+    "a completed array keeps an equals suffix outside its value",
+    "a=[]=2",
+    [["expression", "invalid_syntax", "invalid_character", 4, 6]],
+  ],
+  [
+    "an inline boolean keeps an equals suffix in the container",
+    "a={b=true=2}",
+    [["inline_table_keyvals", "invalid_syntax", "invalid_character", 9, 11]],
+  ],
+  [
+    "an inline number keeps an equals suffix in the container",
+    "a={b=1_2=3}",
+    [["inline_table_keyvals", "invalid_syntax", "invalid_character", 8, 10]],
+  ],
+  [
+    "a completed boolean keeps a control character and equals suffix outside its value",
+    "a=true\u0001=2",
+    [["expression", "invalid_syntax", "invalid_character", 6, 9]],
+  ],
+  [
+    "an inline boolean keeps a control character and equals suffix in the container",
+    "a={b=true\u0001=2}",
+    [["inline_table_keyvals", "invalid_syntax", "invalid_character", 9, 12]],
+  ],
+  [
+    "spaced semicolon stays outside the following document key",
+    "a=1 ;c=2",
+    [
+      ["expression", "invalid_syntax", "invalid_character", 4, 5],
+      ["toml", "invalid_syntax", "missing_newline", 5, 5],
+    ],
+  ],
+  [
+    "spaced semicolon stays outside the following inline key",
+    "a={b=1 ;c=2}",
+    [
+      ["inline_table_keyvals", "invalid_syntax", "invalid_character", 7, 8],
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        8,
+        8,
+      ],
+    ],
+  ],
+  [
+    "spaced dot retains a document key with a missing first segment",
+    "a=1 .x=2",
+    [
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+      ["dotted_key", "invalid_syntax", "missing_key", 4, 4],
+    ],
+  ],
+  [
+    "spaced dot retains an inline key with a missing first segment",
+    "a={b=1 .x=2}",
+    [
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        7,
+        7,
+      ],
+      ["dotted_key", "invalid_syntax", "missing_key", 7, 7],
+    ],
+  ],
+  [
+    "space does not turn document junk into an unassigned key",
+    "a=1 x",
+    [["expression", "invalid_syntax", "invalid_character", 4, 5]],
+  ],
+  [
+    "space does not turn inline junk into an unassigned key",
+    "a={b=1 x}",
+    [["inline_table_keyvals", "invalid_syntax", "invalid_character", 7, 8]],
+  ],
+  [
+    "inline punctuation and unassigned letters share an issue",
+    "a={b=1 ;x}",
+    [["inline_table_keyvals", "invalid_syntax", "invalid_character", 7, 9]],
+  ],
+  [
+    "a real comma separates a key after inline junk",
+    "a={b=1 ;,c=2}",
+    [["inline_table_keyvals", "invalid_syntax", "invalid_character", 7, 8]],
+  ],
+  [
+    "a tab before a real inline assignment retains its key",
+    "a={b=1\tc=2}",
+    [
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        7,
+        7,
+      ],
+    ],
+  ],
+  [
+    "a semicolon at the initial key position remains a key error",
+    "a={;c=2}",
+    [["simple_key", "invalid_syntax", "invalid_key_character", 3, 4]],
+  ],
+  [
+    "a signed zero stays normal before an invalid separator at EOF",
+    "a=+0_",
+    [["unsigned_dec_int", "invalid_syntax", "invalid_number", 4, 5]],
+  ],
+  [
+    "a zero stays normal before repeated separators at EOF",
+    "a=0__",
+    [["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 5]],
+  ],
+  [
+    "an invalid trailing separator keeps a spaced document key",
+    "a=1_ x=2",
+    [
+      ["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 4],
+      ["toml", "invalid_syntax", "missing_newline", 5, 5],
+    ],
+  ],
+  [
+    "invalid trailing separators keep a spaced inline key",
+    "a={b=0x1__ x=2}",
+    [
+      ["hex_int", "invalid_syntax", "invalid_number", 8, 10],
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        11,
+        11,
+      ],
+    ],
+  ],
+  [
+    "a UTC offset keeps a spaced document key",
+    "a=2026-01-01T07:32Z x=2",
+    [["toml", "invalid_syntax", "missing_newline", 20, 20]],
+  ],
+  [
+    "digits after rejected numeric junk end before a spaced bare key",
+    "a=1x.1 x=2",
+    [
+      ["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 5],
+      ["toml", "invalid_syntax", "missing_newline", 7, 7],
+    ],
+  ],
+  [
+    "digits after rejected numeric junk end before a spaced quoted key",
+    'a=1x.1 "x"=2',
+    [
+      ["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 5],
+      ["toml", "invalid_syntax", "missing_newline", 7, 7],
+    ],
+  ],
+  [
+    "a rejected inline separator does not reject a key after the table",
+    "a={b=0_}k=2",
+    [
+      ["unsigned_dec_int", "invalid_syntax", "invalid_number", 6, 7],
+      ["toml", "invalid_syntax", "missing_newline", 8, 8],
+    ],
+  ],
+  [
+    "a rejected nested separator does not reject a key in the outer table",
+    "a={b={c=0_}k=2}",
+    [
+      ["unsigned_dec_int", "invalid_syntax", "invalid_number", 9, 10],
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        11,
+        11,
+      ],
+    ],
+  ],
+  [
+    "a rejected inline UTC offset does not reject a key after the table",
+    "a={b=2026-01-01T07:32Z}k=2",
+    [["toml", "invalid_syntax", "missing_newline", 23, 23]],
+  ],
+  [
+    "rejected inline dotted junk does not reject a key after the table",
+    "a={b=1 x.}k=2",
+    [
+      ["inline_table_keyvals", "invalid_syntax", "invalid_character", 7, 9],
+      ["toml", "invalid_syntax", "missing_newline", 10, 10],
+    ],
+  ],
+  [
+    "a UTC offset keeps a spaced inline key",
+    "a={b=1979-05-27T07:32Z x=2}",
+    [
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        23,
+        23,
+      ],
+    ],
+  ],
+  ...[
+    {
+      source: "a=1 :c=2",
+      owner: "expression",
+      separatorOwner: "toml",
+      separator: "missing_newline",
+      start: 4,
+    },
+    {
+      source: "a=1 \\c=2",
+      owner: "expression",
+      separatorOwner: "toml",
+      separator: "missing_newline",
+      start: 4,
+    },
+    {
+      source: "a=1 \u0001c=2",
+      owner: "expression",
+      separatorOwner: "toml",
+      separator: "missing_newline",
+      start: 4,
+    },
+    {
+      source: "a={b=1 :c=2}",
+      owner: "inline_table_keyvals",
+      separatorOwner: "inline_table_keyvals",
+      separator: "missing_inline_table_separator",
+      start: 7,
+    },
+    {
+      source: "a={b=1 \\c=2}",
+      owner: "inline_table_keyvals",
+      separatorOwner: "inline_table_keyvals",
+      separator: "missing_inline_table_separator",
+      start: 7,
+    },
+    {
+      source: "a={b=1 \u0001c=2}",
+      owner: "inline_table_keyvals",
+      separatorOwner: "inline_table_keyvals",
+      separator: "missing_inline_table_separator",
+      start: 7,
+    },
+  ].map(({ source, owner, separatorOwner, separator, start }) => [
+    `spaced junk preserves the following assignment in ${JSON.stringify(source)}`,
+    source,
+    [
+      [owner, "invalid_syntax", "invalid_character", start, start + 1],
+      [separatorOwner, "invalid_syntax", separator, start + 1, start + 1],
+    ],
+  ]),
+];
+
 for (const [name, source, expected] of [
   ...cases,
   ...boundaryCases,
   ...recoveryCases,
+  ...valueBoundaryCases,
 ]) {
   test(`toml issues: ${name}`, () => {
     const result = parse(source);
@@ -2204,6 +2681,50 @@ for (const [name, source, expected] of [
     assert.deepEqual(edited.nodes, result.nodes);
   });
 }
+
+test("toml: value recovery preserves completed values and real key structure", () => {
+  for (const [source, keyvals, dottedKeys] of [
+    ["a=true=2", ["a=true"], []],
+    ["a=1_2=3", ["a=1_2"], []],
+    ["a=1 ;c=2", ["a=1", "c=2"], []],
+    ["a={b=1 ;c=2}", ["a={b=1 ;c=2}", "b=1", "c=2"], []],
+    ["a=1 .x=2", ["a=1", ".x=2"], [".x"]],
+    ["a={b=1 .x=2}", ["a={b=1 .x=2}", "b=1", ".x=2"], [".x"]],
+    ["a=1 x..y=2", ["a=1", "x..y=2"], ["x..y"]],
+    ["a=1 x.=2", ["a=1", "x.=2"], ["x."]],
+    ["a=truex..key=2", ["a=true", "x..key=2"], ["x..key"]],
+    ["a=1?x..y=2", ["a=1?", "x..y=2"], ["x..y"]],
+    ['a=1 .""..=2', ["a=1", '.""..=2'], ['.""..']],
+    ["a=1 x . . y . =2", ["a=1", "x . . y . =2"], ["x . . y . "]],
+    ["a={b=1 x..y=2}", ["a={b=1 x..y=2}", "b=1", "x..y=2"], ["x..y"]],
+    ["a={b=truex.=2}", ["a={b=truex.=2}", "b=true", "x.=2"], ["x."]],
+    ["a=1 ..=2", ["a=1"], []],
+    ["a={b=1 .=2}", ["a={b=1 .=2}", "b=1"], []],
+    ["a=1?=2", ["a=1?=2"], []],
+  ]) {
+    const result = parse(source);
+    assert.equal(result.hasError, false, result.cst);
+    assert.deepEqual(
+      result.nodes
+        .filter((node) => node.kind === "keyval")
+        .map((node) => source.slice(node.start, node.end)),
+      keyvals,
+    );
+    assert.deepEqual(
+      result.nodes
+        .filter((node) => node.kind === "dotted_key")
+        .map((node) => source.slice(node.start, node.end)),
+      dottedKeys,
+    );
+  }
+  const zero = parse("a=0_");
+  assert.deepEqual(
+    zero.nodes
+      .filter((node) => node.kind === "digit")
+      .map((node) => [zero.nodes[node.parent].kind, node.start, node.end]),
+    [["unsigned_dec_int", 2, 3]],
+  );
+});
 
 test("toml issues: deep nesting keeps every missing closing at EOF", () => {
   const source = `a=${"[".repeat(256)}0`;
@@ -2314,3 +2835,107 @@ test("toml: rejected dotted junk ends before a later key or another expression",
     assert.equal(source.slice(keyval.start, keyval.end), lastKeyval, fresh.cst);
   }
 });
+
+for (const [name, source, expected, structures] of [
+  [
+    "a spaced standard header follows a completed value",
+    "a=1 [b]",
+    [["toml", "invalid_syntax", "missing_newline", 4, 4]],
+    ["std_table"],
+  ],
+  [
+    "an adjacent standard header follows a completed value",
+    "a=1[b]",
+    [["toml", "invalid_syntax", "missing_newline", 3, 3]],
+    ["std_table"],
+  ],
+  [
+    "a spaced array table header follows a completed value",
+    "a=true [[b]]",
+    [["toml", "invalid_syntax", "missing_newline", 7, 7]],
+    ["array_table"],
+  ],
+  [
+    "an adjacent array table header follows a completed value",
+    "a=true[[b]]",
+    [["toml", "invalid_syntax", "missing_newline", 6, 6]],
+    ["array_table"],
+  ],
+  [
+    "an empty header follows a completed array",
+    "a=[][]",
+    [
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+      ["std_table", "invalid_syntax", "missing_key", 5, 5],
+    ],
+    ["array", "std_table"],
+  ],
+  [
+    "an unfinished header follows a completed value",
+    "a=1 [b",
+    [
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+      ["std_table", "incomplete_syntax", "missing_std_table_close", 6, 6],
+    ],
+    ["std_table"],
+  ],
+  [
+    "a header opening alone follows a completed value",
+    "a=1 [",
+    [
+      ["toml", "invalid_syntax", "missing_newline", 4, 4],
+      ["std_table", "incomplete_syntax", "missing_key", 5, 5],
+      ["std_table", "incomplete_syntax", "missing_std_table_close", 5, 5],
+    ],
+    ["std_table"],
+  ],
+  [
+    "a bracket inside an array starts another array value",
+    "a=[1 [2]]",
+    [["array_values", "invalid_syntax", "missing_array_separator", 5, 5]],
+    ["array", "array"],
+  ],
+  [
+    "a bracket inside an inline table retains an unexpected array value",
+    "a={b=1 [2]}",
+    [
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        7,
+        7,
+      ],
+      ["inline_table_keyvals", "invalid_syntax", "unexpected_value", 7, 10],
+    ],
+    ["inline_table", "array"],
+  ],
+]) {
+  test(`toml header recovery: ${name}`, () => {
+    const fresh = parse(source);
+    assert.equal(fresh.hasError, false, fresh.cst);
+    assert.deepEqual(fresh.issues, expected, fresh.cst);
+    assert.deepEqual(
+      fresh.nodes
+        .filter((node) =>
+          ["std_table", "array_table", "array", "inline_table"].includes(
+            node.kind,
+          ),
+        )
+        .map((node) => node.kind),
+      structures,
+    );
+    for (let byte = 0; byte < source.length; byte++) {
+      const remove = { byte, deleteBytes: 1, insert: "" };
+      assert.deepEqual(
+        parse(source, [remove]).nodes,
+        parse(applyEdits(source, [remove])).nodes,
+      );
+      assert.deepEqual(
+        parse(source, [remove, { byte, deleteBytes: 0, insert: source[byte] }])
+          .nodes,
+        fresh.nodes,
+      );
+    }
+  });
+}

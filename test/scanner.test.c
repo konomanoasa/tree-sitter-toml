@@ -78,13 +78,22 @@ static void test_lifecycle_and_serialization(void) {
   tree_sitter_toml_external_scanner_deserialize(scanner, NULL, 0);
   ((struct Scanner *)scanner)->rejected_key = REJECTED_KEY;
   ((struct Scanner *)scanner)->word_continuation = true;
-  assert(tree_sitter_toml_external_scanner_serialize(scanner, buffer) == 1);
+  ((struct Scanner *)scanner)->arrays = UINT32_C(0x12345678);
+  ((struct Scanner *)scanner)->inline_tables = UINT32_C(0x9abcdef0);
+  assert(tree_sitter_toml_external_scanner_serialize(scanner, buffer) == 9);
+  const unsigned char expected[] =
+    {5, 0x78, 0x56, 0x34, 0x12, 0xf0, 0xde, 0xbc, 0x9a};
+  assert(memcmp(buffer, expected, sizeof(expected)) == 0);
   tree_sitter_toml_external_scanner_deserialize(scanner, NULL, 0);
   assert(((struct Scanner *)scanner)->rejected_key == NO_REJECTED_KEY);
   assert(!((struct Scanner *)scanner)->word_continuation);
-  tree_sitter_toml_external_scanner_deserialize(scanner, buffer, 1);
+  assert(((struct Scanner *)scanner)->arrays == 0);
+  assert(((struct Scanner *)scanner)->inline_tables == 0);
+  tree_sitter_toml_external_scanner_deserialize(scanner, buffer, 9);
   assert(((struct Scanner *)scanner)->rejected_key == REJECTED_KEY);
   assert(((struct Scanner *)scanner)->word_continuation);
+  assert(((struct Scanner *)scanner)->arrays == UINT32_C(0x12345678));
+  assert(((struct Scanner *)scanner)->inline_tables == UINT32_C(0x9abcdef0));
   tree_sitter_toml_external_scanner_destroy(scanner);
 }
 
@@ -272,6 +281,7 @@ static void test_scalar_markers_preserve_source_and_real_terminators(void) {
     {{'t', 'r', 'u', ']'}, 4, INVALID_VALUE, 3},
     {{'4', '+', 'e'}, 3, FLOAT_START, 0},
     {{'-', 'e', '5'}, 3, FLOAT_START, 0},
+    {{'-', '?', 'e', '5'}, 4, INTEGER_START, 0},
     {{'4', '-', 'e'}, 3, INTEGER_START, 0},
     {{'4', '-', '=', 'e'}, 4, INTEGER_START, 0},
     {{'4', '=', '-', 'e'}, 4, INTEGER_START, 0},
@@ -405,12 +415,18 @@ static void test_exponent_start_yields_to_an_adjacent_assignment(void) {
   }
 }
 
-static void test_rejected_dotted_keys_do_not_repeat_suffix_lookahead(void) {
-  int32_t input[385];
-  input[0] = 'x';
-  for (size_t index = 1; index < sizeof(input) / sizeof(input[0]); index++)
-    input[index] = index % 3 == 1 ? ' ' : index % 3 == 2 ? '.' : 'x';
-  const size_t length = sizeof(input) / sizeof(input[0]);
+static void
+assert_rejected_chain_is_linear(const int32_t *segment, size_t size) {
+  int32_t input[640];
+  size_t length = 0;
+  while (length + size + 2 <= sizeof(input) / sizeof(input[0])) {
+    if (length > 0) {
+      input[length++] = ' ';
+      input[length++] = '.';
+    }
+    for (size_t index = 0; index < size; index++)
+      input[length++] = segment[index];
+  }
   const bool marker[TOKEN_COUNT] = {
     [UNEXPECTED_CHARACTER_START] = true,
     [UNEXPECTED_CHARACTER_CONTINUATION] = true,
@@ -447,6 +463,13 @@ static void test_rejected_dotted_keys_do_not_repeat_suffix_lookahead(void) {
     position = mock.mark;
   }
   assert(advances < length * 4);
+}
+
+static void test_rejected_dotted_keys_do_not_repeat_suffix_lookahead(void) {
+  assert_rejected_chain_is_linear((const int32_t[]){'x'}, 1);
+  assert_rejected_chain_is_linear((const int32_t[]){'"', 'x', '"'}, 3);
+  assert_rejected_chain_is_linear((const int32_t[]){'.', 'x', '.'}, 3);
+  assert_rejected_chain_is_linear((const int32_t[]){'.'}, 1);
 }
 
 int main(void) {

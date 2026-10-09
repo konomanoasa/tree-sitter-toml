@@ -96,7 +96,7 @@ const issueTokens = [
   ]),
   ["invalid_unicode_escape", "invalid_syntax", "invalid_escape", "escaped"],
   ["unexpected_encoding", "invalid_syntax", "invalid_encoding"],
-  ["invalid_header_encoding", "invalid_syntax", "invalid_encoding"],
+  ["stray_close", "invalid_syntax", "invalid_character"],
 ];
 const digit = ($, rule = $._digit) => alias(rule, $.digit);
 
@@ -112,12 +112,18 @@ const issueRules = Object.fromEntries(
         if (token === "unexpected_header_key")
           return prec.dynamic(-1, $[content]);
         const marker = $[`_${token}`];
-        if (token === "unexpected_character")
+        if (token === "unexpected_character" || token === "stray_close")
           return prec.right(
             seq(
-              $._unexpected_character_start,
-              marker,
-              repeat(seq($._unexpected_character_continuation, marker)),
+              token === "stray_close"
+                ? marker
+                : seq($._unexpected_character_start, marker),
+              repeat(
+                seq(
+                  $._unexpected_character_continuation,
+                  $._unexpected_character,
+                ),
+              ),
             ),
           );
         if (token === "unexpected_encoding")
@@ -221,36 +227,31 @@ const separated = ($, leaf, base) => {
 
 const layout = ($) => optional($._ws_comment_newline);
 
-const elements = ($, element, separator) => {
-  const values = seq(
-    element,
-    repeat(
-      seq(
-        layout($),
-        choice(",", issue($, `missing_${separator}`)),
-        layout($),
-        repeat(seq(issue($, "unexpected_separator"), layout($))),
-        element,
+const elements = ($, element, separator, tail = []) => {
+  const junk = issue($, "stray_close");
+  const stray = seq(layout($), junk, ...tail);
+  const extra = seq(layout($), choice(junk, issue($, "unexpected_separator")));
+  const extras = repeat(extra);
+  return choice(
+    seq(
+      extras,
+      layout($),
+      element,
+      repeat(
+        choice(
+          stray,
+          seq(
+            layout($),
+            choice(",", issue($, `missing_${separator}`)),
+            extras,
+            layout($),
+            element,
+          ),
+        ),
       ),
+      optional(seq(layout($), ",", extras)),
     ),
-    optional(
-      seq(
-        layout($),
-        ",",
-        repeat(seq(layout($), issue($, "unexpected_separator"))),
-      ),
-    ),
-  );
-  return seq(
-    layout($),
-    choice(
-      values,
-      seq(
-        issue($, "unexpected_separator"),
-        repeat(seq(layout($), issue($, "unexpected_separator"))),
-        optional(seq(layout($), values)),
-      ),
-    ),
+    repeat1(extra),
   );
 };
 
@@ -265,7 +266,6 @@ const header = ($, open, close, kind) =>
         choice(
           issue($, "unexpected_header_key"),
           issue($, "invalid_header_character"),
-          issue($, "invalid_header_encoding"),
         ),
       ),
     ),
@@ -345,6 +345,7 @@ export default grammar({
     $._unexpected_character_continuation,
     $._dot_separator,
     $._expression_end,
+    $._item_end,
     $._blank_line,
     $._broken_comment_start,
     $._comment_end,
@@ -360,6 +361,10 @@ export default grammar({
       .map(([name]) => $[`_${name}`]),
     $._escape_prefix,
     $._error_sentinel,
+    $._array_open,
+    $._array_close,
+    $._inline_table_open,
+    $._inline_table_close,
   ],
   conflicts: ($) => [
     [$.key, $.dotted_key],
@@ -774,10 +779,10 @@ export default grammar({
       ),
     array: ($) =>
       seq(
-        "[",
+        alias($._array_open, "["),
         optional($.array_values),
         layout($),
-        choice("]", absent($, "array_close")),
+        choice(alias($._array_close, "]"), absent($, "array_close")),
       ),
     array_values: ($) => elements($, $.val, "array_separator"),
     _ws_comment_newline: ($) =>
@@ -793,27 +798,34 @@ export default grammar({
     std_table: ($) => header($, "[", "]", "std_table"),
     inline_table: ($) =>
       seq(
-        "{",
+        alias($._inline_table_open, "{"),
         optional($.inline_table_keyvals),
         layout($),
-        choice("}", absent($, "inline_table_close")),
+        choice(
+          alias($._inline_table_close, "}"),
+          absent($, "inline_table_close"),
+        ),
       ),
-    inline_table_keyvals: ($) =>
-      elements(
-        $,
-        seq(
-          choice($.keyval, issue($, "unexpected_value")),
-          repeat(
-            choice(
-              issue($, "unexpected_character"),
-              issue($, "unexpected_encoding"),
-            ),
+    inline_table_keyvals: ($) => {
+      // An unmatched closing after an item continues that item's junk.
+      const tail = [
+        repeat(
+          choice(
+            issue($, "unexpected_character"),
+            issue($, "unexpected_encoding"),
           ),
         ),
+        optional($._item_end),
+      ];
+      return elements(
+        $,
+        seq(choice($.keyval, issue($, "unexpected_value")), ...tail),
         "inline_table_separator",
-      ),
+        tail,
+      );
+    },
     array_table: ($) => header($, "[[", "]]", "array_table"),
-    _unexpected_separator: () => token(","),
+    _unexpected_separator: () => /,/,
     _invalid_header_character: () => token(/[,{}]+/),
     ...issueRules,
   },

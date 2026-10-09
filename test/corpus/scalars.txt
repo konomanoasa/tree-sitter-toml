@@ -458,21 +458,10 @@ a = 1 2
         (integer
           (dec_int
             (unsigned_dec_int
-              (digit)))))))
-  issue: (syntax_issue
-    (invalid_syntax
-      (missing_newline)))
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      issue: (syntax_issue
-        (incomplete_syntax
-          (missing_assignment_operator)))
-      issue: (syntax_issue
-        (incomplete_syntax
-          (missing_value))))))
+              (digit))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 
 ==================
 Fraction missing integer part
@@ -608,7 +597,7 @@ a = 4-e2
               (digit))))))))
 
 ==================
-Digit separator before a stray equals sign stays in the integer
+Completed integer retains its digit separator before an equals suffix
 ==================
 a = 1_2=3
 ---
@@ -624,10 +613,7 @@ a = 1_2=3
           (dec_int
             (unsigned_dec_int
               (digit1_9)
-              (digit))))
-        issue: (syntax_issue
-          (invalid_syntax
-            (invalid_character)))))
+              (digit))))))
     issue: (syntax_issue
       (invalid_syntax
         (invalid_character)))))
