@@ -1,10 +1,4 @@
-(comment
-  !issue) @comment
-
 (comment_text) @comment
-
-(invalid_value
-  (digit) @number)
 
 (unquoted_key) @property
 
@@ -27,6 +21,11 @@
 ] @punctuation.delimiter
 
 [
+  "true"
+  "false"
+] @boolean
+
+[
   "0x"
   "0o"
   "0b"
@@ -38,24 +37,13 @@
 ] @number.float
 
 [
-  "true"
-  "false"
-] @boolean
-
-[
   ":"
   "Z"
   "z"
 ] @string.special
 
-(dotted_key
-  "." @punctuation.delimiter)
-
-(basic_string
-  "\"" @punctuation.delimiter)
-
-(literal_string
-  "'" @punctuation.delimiter)
+(comment
+  !issue) @comment
 
 (quoted_key
   (basic_string
@@ -65,6 +53,15 @@
 (quoted_key
   (literal_string
     (literal_char) @property))
+
+(dotted_key
+  "." @punctuation.delimiter)
+
+(basic_string
+  "\"" @punctuation.delimiter)
+
+(literal_string
+  "'" @punctuation.delimiter)
 
 (string
   (basic_string
@@ -126,6 +123,14 @@
         "_"
       ] @number)))
 
+(integer
+  (dec_int
+    (unsigned_dec_int
+      (syntax_issue
+        (invalid_syntax
+          (invalid_number
+            (digit) @number))))))
+
 (hex_int
   [
     (hexdig)
@@ -144,6 +149,9 @@
     "_"
   ] @number)
 
+(invalid_value
+  (digit) @number)
+
 (float_int_part
   (dec_int
     [
@@ -159,6 +167,14 @@
         (digit1_9)
         "_"
       ] @number.float)))
+
+(float_int_part
+  (dec_int
+    (unsigned_dec_int
+      (syntax_issue
+        (invalid_syntax
+          (invalid_number
+            (digit) @number.float))))))
 
 (frac
   "." @number.float)
@@ -229,19 +245,3 @@
 
 (invalid_date_time
   (digit) @string.special)
-
-(integer
-  (dec_int
-    (unsigned_dec_int
-      (syntax_issue
-        (invalid_syntax
-          (invalid_number
-            (digit) @number))))))
-
-(float_int_part
-  (dec_int
-    (unsigned_dec_int
-      (syntax_issue
-        (invalid_syntax
-          (invalid_number
-            (digit) @number.float))))))

@@ -1,4 +1,13 @@
-const missing = [
+const bases = ["dec", "hex", "oct", "bin"];
+const dateElements = [
+  "date_fullyear",
+  "date_month",
+  "date_mday",
+  "time_hour",
+  "time_minute",
+  "time_second",
+];
+const missingParts = [
   "date_separator",
   "time_separator",
   "digits",
@@ -12,59 +21,111 @@ const missing = [
   "std_table_close",
   "array_table_close",
 ];
-const dateElements = [
-  "date_fullyear",
-  "date_month",
-  "date_mday",
-  "time_hour",
-  "time_minute",
-  "time_second",
+
+const digit = ($, rule = $._digit) => alias(rule, $.digit);
+
+const hexdig = ($) => alias($._hexdig, $.hexdig);
+
+const times = (count, rule) => Array(count).fill(rule);
+
+const followedBy = (name) => ($, marker) => seq(marker, $[name]);
+
+const digitRun = ($, marker) =>
+  seq(marker, repeat1(digit($)), $._date_element_end);
+
+const junkRun = ($, start) =>
+  prec.right(
+    seq(
+      start,
+      repeat(
+        seq($._unexpected_character_continuation, $._unexpected_character),
+      ),
+    ),
+  );
+
+const invalidDigitRun = (base) => ($, marker) =>
+  seq(
+    marker,
+    repeat(
+      seq(
+        $[`_invalid_${base}_continuation`],
+        base === "dec"
+          ? choice($._invalid_dec_digit, $._leading_separator)
+          : marker,
+      ),
+    ),
+  );
+
+const bothOutcomes = (name, reason, source) => [
+  [`invalid_${name}`, "invalid_syntax", reason, source],
+  [`incomplete_${name}`, "incomplete_syntax", reason, source],
 ];
-const twoDigitElements = dateElements.slice(1);
-const numericBases = ["dec", "hex", "oct", "bin"];
-const issueTokens = [
-  ["unexpected_value", "invalid_syntax", "unexpected_value", "val"],
-  ["unexpected_character", "invalid_syntax", "invalid_character"],
-  ["unexpected_header_key", "invalid_syntax", "unexpected_key", "key"],
+
+const lexicalIssues = new Set([
+  "unexpected_header_key",
+  "invalid_header_character",
+  "unexpected_separator",
+]);
+
+const issues = [
+  ["unexpected_value", "invalid_syntax", "unexpected_value", followedBy("val")],
+  [
+    "unexpected_character",
+    "invalid_syntax",
+    "invalid_character",
+    ($, marker) => junkRun($, seq($._unexpected_character_start, marker)),
+  ],
+  [
+    "unexpected_header_key",
+    "invalid_syntax",
+    "unexpected_key",
+    ($) => prec.dynamic(-1, $.key),
+  ],
   ["invalid_header_character", "invalid_syntax", "invalid_character"],
-  ["invalid_array_table_close", "invalid_syntax", "invalid_delimiter"],
-  ["incomplete_array_table_close", "incomplete_syntax", "invalid_delimiter"],
+  ...bothOutcomes("array_table_close", "invalid_delimiter"),
   ["missing_dotted_key", "invalid_syntax", "missing_key"],
   [
     "unexpected_time_offset",
     "invalid_syntax",
     "unexpected_time_offset",
-    "time_offset",
+    followedBy("time_offset"),
   ],
   [
     "unexpected_time_fraction",
     "invalid_syntax",
     "unexpected_time_fraction",
-    "time_secfrac",
+    followedBy("time_secfrac"),
   ],
-  ...numericBases.map((base) => [
+  ...bases.map((base) => [
     `invalid_${base}_digit`,
     "invalid_syntax",
     "invalid_number",
+    invalidDigitRun(base),
   ]),
-  ["leading_zero", "invalid_syntax", "invalid_number", "digit"],
-  ["leading_separator", "invalid_syntax", "invalid_number"],
-  ...twoDigitElements.flatMap((name) => [
-    [`invalid_${name}`, "invalid_syntax", "invalid_date_time", "digits"],
-    [`incomplete_${name}`, "incomplete_syntax", "invalid_date_time", "digits"],
-  ]),
+  [
+    "leading_zero",
+    "invalid_syntax",
+    "invalid_number",
+    ($, marker) => seq(marker, digit($)),
+  ],
+  [
+    "leading_separator",
+    "invalid_syntax",
+    "invalid_number",
+    invalidDigitRun("dec"),
+  ],
+  ...dateElements
+    .slice(1)
+    .flatMap((name) => bothOutcomes(name, "invalid_date_time", digitRun)),
   ["incomplete_number", "incomplete_syntax", "invalid_number"],
-  ["invalid_value", "invalid_syntax", "invalid_value"],
-  ["incomplete_value", "incomplete_syntax", "invalid_value"],
-  ["incomplete_numeric_value", "incomplete_syntax", "invalid_value", "digits"],
-  ["invalid_special_float", "invalid_syntax", "invalid_value"],
-  ["incomplete_special_float", "incomplete_syntax", "invalid_value"],
+  ...bothOutcomes("value", "invalid_value"),
+  ["incomplete_numeric_value", "incomplete_syntax", "invalid_value", digitRun],
+  ...bothOutcomes("special_float", "invalid_value"),
   ["invalid_key_character", "invalid_syntax", "invalid_key_character"],
   ["missing_pair_key", "invalid_syntax", "missing_key"],
-  ...missing.flatMap((name) => [
-    [`invalid_missing_${name}`, "invalid_syntax", `missing_${name}`],
-    [`incomplete_missing_${name}`, "incomplete_syntax", `missing_${name}`],
-  ]),
+  ...missingParts.flatMap((part) =>
+    bothOutcomes(`missing_${part}`, `missing_${part}`),
+  ),
   [
     "missing_ml_basic_string_close",
     "incomplete_syntax",
@@ -82,144 +143,113 @@ const issueTokens = [
     "missing_inline_table_separator",
   ],
   ["missing_newline", "invalid_syntax", "missing_newline"],
-  ["invalid_escape", "invalid_syntax", "invalid_escape"],
-  ["incomplete_escape", "incomplete_syntax", "invalid_escape"],
-  ["invalid_character", "invalid_syntax", "invalid_character"],
-  ["invalid_line_ending", "invalid_syntax", "invalid_line_ending"],
-  ["incomplete_line_ending", "incomplete_syntax", "invalid_line_ending"],
+  ...bothOutcomes("escape", "invalid_escape"),
+  [
+    "invalid_character",
+    "invalid_syntax",
+    "invalid_character",
+    (_, marker) => prec.right(repeat1(marker)),
+  ],
+  ...bothOutcomes("line_ending", "invalid_line_ending"),
   ["unexpected_separator", "invalid_syntax", "unexpected_separator"],
   ["invalid_encoding", "invalid_syntax", "invalid_encoding"],
-  ...numericBases.map((base) => [
+  ...bases.map((base) => [
     `invalid_${base}_encoding`,
     "invalid_syntax",
     "invalid_encoding",
   ]),
-  ["invalid_unicode_escape", "invalid_syntax", "invalid_escape", "escaped"],
-  ["unexpected_encoding", "invalid_syntax", "invalid_encoding"],
-  ["stray_close", "invalid_syntax", "invalid_character"],
+  [
+    "invalid_unicode_escape",
+    "invalid_syntax",
+    "invalid_escape",
+    followedBy("escaped"),
+  ],
+  [
+    "unexpected_encoding",
+    "invalid_syntax",
+    "invalid_encoding",
+    ($, marker) => seq($._unexpected_character_start, marker),
+  ],
+  [
+    "stray_close",
+    "invalid_syntax",
+    "invalid_character",
+    ($, marker) => junkRun($, marker),
+  ],
 ];
-const digit = ($, rule = $._digit) => alias(rule, $.digit);
-
-const hexdig = ($) => alias($._hexdig, $.hexdig);
-
-const times = (count, leaf) => Array(count).fill(leaf);
 
 const issueRules = Object.fromEntries(
-  issueTokens.flatMap(([token, outcome, reason, content]) => [
-    [
-      `_${token}_source`,
-      ($) => {
-        if (token === "unexpected_header_key")
-          return prec.dynamic(-1, $[content]);
-        const marker = $[`_${token}`];
-        if (token === "unexpected_character" || token === "stray_close")
-          return prec.right(
-            seq(
-              token === "stray_close"
-                ? marker
-                : seq($._unexpected_character_start, marker),
-              repeat(
-                seq(
-                  $._unexpected_character_continuation,
-                  $._unexpected_character,
-                ),
-              ),
-            ),
-          );
-        if (token === "unexpected_encoding")
-          return seq($._unexpected_character_start, marker);
-        if (token === "invalid_character") return prec.right(repeat1(marker));
-        if (["invalid_dec_digit", "leading_separator"].includes(token))
-          return seq(
-            marker,
-            repeat(
-              seq(
-                $._invalid_dec_continuation,
-                choice($._invalid_dec_digit, $._leading_separator),
-              ),
-            ),
-          );
-        const base = numericBases
-          .slice(1)
-          .find((base) => token === `invalid_${base}_digit`);
-        if (base)
-          return seq(
-            marker,
-            repeat(seq($[`_invalid_${base}_continuation`], marker)),
-          );
-        if (content === "digit") return seq(marker, digit($));
-        if (content === "digits")
-          return seq(marker, repeat1(digit($)), $._date_element_end);
-        return content ? seq(marker, $[content]) : marker;
-      },
-    ],
-    [`_${token}_outcome`, ($) => alias($[`_${token}_source`], $[reason])],
-    [`_${token}_issue`, ($) => alias($[`_${token}_outcome`], $[outcome])],
+  issues.flatMap(([name, outcome, reason, source = (_, marker) => marker]) => [
+    [`_${name}_source`, ($) => source($, $[`_${name}`])],
+    [`_${name}_outcome`, ($) => alias($[`_${name}_source`], $[reason])],
+    [`_${name}_issue`, ($) => alias($[`_${name}_outcome`], $[outcome])],
   ]),
 );
+
 const issue = ($, name) =>
   field("issue", alias($[`_${name}_issue`], $.syntax_issue));
-const absent = ($, name) =>
-  choice(
-    issue($, `invalid_missing_${name}`),
-    issue($, `incomplete_missing_${name}`),
-  );
-const lineIssue = ($) =>
-  choice(issue($, "invalid_line_ending"), issue($, "incomplete_line_ending"));
+
+const anyOutcome = ($, name) =>
+  choice(issue($, `invalid_${name}`), issue($, `incomplete_${name}`));
+
+const absent = ($, part) => anyOutcome($, `missing_${part}`);
+
+const invalidText = ($) =>
+  choice(issue($, "invalid_character"), issue($, "invalid_encoding"));
+
+const junk = ($) =>
+  choice(issue($, "unexpected_character"), issue($, "unexpected_encoding"));
+
+const lineIssue = ($) => anyOutcome($, "line_ending");
+
 const stringIssue = ($) =>
   choice(
-    issue($, "invalid_escape"),
-    issue($, "incomplete_escape"),
-    issue($, "invalid_character"),
-    issue($, "invalid_encoding"),
+    anyOutcome($, "escape"),
+    invalidText($),
     issue($, "invalid_unicode_escape"),
   );
 
-const dateElement = ($, name) =>
+const invalidDigit = ($, base) =>
   choice(
-    seq($[`_${name}_start`], digit($), digit($)),
-    issue($, `invalid_${name}`),
-    issue($, `incomplete_${name}`),
-  );
-
-const numericPart = ($, leaf, base) =>
-  choice(
-    leaf,
     issue($, `invalid_${base}_digit`),
     issue($, `invalid_${base}_encoding`),
+  );
+
+const dateElement = ($, name) =>
+  choice(seq($[`_${name}_start`], digit($), digit($)), anyOutcome($, name));
+
+const numberPart = ($, leaf, base) =>
+  choice(
+    leaf,
+    invalidDigit($, base),
     seq("_", leaf),
     issue($, "incomplete_number"),
   );
 
-const underscored = ($, leaf, base) =>
+const numberContinuation = ($, leaf, base) =>
   choice(
-    seq($[`_${base}_continuation`], numericPart($, leaf, base)),
+    seq($[`_${base}_continuation`], numberPart($, leaf, base)),
     prec.right(
       seq(
         $[`_${base}_junk_start`],
         repeat1(
-          seq($[`_${base}_junk_continuation`], numericPart($, leaf, base)),
+          seq($[`_${base}_junk_continuation`], numberPart($, leaf, base)),
         ),
         optional($._number_junk_end),
       ),
     ),
   );
 
-const separated = ($, leaf, base) => {
+const numberDigits = ($, leaf, base) => {
   const digits = seq(
     leaf,
-    repeat(underscored($, leaf, base)),
+    repeat(numberContinuation($, leaf, base)),
     optional($._number_end),
   );
   return choice(
     digits,
     seq(
-      repeat1(
-        choice(
-          issue($, `invalid_${base}_digit`),
-          issue($, `invalid_${base}_encoding`),
-        ),
-      ),
+      repeat1(invalidDigit($, base)),
       optional(seq($._numeric_prefix_digits_start, digits)),
     ),
   );
@@ -227,35 +257,33 @@ const separated = ($, leaf, base) => {
 
 const layout = ($) => optional($._ws_comment_newline);
 
-const elements = ($, element, separator, tail = []) => {
-  const junk = issue($, "stray_close");
-  const stray = seq(layout($), junk, ...tail);
-  const extra = seq(layout($), choice(junk, issue($, "unexpected_separator")));
-  const extras = repeat(extra);
+const list = ($, item, separator, itemEnd = []) => {
+  const stray = issue($, "stray_close");
+  const extra = seq(layout($), choice(stray, issue($, "unexpected_separator")));
   return choice(
     seq(
-      extras,
+      repeat(extra),
       layout($),
-      element,
+      item,
       repeat(
         choice(
-          stray,
+          seq(layout($), stray, ...itemEnd),
           seq(
             layout($),
             choice(",", issue($, `missing_${separator}`)),
-            extras,
+            repeat(extra),
             layout($),
-            element,
+            item,
           ),
         ),
       ),
-      optional(seq(layout($), ",", extras)),
+      optional(seq(layout($), ",", repeat(extra))),
     ),
     repeat1(extra),
   );
 };
 
-const header = ($, open, close, kind) =>
+const header = ($, open, close, name, ...partialClose) =>
   seq(
     open,
     optional($._ws),
@@ -270,26 +298,17 @@ const header = ($, open, close, kind) =>
       ),
     ),
     optional($._ws),
-    choice(
-      close,
-      absent($, `${kind}_close`),
-      ...(kind === "array_table"
-        ? [
-            issue($, "invalid_array_table_close"),
-            issue($, "incomplete_array_table_close"),
-          ]
-        : []),
-    ),
+    choice(close, absent($, `${name}_close`), ...partialClose),
   );
 
-const multiline = ($, delimiter, body, kind) =>
+const multiline = ($, delimiter, body, name) =>
   prec(
     1,
     seq(
       delimiter,
       optional($.newline),
       optional(body),
-      choice(delimiter, issue($, `missing_${kind}_close`)),
+      choice(delimiter, issue($, `missing_${name}_close`)),
     ),
   );
 
@@ -332,14 +351,11 @@ export default grammar({
     $._fraction_digits_start,
     $._numeric_prefix_digits_start,
     $._signed_exponent_digits_start,
-    $._dec_continuation,
-    $._hex_continuation,
-    $._oct_continuation,
-    $._bin_continuation,
-    ...numericBases.map((base) => $[`_${base}_junk_start`]),
-    ...numericBases.map((base) => $[`_${base}_junk_continuation`]),
+    ...bases.map((base) => $[`_${base}_continuation`]),
+    ...bases.map((base) => $[`_${base}_junk_start`]),
+    ...bases.map((base) => $[`_${base}_junk_continuation`]),
     $._number_junk_end,
-    ...numericBases.map((base) => $[`_invalid_${base}_continuation`]),
+    ...bases.map((base) => $[`_invalid_${base}_continuation`]),
     $._number_end,
     $._unexpected_character_start,
     $._unexpected_character_continuation,
@@ -351,13 +367,8 @@ export default grammar({
     $._comment_end,
     $._date_element_end,
     ...dateElements.map((name) => $[`_${name}_start`]),
-    ...issueTokens
-      .filter(
-        ([name]) =>
-          name !== "unexpected_separator" &&
-          name !== "invalid_header_character" &&
-          name !== "unexpected_header_key",
-      )
+    ...issues
+      .filter(([name]) => !lexicalIssues.has(name))
       .map(([name]) => $[`_${name}`]),
     $._escape_prefix,
     $._error_sentinel,
@@ -369,7 +380,6 @@ export default grammar({
   conflicts: ($) => [
     [$.key, $.dotted_key],
     [$.dotted_key],
-
     [$.array_values],
     [$.inline_table_keyvals],
   ],
@@ -398,21 +408,8 @@ export default grammar({
         seq(optional($._ws), $._comment),
         seq(
           optional($._ws),
-          choice(
-            $.keyval,
-            $.table,
-            issue($, "unexpected_character"),
-            issue($, "unexpected_encoding"),
-          ),
-          repeat(
-            seq(
-              optional($._ws),
-              choice(
-                issue($, "unexpected_character"),
-                issue($, "unexpected_encoding"),
-              ),
-            ),
-          ),
+          choice($.keyval, $.table, junk($)),
+          repeat(seq(optional($._ws), junk($))),
           optional($._ws),
           optional($._comment),
         ),
@@ -428,13 +425,7 @@ export default grammar({
     _broken_comment: ($) =>
       seq(
         $._broken_comment_start,
-        repeat1(
-          choice(
-            $.comment_text,
-            issue($, "invalid_character"),
-            issue($, "invalid_encoding"),
-          ),
-        ),
+        repeat1(choice($.comment_text, invalidText($))),
         $._comment_end,
       ),
     comment_text: () => /[\t\x20-\x7e\u0080-\u{d7ff}\u{e000}-\u{10ffff}]+/u,
@@ -476,18 +467,8 @@ export default grammar({
       ),
     val: ($) =>
       choice(
-        seq(
-          repeat(
-            choice(issue($, "invalid_character"), issue($, "invalid_encoding")),
-          ),
-          $._val,
-          repeat(
-            choice(issue($, "invalid_character"), issue($, "invalid_encoding")),
-          ),
-        ),
-        repeat1(
-          choice(issue($, "invalid_character"), issue($, "invalid_encoding")),
-        ),
+        seq(repeat(invalidText($)), $._val, repeat(invalidText($))),
+        repeat1(invalidText($)),
       ),
     _val: ($) =>
       choice(
@@ -498,8 +479,7 @@ export default grammar({
         seq($._date_start, $.date_time),
         seq($._float_start, $.float),
         seq($._integer_start, $.integer),
-        issue($, "invalid_value"),
-        issue($, "incomplete_value"),
+        anyOutcome($, "value"),
         issue($, "incomplete_numeric_value"),
       ),
     string: ($) =>
@@ -566,13 +546,7 @@ export default grammar({
     literal_string: ($) =>
       seq(
         "'",
-        repeat(
-          choice(
-            $.literal_char,
-            issue($, "invalid_character"),
-            issue($, "invalid_encoding"),
-          ),
-        ),
+        repeat(choice($.literal_char, invalidText($))),
         choice("'", absent($, "literal_string_close")),
       ),
     literal_char: () =>
@@ -581,12 +555,7 @@ export default grammar({
       multiline($, "'''", $.ml_literal_body, "ml_literal_string"),
     ml_literal_body: ($) =>
       multilineBody(
-        choice(
-          $.mll_content,
-          issue($, "invalid_character"),
-          issue($, "invalid_encoding"),
-          lineIssue($),
-        ),
+        choice($.mll_content, invalidText($), lineIssue($)),
         $.mll_quotes,
       ),
     mll_content: ($) => choice($.literal_char, $.newline),
@@ -620,30 +589,27 @@ export default grammar({
           seq(
             digit($, /0/),
             $._dec_continuation,
-            choice(
-              issue($, "invalid_dec_digit"),
-              issue($, "invalid_dec_encoding"),
-            ),
-            repeat(underscored($, digit($), "dec")),
+            invalidDigit($, "dec"),
+            repeat(numberContinuation($, digit($), "dec")),
           ),
           seq(
             issue($, "leading_zero"),
-            repeat1(underscored($, digit($), "dec")),
+            repeat1(numberContinuation($, digit($), "dec")),
           ),
           seq(
             alias($._digit1_9, $.digit1_9),
-            repeat1(underscored($, digit($), "dec")),
+            repeat1(numberContinuation($, digit($), "dec")),
           ),
         ),
         optional($._number_end),
       ),
     hex_int: ($) =>
-      seq("0x", choice(separated($, hexdig($), "hex"), absent($, "digits"))),
+      seq("0x", choice(numberDigits($, hexdig($), "hex"), absent($, "digits"))),
     oct_int: ($) =>
       seq(
         "0o",
         choice(
-          separated($, alias($._digit0_7, $.digit0_7), "oct"),
+          numberDigits($, alias($._digit0_7, $.digit0_7), "oct"),
           absent($, "digits"),
         ),
       ),
@@ -651,7 +617,7 @@ export default grammar({
       seq(
         "0b",
         choice(
-          separated($, alias($._digit0_1, $.digit0_1), "bin"),
+          numberDigits($, alias($._digit0_1, $.digit0_1), "bin"),
           absent($, "digits"),
         ),
       ),
@@ -678,7 +644,7 @@ export default grammar({
           absent($, "digits"),
         ),
       ),
-    zero_prefixable_int: ($) => separated($, digit($), "dec"),
+    zero_prefixable_int: ($) => numberDigits($, digit($), "dec"),
     exp: ($) =>
       seq(
         $._exponent_start,
@@ -699,12 +665,7 @@ export default grammar({
     special_float: ($) =>
       seq(
         optional(choice("-", "+")),
-        choice(
-          "inf",
-          "nan",
-          issue($, "invalid_special_float"),
-          issue($, "incomplete_special_float"),
-        ),
+        choice("inf", "nan", anyOutcome($, "special_float")),
       ),
     boolean: () => choice("true", "false"),
     date_time: ($) =>
@@ -784,7 +745,7 @@ export default grammar({
         layout($),
         choice(alias($._array_close, "]"), absent($, "array_close")),
       ),
-    array_values: ($) => elements($, $.val, "array_separator"),
+    array_values: ($) => list($, $.val, "array_separator"),
     _ws_comment_newline: ($) =>
       repeat1(
         choice(
@@ -807,24 +768,16 @@ export default grammar({
         ),
       ),
     inline_table_keyvals: ($) => {
-      // An unmatched closing after an item continues that item's junk.
-      const tail = [
-        repeat(
-          choice(
-            issue($, "unexpected_character"),
-            issue($, "unexpected_encoding"),
-          ),
-        ),
-        optional($._item_end),
-      ];
-      return elements(
+      const itemEnd = [repeat(junk($)), optional($._item_end)];
+      return list(
         $,
-        seq(choice($.keyval, issue($, "unexpected_value")), ...tail),
+        seq(choice($.keyval, issue($, "unexpected_value")), ...itemEnd),
         "inline_table_separator",
-        tail,
+        itemEnd,
       );
     },
-    array_table: ($) => header($, "[[", "]]", "array_table"),
+    array_table: ($) =>
+      header($, "[[", "]]", "array_table", anyOutcome($, "array_table_close")),
     _unexpected_separator: () => /,/,
     _invalid_header_character: () => token(/[,{}]+/),
     ...issueRules,

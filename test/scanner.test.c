@@ -67,37 +67,46 @@ init_mock_lexer(struct MockLexer *mock, const int32_t *input, size_t length) {
 }
 
 static void test_lifecycle_and_serialization(void) {
-  void *scanner = tree_sitter_toml_external_scanner_create();
+  const unsigned char untouched_byte = 0x5a;
+  struct Scanner *scanner = tree_sitter_toml_external_scanner_create();
   assert(scanner != NULL);
   char buffer[TREE_SITTER_SERIALIZATION_BUFFER_SIZE];
-  memset(buffer, 0x5a, sizeof(buffer));
+  memset(buffer, untouched_byte, sizeof(buffer));
   assert(tree_sitter_toml_external_scanner_serialize(scanner, buffer) == 0);
   for (size_t index = 0; index < sizeof(buffer); index += 1) {
-    assert(buffer[index] == 0x5a);
+    assert(buffer[index] == untouched_byte);
   }
   tree_sitter_toml_external_scanner_deserialize(scanner, NULL, 0);
-  ((struct Scanner *)scanner)->rejected_key = REJECTED_KEY;
-  ((struct Scanner *)scanner)->word_continuation = true;
-  ((struct Scanner *)scanner)->arrays = UINT32_C(0x12345678);
-  ((struct Scanner *)scanner)->inline_tables = UINT32_C(0x9abcdef0);
-  assert(tree_sitter_toml_external_scanner_serialize(scanner, buffer) == 9);
+  scanner->rejected_key = REJECTED_KEY;
+  scanner->word_continuation = true;
+  scanner->arrays = UINT32_C(0x12345678);
+  scanner->inline_tables = UINT32_C(0x9abcdef0);
   const unsigned char expected[] =
     {5, 0x78, 0x56, 0x34, 0x12, 0xf0, 0xde, 0xbc, 0x9a};
+  assert(
+    tree_sitter_toml_external_scanner_serialize(scanner, buffer) ==
+    sizeof(expected)
+  );
   assert(memcmp(buffer, expected, sizeof(expected)) == 0);
   tree_sitter_toml_external_scanner_deserialize(scanner, NULL, 0);
-  assert(((struct Scanner *)scanner)->rejected_key == NO_REJECTED_KEY);
-  assert(!((struct Scanner *)scanner)->word_continuation);
-  assert(((struct Scanner *)scanner)->arrays == 0);
-  assert(((struct Scanner *)scanner)->inline_tables == 0);
-  tree_sitter_toml_external_scanner_deserialize(scanner, buffer, 9);
-  assert(((struct Scanner *)scanner)->rejected_key == REJECTED_KEY);
-  assert(((struct Scanner *)scanner)->word_continuation);
-  assert(((struct Scanner *)scanner)->arrays == UINT32_C(0x12345678));
-  assert(((struct Scanner *)scanner)->inline_tables == UINT32_C(0x9abcdef0));
+  assert(scanner->rejected_key == NO_REJECTED_KEY);
+  assert(!scanner->word_continuation);
+  assert(scanner->arrays == 0);
+  assert(scanner->inline_tables == 0);
+  tree_sitter_toml_external_scanner_deserialize(
+    scanner,
+    buffer,
+    sizeof(expected)
+  );
+  assert(scanner->rejected_key == REJECTED_KEY);
+  assert(scanner->word_continuation);
+  assert(scanner->arrays == UINT32_C(0x12345678));
+  assert(scanner->inline_tables == UINT32_C(0x9abcdef0));
   tree_sitter_toml_external_scanner_destroy(scanner);
 }
 
 static void test_quote_runs_preserve_content_and_closing_delimiters(void) {
+  enum { MAX_QUOTE_RUN = 7 };
   const struct {
     size_t length;
     bool accepted;
@@ -108,7 +117,7 @@ static void test_quote_runs_preserve_content_and_closing_delimiters(void) {
     {4, true},
     {5, true},
     {6, true},
-    {7, true},
+    {MAX_QUOTE_RUN, true},
   };
   for (unsigned symbol = MLB_QUOTE; symbol <= MLL_QUOTE; symbol += 1) {
     bool valid_symbols[TOKEN_COUNT] = {false};
@@ -116,7 +125,7 @@ static void test_quote_runs_preserve_content_and_closing_delimiters(void) {
     for (
       size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); index += 1
     ) {
-      int32_t input[8];
+      int32_t input[MAX_QUOTE_RUN + 1];
       for (size_t offset = 0; offset < cases[index].length; offset += 1) {
         input[offset] = symbol == MLB_QUOTE ? '"' : '\'';
       }
@@ -142,9 +151,9 @@ static void test_quote_runs_preserve_content_and_closing_delimiters(void) {
 
 static void test_disabled_scans_do_not_consume_source(void) {
   const int32_t input[] = {'"', 'x'};
-  const bool valid_symbols[TOKEN_COUNT] = {false, false};
+  const bool valid_symbols[TOKEN_COUNT] = {false};
   struct MockLexer mock;
-  init_mock_lexer(&mock, input, 2);
+  init_mock_lexer(&mock, input, sizeof(input) / sizeof(input[0]));
   assert(!tree_sitter_toml_external_scanner_scan(
     &(struct Scanner){0},
     &mock.lexer,
@@ -155,7 +164,10 @@ static void test_disabled_scans_do_not_consume_source(void) {
 }
 
 static void test_quote_tokens_select_the_matching_delimiter(void) {
-  const bool valid_symbols[TOKEN_COUNT] = {true, true};
+  const bool valid_symbols[TOKEN_COUNT] = {
+    [MLB_QUOTE] = true,
+    [MLL_QUOTE] = true
+  };
   const struct {
     int32_t quote;
     unsigned symbol;
@@ -163,7 +175,7 @@ static void test_quote_tokens_select_the_matching_delimiter(void) {
   for (size_t index = 0; index < sizeof(cases) / sizeof(cases[0]); index += 1) {
     const int32_t input[] = {cases[index].quote, 'x'};
     struct MockLexer mock;
-    init_mock_lexer(&mock, input, 2);
+    init_mock_lexer(&mock, input, sizeof(input) / sizeof(input[0]));
     assert(tree_sitter_toml_external_scanner_scan(
       &(struct Scanner){0},
       &mock.lexer,
@@ -207,11 +219,10 @@ static void test_unrelated_characters_and_eof_are_not_quote_content(void) {
 
 static void test_recovery_sentinel_does_not_emit_issue_tokens(void) {
   bool valid[TOKEN_COUNT];
-  for (unsigned index = 0; index < TOKEN_COUNT; index++)
-    valid[index] = true;
+  for (unsigned index = 0; index < TOKEN_COUNT; index++) valid[index] = true;
   const int32_t input[] = {'"', 'x'};
   struct MockLexer mock;
-  init_mock_lexer(&mock, input, 2);
+  init_mock_lexer(&mock, input, sizeof(input) / sizeof(input[0]));
   assert(!tree_sitter_toml_external_scanner_scan(
     &(struct Scanner){0},
     &mock.lexer,
@@ -234,7 +245,7 @@ static void test_missing_value_distinguishes_eof_from_line_boundary(void) {
   ));
   assert(mock.lexer.result_symbol == INCOMPLETE_MISSING_VALUE);
   assert(mock.mark == 0);
-  init_mock_lexer(&mock, input, 1);
+  init_mock_lexer(&mock, input, sizeof(input) / sizeof(input[0]));
   assert(tree_sitter_toml_external_scanner_scan(
     &(struct Scanner){0},
     &mock.lexer,
@@ -249,7 +260,7 @@ static void test_nul_is_a_character_and_eof_is_not_consumed(void) {
   valid[INVALID_CHARACTER] = true;
   const int32_t input[] = {0};
   struct MockLexer mock;
-  init_mock_lexer(&mock, input, 1);
+  init_mock_lexer(&mock, input, sizeof(input) / sizeof(input[0]));
   assert(tree_sitter_toml_external_scanner_scan(
     &(struct Scanner){0},
     &mock.lexer,
@@ -267,8 +278,9 @@ static void test_nul_is_a_character_and_eof_is_not_consumed(void) {
 }
 
 static void test_scalar_markers_preserve_source_and_real_terminators(void) {
+  enum { MAX_SCALAR_CHARACTERS = 10 };
   const struct {
-    int32_t input[12];
+    int32_t input[MAX_SCALAR_CHARACTERS];
     size_t length;
     enum TokenType token;
     size_t end;
@@ -305,7 +317,8 @@ static void test_scalar_markers_preserve_source_and_real_terminators(void) {
 }
 
 static void test_long_date_elements_do_not_overflow_lookahead(void) {
-  int32_t input[4096];
+  enum { DIGIT_COUNT = 4096 };
+  int32_t input[DIGIT_COUNT];
   for (size_t index = 0; index < sizeof(input) / sizeof(input[0]); index++)
     input[index] = '9';
   bool valid[TOKEN_COUNT] = {false};
@@ -324,8 +337,9 @@ static void test_long_date_elements_do_not_overflow_lookahead(void) {
 }
 
 static void test_date_end_and_space_markers_are_zero_width(void) {
+  enum { MAX_LOOKAHEAD_CHARACTERS = 4 };
   const struct {
-    int32_t input[4];
+    int32_t input[MAX_LOOKAHEAD_CHARACTERS];
     size_t length;
     bool accepted;
     enum TokenType token;
@@ -361,8 +375,9 @@ static void test_date_end_and_space_markers_are_zero_width(void) {
 }
 
 static void test_number_end_requires_an_adjacent_assignment(void) {
+  enum { MAX_ASSIGNMENT_CHARACTERS = 4 };
   const struct {
-    int32_t input[4];
+    int32_t input[MAX_ASSIGNMENT_CHARACTERS];
     size_t length;
     bool expression;
     enum TokenType token;
@@ -391,8 +406,9 @@ static void test_number_end_requires_an_adjacent_assignment(void) {
 }
 
 static void test_exponent_start_yields_to_an_adjacent_assignment(void) {
+  enum { MAX_ASSIGNMENT_CHARACTERS = 4 };
   const struct {
-    int32_t input[4];
+    int32_t input[MAX_ASSIGNMENT_CHARACTERS];
     size_t length;
     enum TokenType token;
   } cases[] = {
@@ -417,12 +433,15 @@ static void test_exponent_start_yields_to_an_adjacent_assignment(void) {
 
 static void
 assert_rejected_chain_is_linear(const int32_t *segment, size_t size) {
-  int32_t input[640];
+  enum { INPUT_CAPACITY = 640, ADVANCES_PER_CHARACTER_LIMIT = 4 };
+  int32_t input[INPUT_CAPACITY];
+  const int32_t separator[] = {' ', '.'};
+  const size_t separator_length = sizeof(separator) / sizeof(separator[0]);
   size_t length = 0;
-  while (length + size + 2 <= sizeof(input) / sizeof(input[0])) {
+  while (length + size + separator_length <= INPUT_CAPACITY) {
     if (length > 0) {
-      input[length++] = ' ';
-      input[length++] = '.';
+      for (size_t index = 0; index < separator_length; index++)
+        input[length++] = separator[index];
     }
     for (size_t index = 0; index < size; index++)
       input[length++] = segment[index];
@@ -445,8 +464,7 @@ assert_rejected_chain_is_linear(const int32_t *segment, size_t size) {
       tree_sitter_toml_external_scanner_scan(&scanner, &mock.lexer, marker)
     );
     assert(
-      mock.lexer.result_symbol ==
-      UNEXPECTED_CHARACTER_START ||
+      mock.lexer.result_symbol == UNEXPECTED_CHARACTER_START ||
       mock.lexer.result_symbol == UNEXPECTED_CHARACTER_CONTINUATION
     );
     advances += mock.advances;
@@ -462,7 +480,7 @@ assert_rejected_chain_is_linear(const int32_t *segment, size_t size) {
     advances += mock.advances;
     position = mock.mark;
   }
-  assert(advances < length * 4);
+  assert(advances < length * ADVANCES_PER_CHARACTER_LIMIT);
 }
 
 static void test_rejected_dotted_keys_do_not_repeat_suffix_lookahead(void) {
@@ -474,7 +492,6 @@ static void test_rejected_dotted_keys_do_not_repeat_suffix_lookahead(void) {
 
 int main(void) {
   test_lifecycle_and_serialization();
-  test_rejected_dotted_keys_do_not_repeat_suffix_lookahead();
   test_quote_runs_preserve_content_and_closing_delimiters();
   test_disabled_scans_do_not_consume_source();
   test_quote_tokens_select_the_matching_delimiter();
@@ -487,5 +504,6 @@ int main(void) {
   test_date_end_and_space_markers_are_zero_width();
   test_number_end_requires_an_adjacent_assignment();
   test_exponent_start_yields_to_an_adjacent_assignment();
+  test_rejected_dotted_keys_do_not_repeat_suffix_lookahead();
   return 0;
 }

@@ -183,30 +183,35 @@
                   "name": "table"
                 },
                 {
-                  "type": "FIELD",
-                  "name": "issue",
-                  "content": {
-                    "type": "ALIAS",
-                    "content": {
-                      "type": "SYMBOL",
-                      "name": "_unexpected_character_issue"
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "FIELD",
+                      "name": "issue",
+                      "content": {
+                        "type": "ALIAS",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "_unexpected_character_issue"
+                        },
+                        "named": true,
+                        "value": "syntax_issue"
+                      }
                     },
-                    "named": true,
-                    "value": "syntax_issue"
-                  }
-                },
-                {
-                  "type": "FIELD",
-                  "name": "issue",
-                  "content": {
-                    "type": "ALIAS",
-                    "content": {
-                      "type": "SYMBOL",
-                      "name": "_unexpected_encoding_issue"
-                    },
-                    "named": true,
-                    "value": "syntax_issue"
-                  }
+                    {
+                      "type": "FIELD",
+                      "name": "issue",
+                      "content": {
+                        "type": "ALIAS",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "_unexpected_encoding_issue"
+                        },
+                        "named": true,
+                        "value": "syntax_issue"
+                      }
+                    }
+                  ]
                 }
               ]
             },
@@ -342,30 +347,35 @@
                 "name": "comment_text"
               },
               {
-                "type": "FIELD",
-                "name": "issue",
-                "content": {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_invalid_character_issue"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "FIELD",
+                    "name": "issue",
+                    "content": {
+                      "type": "ALIAS",
+                      "content": {
+                        "type": "SYMBOL",
+                        "name": "_invalid_character_issue"
+                      },
+                      "named": true,
+                      "value": "syntax_issue"
+                    }
                   },
-                  "named": true,
-                  "value": "syntax_issue"
-                }
-              },
-              {
-                "type": "FIELD",
-                "name": "issue",
-                "content": {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_invalid_encoding_issue"
-                  },
-                  "named": true,
-                  "value": "syntax_issue"
-                }
+                  {
+                    "type": "FIELD",
+                    "name": "issue",
+                    "content": {
+                      "type": "ALIAS",
+                      "content": {
+                        "type": "SYMBOL",
+                        "name": "_invalid_encoding_issue"
+                      },
+                      "named": true,
+                      "value": "syntax_issue"
+                    }
+                  }
+                ]
               }
             ]
           }
@@ -884,30 +894,35 @@
           ]
         },
         {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_invalid_value_issue"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_invalid_value_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
             },
-            "named": true,
-            "value": "syntax_issue"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_incomplete_value_issue"
-            },
-            "named": true,
-            "value": "syntax_issue"
-          }
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_incomplete_value_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
+            }
+          ]
         },
         {
           "type": "FIELD",
@@ -965,56 +980,66 @@
                 "type": "CHOICE",
                 "members": [
                   {
-                    "type": "FIELD",
-                    "name": "issue",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_invalid_escape_issue"
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "FIELD",
+                        "name": "issue",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_invalid_escape_issue"
+                          },
+                          "named": true,
+                          "value": "syntax_issue"
+                        }
                       },
-                      "named": true,
-                      "value": "syntax_issue"
-                    }
+                      {
+                        "type": "FIELD",
+                        "name": "issue",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_incomplete_escape_issue"
+                          },
+                          "named": true,
+                          "value": "syntax_issue"
+                        }
+                      }
+                    ]
                   },
                   {
-                    "type": "FIELD",
-                    "name": "issue",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_incomplete_escape_issue"
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "FIELD",
+                        "name": "issue",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_invalid_character_issue"
+                          },
+                          "named": true,
+                          "value": "syntax_issue"
+                        }
                       },
-                      "named": true,
-                      "value": "syntax_issue"
-                    }
-                  },
-                  {
-                    "type": "FIELD",
-                    "name": "issue",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_invalid_character_issue"
-                      },
-                      "named": true,
-                      "value": "syntax_issue"
-                    }
-                  },
-                  {
-                    "type": "FIELD",
-                    "name": "issue",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_invalid_encoding_issue"
-                      },
-                      "named": true,
-                      "value": "syntax_issue"
-                    }
+                      {
+                        "type": "FIELD",
+                        "name": "issue",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_invalid_encoding_issue"
+                          },
+                          "named": true,
+                          "value": "syntax_issue"
+                        }
+                      }
+                    ]
                   },
                   {
                     "type": "FIELD",
@@ -1467,56 +1492,66 @@
                     "type": "CHOICE",
                     "members": [
                       {
-                        "type": "FIELD",
-                        "name": "issue",
-                        "content": {
-                          "type": "ALIAS",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_invalid_escape_issue"
+                        "type": "CHOICE",
+                        "members": [
+                          {
+                            "type": "FIELD",
+                            "name": "issue",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_invalid_escape_issue"
+                              },
+                              "named": true,
+                              "value": "syntax_issue"
+                            }
                           },
-                          "named": true,
-                          "value": "syntax_issue"
-                        }
+                          {
+                            "type": "FIELD",
+                            "name": "issue",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_incomplete_escape_issue"
+                              },
+                              "named": true,
+                              "value": "syntax_issue"
+                            }
+                          }
+                        ]
                       },
                       {
-                        "type": "FIELD",
-                        "name": "issue",
-                        "content": {
-                          "type": "ALIAS",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_incomplete_escape_issue"
+                        "type": "CHOICE",
+                        "members": [
+                          {
+                            "type": "FIELD",
+                            "name": "issue",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_invalid_character_issue"
+                              },
+                              "named": true,
+                              "value": "syntax_issue"
+                            }
                           },
-                          "named": true,
-                          "value": "syntax_issue"
-                        }
-                      },
-                      {
-                        "type": "FIELD",
-                        "name": "issue",
-                        "content": {
-                          "type": "ALIAS",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_invalid_character_issue"
-                          },
-                          "named": true,
-                          "value": "syntax_issue"
-                        }
-                      },
-                      {
-                        "type": "FIELD",
-                        "name": "issue",
-                        "content": {
-                          "type": "ALIAS",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_invalid_encoding_issue"
-                          },
-                          "named": true,
-                          "value": "syntax_issue"
-                        }
+                          {
+                            "type": "FIELD",
+                            "name": "issue",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_invalid_encoding_issue"
+                              },
+                              "named": true,
+                              "value": "syntax_issue"
+                            }
+                          }
+                        ]
                       },
                       {
                         "type": "FIELD",
@@ -1589,56 +1624,66 @@
                           "type": "CHOICE",
                           "members": [
                             {
-                              "type": "FIELD",
-                              "name": "issue",
-                              "content": {
-                                "type": "ALIAS",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "_invalid_escape_issue"
+                              "type": "CHOICE",
+                              "members": [
+                                {
+                                  "type": "FIELD",
+                                  "name": "issue",
+                                  "content": {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_invalid_escape_issue"
+                                    },
+                                    "named": true,
+                                    "value": "syntax_issue"
+                                  }
                                 },
-                                "named": true,
-                                "value": "syntax_issue"
-                              }
+                                {
+                                  "type": "FIELD",
+                                  "name": "issue",
+                                  "content": {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_incomplete_escape_issue"
+                                    },
+                                    "named": true,
+                                    "value": "syntax_issue"
+                                  }
+                                }
+                              ]
                             },
                             {
-                              "type": "FIELD",
-                              "name": "issue",
-                              "content": {
-                                "type": "ALIAS",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "_incomplete_escape_issue"
+                              "type": "CHOICE",
+                              "members": [
+                                {
+                                  "type": "FIELD",
+                                  "name": "issue",
+                                  "content": {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_invalid_character_issue"
+                                    },
+                                    "named": true,
+                                    "value": "syntax_issue"
+                                  }
                                 },
-                                "named": true,
-                                "value": "syntax_issue"
-                              }
-                            },
-                            {
-                              "type": "FIELD",
-                              "name": "issue",
-                              "content": {
-                                "type": "ALIAS",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "_invalid_character_issue"
-                                },
-                                "named": true,
-                                "value": "syntax_issue"
-                              }
-                            },
-                            {
-                              "type": "FIELD",
-                              "name": "issue",
-                              "content": {
-                                "type": "ALIAS",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "_invalid_encoding_issue"
-                                },
-                                "named": true,
-                                "value": "syntax_issue"
-                              }
+                                {
+                                  "type": "FIELD",
+                                  "name": "issue",
+                                  "content": {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_invalid_encoding_issue"
+                                    },
+                                    "named": true,
+                                    "value": "syntax_issue"
+                                  }
+                                }
+                              ]
                             },
                             {
                               "type": "FIELD",
@@ -1731,56 +1776,66 @@
                           "type": "CHOICE",
                           "members": [
                             {
-                              "type": "FIELD",
-                              "name": "issue",
-                              "content": {
-                                "type": "ALIAS",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "_invalid_escape_issue"
+                              "type": "CHOICE",
+                              "members": [
+                                {
+                                  "type": "FIELD",
+                                  "name": "issue",
+                                  "content": {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_invalid_escape_issue"
+                                    },
+                                    "named": true,
+                                    "value": "syntax_issue"
+                                  }
                                 },
-                                "named": true,
-                                "value": "syntax_issue"
-                              }
+                                {
+                                  "type": "FIELD",
+                                  "name": "issue",
+                                  "content": {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_incomplete_escape_issue"
+                                    },
+                                    "named": true,
+                                    "value": "syntax_issue"
+                                  }
+                                }
+                              ]
                             },
                             {
-                              "type": "FIELD",
-                              "name": "issue",
-                              "content": {
-                                "type": "ALIAS",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "_incomplete_escape_issue"
+                              "type": "CHOICE",
+                              "members": [
+                                {
+                                  "type": "FIELD",
+                                  "name": "issue",
+                                  "content": {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_invalid_character_issue"
+                                    },
+                                    "named": true,
+                                    "value": "syntax_issue"
+                                  }
                                 },
-                                "named": true,
-                                "value": "syntax_issue"
-                              }
-                            },
-                            {
-                              "type": "FIELD",
-                              "name": "issue",
-                              "content": {
-                                "type": "ALIAS",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "_invalid_character_issue"
-                                },
-                                "named": true,
-                                "value": "syntax_issue"
-                              }
-                            },
-                            {
-                              "type": "FIELD",
-                              "name": "issue",
-                              "content": {
-                                "type": "ALIAS",
-                                "content": {
-                                  "type": "SYMBOL",
-                                  "name": "_invalid_encoding_issue"
-                                },
-                                "named": true,
-                                "value": "syntax_issue"
-                              }
+                                {
+                                  "type": "FIELD",
+                                  "name": "issue",
+                                  "content": {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_invalid_encoding_issue"
+                                    },
+                                    "named": true,
+                                    "value": "syntax_issue"
+                                  }
+                                }
+                              ]
                             },
                             {
                               "type": "FIELD",
@@ -1854,56 +1909,66 @@
                         "type": "CHOICE",
                         "members": [
                           {
-                            "type": "FIELD",
-                            "name": "issue",
-                            "content": {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_invalid_escape_issue"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "FIELD",
+                                "name": "issue",
+                                "content": {
+                                  "type": "ALIAS",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_invalid_escape_issue"
+                                  },
+                                  "named": true,
+                                  "value": "syntax_issue"
+                                }
                               },
-                              "named": true,
-                              "value": "syntax_issue"
-                            }
+                              {
+                                "type": "FIELD",
+                                "name": "issue",
+                                "content": {
+                                  "type": "ALIAS",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_incomplete_escape_issue"
+                                  },
+                                  "named": true,
+                                  "value": "syntax_issue"
+                                }
+                              }
+                            ]
                           },
                           {
-                            "type": "FIELD",
-                            "name": "issue",
-                            "content": {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_incomplete_escape_issue"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "FIELD",
+                                "name": "issue",
+                                "content": {
+                                  "type": "ALIAS",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_invalid_character_issue"
+                                  },
+                                  "named": true,
+                                  "value": "syntax_issue"
+                                }
                               },
-                              "named": true,
-                              "value": "syntax_issue"
-                            }
-                          },
-                          {
-                            "type": "FIELD",
-                            "name": "issue",
-                            "content": {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_invalid_character_issue"
-                              },
-                              "named": true,
-                              "value": "syntax_issue"
-                            }
-                          },
-                          {
-                            "type": "FIELD",
-                            "name": "issue",
-                            "content": {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_invalid_encoding_issue"
-                              },
-                              "named": true,
-                              "value": "syntax_issue"
-                            }
+                              {
+                                "type": "FIELD",
+                                "name": "issue",
+                                "content": {
+                                  "type": "ALIAS",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_invalid_encoding_issue"
+                                  },
+                                  "named": true,
+                                  "value": "syntax_issue"
+                                }
+                              }
+                            ]
                           },
                           {
                             "type": "FIELD",
@@ -2073,30 +2138,35 @@
                 "name": "literal_char"
               },
               {
-                "type": "FIELD",
-                "name": "issue",
-                "content": {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_invalid_character_issue"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "FIELD",
+                    "name": "issue",
+                    "content": {
+                      "type": "ALIAS",
+                      "content": {
+                        "type": "SYMBOL",
+                        "name": "_invalid_character_issue"
+                      },
+                      "named": true,
+                      "value": "syntax_issue"
+                    }
                   },
-                  "named": true,
-                  "value": "syntax_issue"
-                }
-              },
-              {
-                "type": "FIELD",
-                "name": "issue",
-                "content": {
-                  "type": "ALIAS",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_invalid_encoding_issue"
-                  },
-                  "named": true,
-                  "value": "syntax_issue"
-                }
+                  {
+                    "type": "FIELD",
+                    "name": "issue",
+                    "content": {
+                      "type": "ALIAS",
+                      "content": {
+                        "type": "SYMBOL",
+                        "name": "_invalid_encoding_issue"
+                      },
+                      "named": true,
+                      "value": "syntax_issue"
+                    }
+                  }
+                ]
               }
             ]
           }
@@ -2223,30 +2293,35 @@
                     "name": "mll_content"
                   },
                   {
-                    "type": "FIELD",
-                    "name": "issue",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_invalid_character_issue"
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "FIELD",
+                        "name": "issue",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_invalid_character_issue"
+                          },
+                          "named": true,
+                          "value": "syntax_issue"
+                        }
                       },
-                      "named": true,
-                      "value": "syntax_issue"
-                    }
-                  },
-                  {
-                    "type": "FIELD",
-                    "name": "issue",
-                    "content": {
-                      "type": "ALIAS",
-                      "content": {
-                        "type": "SYMBOL",
-                        "name": "_invalid_encoding_issue"
-                      },
-                      "named": true,
-                      "value": "syntax_issue"
-                    }
+                      {
+                        "type": "FIELD",
+                        "name": "issue",
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_invalid_encoding_issue"
+                          },
+                          "named": true,
+                          "value": "syntax_issue"
+                        }
+                      }
+                    ]
                   },
                   {
                     "type": "CHOICE",
@@ -2301,30 +2376,35 @@
                           "name": "mll_content"
                         },
                         {
-                          "type": "FIELD",
-                          "name": "issue",
-                          "content": {
-                            "type": "ALIAS",
-                            "content": {
-                              "type": "SYMBOL",
-                              "name": "_invalid_character_issue"
+                          "type": "CHOICE",
+                          "members": [
+                            {
+                              "type": "FIELD",
+                              "name": "issue",
+                              "content": {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_invalid_character_issue"
+                                },
+                                "named": true,
+                                "value": "syntax_issue"
+                              }
                             },
-                            "named": true,
-                            "value": "syntax_issue"
-                          }
-                        },
-                        {
-                          "type": "FIELD",
-                          "name": "issue",
-                          "content": {
-                            "type": "ALIAS",
-                            "content": {
-                              "type": "SYMBOL",
-                              "name": "_invalid_encoding_issue"
-                            },
-                            "named": true,
-                            "value": "syntax_issue"
-                          }
+                            {
+                              "type": "FIELD",
+                              "name": "issue",
+                              "content": {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_invalid_encoding_issue"
+                                },
+                                "named": true,
+                                "value": "syntax_issue"
+                              }
+                            }
+                          ]
                         },
                         {
                           "type": "CHOICE",
@@ -2399,30 +2479,35 @@
                           "name": "mll_content"
                         },
                         {
-                          "type": "FIELD",
-                          "name": "issue",
-                          "content": {
-                            "type": "ALIAS",
-                            "content": {
-                              "type": "SYMBOL",
-                              "name": "_invalid_character_issue"
+                          "type": "CHOICE",
+                          "members": [
+                            {
+                              "type": "FIELD",
+                              "name": "issue",
+                              "content": {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_invalid_character_issue"
+                                },
+                                "named": true,
+                                "value": "syntax_issue"
+                              }
                             },
-                            "named": true,
-                            "value": "syntax_issue"
-                          }
-                        },
-                        {
-                          "type": "FIELD",
-                          "name": "issue",
-                          "content": {
-                            "type": "ALIAS",
-                            "content": {
-                              "type": "SYMBOL",
-                              "name": "_invalid_encoding_issue"
-                            },
-                            "named": true,
-                            "value": "syntax_issue"
-                          }
+                            {
+                              "type": "FIELD",
+                              "name": "issue",
+                              "content": {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_invalid_encoding_issue"
+                                },
+                                "named": true,
+                                "value": "syntax_issue"
+                              }
+                            }
+                          ]
                         },
                         {
                           "type": "CHOICE",
@@ -2478,30 +2563,35 @@
                         "name": "mll_content"
                       },
                       {
-                        "type": "FIELD",
-                        "name": "issue",
-                        "content": {
-                          "type": "ALIAS",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_invalid_character_issue"
+                        "type": "CHOICE",
+                        "members": [
+                          {
+                            "type": "FIELD",
+                            "name": "issue",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_invalid_character_issue"
+                              },
+                              "named": true,
+                              "value": "syntax_issue"
+                            }
                           },
-                          "named": true,
-                          "value": "syntax_issue"
-                        }
-                      },
-                      {
-                        "type": "FIELD",
-                        "name": "issue",
-                        "content": {
-                          "type": "ALIAS",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_invalid_encoding_issue"
-                          },
-                          "named": true,
-                          "value": "syntax_issue"
-                        }
+                          {
+                            "type": "FIELD",
+                            "name": "issue",
+                            "content": {
+                              "type": "ALIAS",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_invalid_encoding_issue"
+                              },
+                              "named": true,
+                              "value": "syntax_issue"
+                            }
+                          }
+                        ]
                       },
                       {
                         "type": "CHOICE",
@@ -2829,30 +2919,35 @@
                                 "value": "digit"
                               },
                               {
-                                "type": "FIELD",
-                                "name": "issue",
-                                "content": {
-                                  "type": "ALIAS",
-                                  "content": {
-                                    "type": "SYMBOL",
-                                    "name": "_invalid_dec_digit_issue"
+                                "type": "CHOICE",
+                                "members": [
+                                  {
+                                    "type": "FIELD",
+                                    "name": "issue",
+                                    "content": {
+                                      "type": "ALIAS",
+                                      "content": {
+                                        "type": "SYMBOL",
+                                        "name": "_invalid_dec_digit_issue"
+                                      },
+                                      "named": true,
+                                      "value": "syntax_issue"
+                                    }
                                   },
-                                  "named": true,
-                                  "value": "syntax_issue"
-                                }
-                              },
-                              {
-                                "type": "FIELD",
-                                "name": "issue",
-                                "content": {
-                                  "type": "ALIAS",
-                                  "content": {
-                                    "type": "SYMBOL",
-                                    "name": "_invalid_dec_encoding_issue"
-                                  },
-                                  "named": true,
-                                  "value": "syntax_issue"
-                                }
+                                  {
+                                    "type": "FIELD",
+                                    "name": "issue",
+                                    "content": {
+                                      "type": "ALIAS",
+                                      "content": {
+                                        "type": "SYMBOL",
+                                        "name": "_invalid_dec_encoding_issue"
+                                      },
+                                      "named": true,
+                                      "value": "syntax_issue"
+                                    }
+                                  }
+                                ]
                               },
                               {
                                 "type": "SEQ",
@@ -2921,30 +3016,35 @@
                                         "value": "digit"
                                       },
                                       {
-                                        "type": "FIELD",
-                                        "name": "issue",
-                                        "content": {
-                                          "type": "ALIAS",
-                                          "content": {
-                                            "type": "SYMBOL",
-                                            "name": "_invalid_dec_digit_issue"
+                                        "type": "CHOICE",
+                                        "members": [
+                                          {
+                                            "type": "FIELD",
+                                            "name": "issue",
+                                            "content": {
+                                              "type": "ALIAS",
+                                              "content": {
+                                                "type": "SYMBOL",
+                                                "name": "_invalid_dec_digit_issue"
+                                              },
+                                              "named": true,
+                                              "value": "syntax_issue"
+                                            }
                                           },
-                                          "named": true,
-                                          "value": "syntax_issue"
-                                        }
-                                      },
-                                      {
-                                        "type": "FIELD",
-                                        "name": "issue",
-                                        "content": {
-                                          "type": "ALIAS",
-                                          "content": {
-                                            "type": "SYMBOL",
-                                            "name": "_invalid_dec_encoding_issue"
-                                          },
-                                          "named": true,
-                                          "value": "syntax_issue"
-                                        }
+                                          {
+                                            "type": "FIELD",
+                                            "name": "issue",
+                                            "content": {
+                                              "type": "ALIAS",
+                                              "content": {
+                                                "type": "SYMBOL",
+                                                "name": "_invalid_dec_encoding_issue"
+                                              },
+                                              "named": true,
+                                              "value": "syntax_issue"
+                                            }
+                                          }
+                                        ]
                                       },
                                       {
                                         "type": "SEQ",
@@ -3043,30 +3143,35 @@
                                 "value": "digit"
                               },
                               {
-                                "type": "FIELD",
-                                "name": "issue",
-                                "content": {
-                                  "type": "ALIAS",
-                                  "content": {
-                                    "type": "SYMBOL",
-                                    "name": "_invalid_dec_digit_issue"
+                                "type": "CHOICE",
+                                "members": [
+                                  {
+                                    "type": "FIELD",
+                                    "name": "issue",
+                                    "content": {
+                                      "type": "ALIAS",
+                                      "content": {
+                                        "type": "SYMBOL",
+                                        "name": "_invalid_dec_digit_issue"
+                                      },
+                                      "named": true,
+                                      "value": "syntax_issue"
+                                    }
                                   },
-                                  "named": true,
-                                  "value": "syntax_issue"
-                                }
-                              },
-                              {
-                                "type": "FIELD",
-                                "name": "issue",
-                                "content": {
-                                  "type": "ALIAS",
-                                  "content": {
-                                    "type": "SYMBOL",
-                                    "name": "_invalid_dec_encoding_issue"
-                                  },
-                                  "named": true,
-                                  "value": "syntax_issue"
-                                }
+                                  {
+                                    "type": "FIELD",
+                                    "name": "issue",
+                                    "content": {
+                                      "type": "ALIAS",
+                                      "content": {
+                                        "type": "SYMBOL",
+                                        "name": "_invalid_dec_encoding_issue"
+                                      },
+                                      "named": true,
+                                      "value": "syntax_issue"
+                                    }
+                                  }
+                                ]
                               },
                               {
                                 "type": "SEQ",
@@ -3135,30 +3240,35 @@
                                         "value": "digit"
                                       },
                                       {
-                                        "type": "FIELD",
-                                        "name": "issue",
-                                        "content": {
-                                          "type": "ALIAS",
-                                          "content": {
-                                            "type": "SYMBOL",
-                                            "name": "_invalid_dec_digit_issue"
+                                        "type": "CHOICE",
+                                        "members": [
+                                          {
+                                            "type": "FIELD",
+                                            "name": "issue",
+                                            "content": {
+                                              "type": "ALIAS",
+                                              "content": {
+                                                "type": "SYMBOL",
+                                                "name": "_invalid_dec_digit_issue"
+                                              },
+                                              "named": true,
+                                              "value": "syntax_issue"
+                                            }
                                           },
-                                          "named": true,
-                                          "value": "syntax_issue"
-                                        }
-                                      },
-                                      {
-                                        "type": "FIELD",
-                                        "name": "issue",
-                                        "content": {
-                                          "type": "ALIAS",
-                                          "content": {
-                                            "type": "SYMBOL",
-                                            "name": "_invalid_dec_encoding_issue"
-                                          },
-                                          "named": true,
-                                          "value": "syntax_issue"
-                                        }
+                                          {
+                                            "type": "FIELD",
+                                            "name": "issue",
+                                            "content": {
+                                              "type": "ALIAS",
+                                              "content": {
+                                                "type": "SYMBOL",
+                                                "name": "_invalid_dec_encoding_issue"
+                                              },
+                                              "named": true,
+                                              "value": "syntax_issue"
+                                            }
+                                          }
+                                        ]
                                       },
                                       {
                                         "type": "SEQ",
@@ -3253,30 +3363,35 @@
                                 "value": "digit"
                               },
                               {
-                                "type": "FIELD",
-                                "name": "issue",
-                                "content": {
-                                  "type": "ALIAS",
-                                  "content": {
-                                    "type": "SYMBOL",
-                                    "name": "_invalid_dec_digit_issue"
+                                "type": "CHOICE",
+                                "members": [
+                                  {
+                                    "type": "FIELD",
+                                    "name": "issue",
+                                    "content": {
+                                      "type": "ALIAS",
+                                      "content": {
+                                        "type": "SYMBOL",
+                                        "name": "_invalid_dec_digit_issue"
+                                      },
+                                      "named": true,
+                                      "value": "syntax_issue"
+                                    }
                                   },
-                                  "named": true,
-                                  "value": "syntax_issue"
-                                }
-                              },
-                              {
-                                "type": "FIELD",
-                                "name": "issue",
-                                "content": {
-                                  "type": "ALIAS",
-                                  "content": {
-                                    "type": "SYMBOL",
-                                    "name": "_invalid_dec_encoding_issue"
-                                  },
-                                  "named": true,
-                                  "value": "syntax_issue"
-                                }
+                                  {
+                                    "type": "FIELD",
+                                    "name": "issue",
+                                    "content": {
+                                      "type": "ALIAS",
+                                      "content": {
+                                        "type": "SYMBOL",
+                                        "name": "_invalid_dec_encoding_issue"
+                                      },
+                                      "named": true,
+                                      "value": "syntax_issue"
+                                    }
+                                  }
+                                ]
                               },
                               {
                                 "type": "SEQ",
@@ -3345,30 +3460,35 @@
                                         "value": "digit"
                                       },
                                       {
-                                        "type": "FIELD",
-                                        "name": "issue",
-                                        "content": {
-                                          "type": "ALIAS",
-                                          "content": {
-                                            "type": "SYMBOL",
-                                            "name": "_invalid_dec_digit_issue"
+                                        "type": "CHOICE",
+                                        "members": [
+                                          {
+                                            "type": "FIELD",
+                                            "name": "issue",
+                                            "content": {
+                                              "type": "ALIAS",
+                                              "content": {
+                                                "type": "SYMBOL",
+                                                "name": "_invalid_dec_digit_issue"
+                                              },
+                                              "named": true,
+                                              "value": "syntax_issue"
+                                            }
                                           },
-                                          "named": true,
-                                          "value": "syntax_issue"
-                                        }
-                                      },
-                                      {
-                                        "type": "FIELD",
-                                        "name": "issue",
-                                        "content": {
-                                          "type": "ALIAS",
-                                          "content": {
-                                            "type": "SYMBOL",
-                                            "name": "_invalid_dec_encoding_issue"
-                                          },
-                                          "named": true,
-                                          "value": "syntax_issue"
-                                        }
+                                          {
+                                            "type": "FIELD",
+                                            "name": "issue",
+                                            "content": {
+                                              "type": "ALIAS",
+                                              "content": {
+                                                "type": "SYMBOL",
+                                                "name": "_invalid_dec_encoding_issue"
+                                              },
+                                              "named": true,
+                                              "value": "syntax_issue"
+                                            }
+                                          }
+                                        ]
                                       },
                                       {
                                         "type": "SEQ",
@@ -3492,30 +3612,35 @@
                                     "value": "hexdig"
                                   },
                                   {
-                                    "type": "FIELD",
-                                    "name": "issue",
-                                    "content": {
-                                      "type": "ALIAS",
-                                      "content": {
-                                        "type": "SYMBOL",
-                                        "name": "_invalid_hex_digit_issue"
+                                    "type": "CHOICE",
+                                    "members": [
+                                      {
+                                        "type": "FIELD",
+                                        "name": "issue",
+                                        "content": {
+                                          "type": "ALIAS",
+                                          "content": {
+                                            "type": "SYMBOL",
+                                            "name": "_invalid_hex_digit_issue"
+                                          },
+                                          "named": true,
+                                          "value": "syntax_issue"
+                                        }
                                       },
-                                      "named": true,
-                                      "value": "syntax_issue"
-                                    }
-                                  },
-                                  {
-                                    "type": "FIELD",
-                                    "name": "issue",
-                                    "content": {
-                                      "type": "ALIAS",
-                                      "content": {
-                                        "type": "SYMBOL",
-                                        "name": "_invalid_hex_encoding_issue"
-                                      },
-                                      "named": true,
-                                      "value": "syntax_issue"
-                                    }
+                                      {
+                                        "type": "FIELD",
+                                        "name": "issue",
+                                        "content": {
+                                          "type": "ALIAS",
+                                          "content": {
+                                            "type": "SYMBOL",
+                                            "name": "_invalid_hex_encoding_issue"
+                                          },
+                                          "named": true,
+                                          "value": "syntax_issue"
+                                        }
+                                      }
+                                    ]
                                   },
                                   {
                                     "type": "SEQ",
@@ -3584,30 +3709,35 @@
                                             "value": "hexdig"
                                           },
                                           {
-                                            "type": "FIELD",
-                                            "name": "issue",
-                                            "content": {
-                                              "type": "ALIAS",
-                                              "content": {
-                                                "type": "SYMBOL",
-                                                "name": "_invalid_hex_digit_issue"
+                                            "type": "CHOICE",
+                                            "members": [
+                                              {
+                                                "type": "FIELD",
+                                                "name": "issue",
+                                                "content": {
+                                                  "type": "ALIAS",
+                                                  "content": {
+                                                    "type": "SYMBOL",
+                                                    "name": "_invalid_hex_digit_issue"
+                                                  },
+                                                  "named": true,
+                                                  "value": "syntax_issue"
+                                                }
                                               },
-                                              "named": true,
-                                              "value": "syntax_issue"
-                                            }
-                                          },
-                                          {
-                                            "type": "FIELD",
-                                            "name": "issue",
-                                            "content": {
-                                              "type": "ALIAS",
-                                              "content": {
-                                                "type": "SYMBOL",
-                                                "name": "_invalid_hex_encoding_issue"
-                                              },
-                                              "named": true,
-                                              "value": "syntax_issue"
-                                            }
+                                              {
+                                                "type": "FIELD",
+                                                "name": "issue",
+                                                "content": {
+                                                  "type": "ALIAS",
+                                                  "content": {
+                                                    "type": "SYMBOL",
+                                                    "name": "_invalid_hex_encoding_issue"
+                                                  },
+                                                  "named": true,
+                                                  "value": "syntax_issue"
+                                                }
+                                              }
+                                            ]
                                           },
                                           {
                                             "type": "SEQ",
@@ -3761,30 +3891,35 @@
                                                 "value": "hexdig"
                                               },
                                               {
-                                                "type": "FIELD",
-                                                "name": "issue",
-                                                "content": {
-                                                  "type": "ALIAS",
-                                                  "content": {
-                                                    "type": "SYMBOL",
-                                                    "name": "_invalid_hex_digit_issue"
+                                                "type": "CHOICE",
+                                                "members": [
+                                                  {
+                                                    "type": "FIELD",
+                                                    "name": "issue",
+                                                    "content": {
+                                                      "type": "ALIAS",
+                                                      "content": {
+                                                        "type": "SYMBOL",
+                                                        "name": "_invalid_hex_digit_issue"
+                                                      },
+                                                      "named": true,
+                                                      "value": "syntax_issue"
+                                                    }
                                                   },
-                                                  "named": true,
-                                                  "value": "syntax_issue"
-                                                }
-                                              },
-                                              {
-                                                "type": "FIELD",
-                                                "name": "issue",
-                                                "content": {
-                                                  "type": "ALIAS",
-                                                  "content": {
-                                                    "type": "SYMBOL",
-                                                    "name": "_invalid_hex_encoding_issue"
-                                                  },
-                                                  "named": true,
-                                                  "value": "syntax_issue"
-                                                }
+                                                  {
+                                                    "type": "FIELD",
+                                                    "name": "issue",
+                                                    "content": {
+                                                      "type": "ALIAS",
+                                                      "content": {
+                                                        "type": "SYMBOL",
+                                                        "name": "_invalid_hex_encoding_issue"
+                                                      },
+                                                      "named": true,
+                                                      "value": "syntax_issue"
+                                                    }
+                                                  }
+                                                ]
                                               },
                                               {
                                                 "type": "SEQ",
@@ -3853,30 +3988,35 @@
                                                         "value": "hexdig"
                                                       },
                                                       {
-                                                        "type": "FIELD",
-                                                        "name": "issue",
-                                                        "content": {
-                                                          "type": "ALIAS",
-                                                          "content": {
-                                                            "type": "SYMBOL",
-                                                            "name": "_invalid_hex_digit_issue"
+                                                        "type": "CHOICE",
+                                                        "members": [
+                                                          {
+                                                            "type": "FIELD",
+                                                            "name": "issue",
+                                                            "content": {
+                                                              "type": "ALIAS",
+                                                              "content": {
+                                                                "type": "SYMBOL",
+                                                                "name": "_invalid_hex_digit_issue"
+                                                              },
+                                                              "named": true,
+                                                              "value": "syntax_issue"
+                                                            }
                                                           },
-                                                          "named": true,
-                                                          "value": "syntax_issue"
-                                                        }
-                                                      },
-                                                      {
-                                                        "type": "FIELD",
-                                                        "name": "issue",
-                                                        "content": {
-                                                          "type": "ALIAS",
-                                                          "content": {
-                                                            "type": "SYMBOL",
-                                                            "name": "_invalid_hex_encoding_issue"
-                                                          },
-                                                          "named": true,
-                                                          "value": "syntax_issue"
-                                                        }
+                                                          {
+                                                            "type": "FIELD",
+                                                            "name": "issue",
+                                                            "content": {
+                                                              "type": "ALIAS",
+                                                              "content": {
+                                                                "type": "SYMBOL",
+                                                                "name": "_invalid_hex_encoding_issue"
+                                                              },
+                                                              "named": true,
+                                                              "value": "syntax_issue"
+                                                            }
+                                                          }
+                                                        ]
                                                       },
                                                       {
                                                         "type": "SEQ",
@@ -4042,30 +4182,35 @@
                                     "value": "digit0_7"
                                   },
                                   {
-                                    "type": "FIELD",
-                                    "name": "issue",
-                                    "content": {
-                                      "type": "ALIAS",
-                                      "content": {
-                                        "type": "SYMBOL",
-                                        "name": "_invalid_oct_digit_issue"
+                                    "type": "CHOICE",
+                                    "members": [
+                                      {
+                                        "type": "FIELD",
+                                        "name": "issue",
+                                        "content": {
+                                          "type": "ALIAS",
+                                          "content": {
+                                            "type": "SYMBOL",
+                                            "name": "_invalid_oct_digit_issue"
+                                          },
+                                          "named": true,
+                                          "value": "syntax_issue"
+                                        }
                                       },
-                                      "named": true,
-                                      "value": "syntax_issue"
-                                    }
-                                  },
-                                  {
-                                    "type": "FIELD",
-                                    "name": "issue",
-                                    "content": {
-                                      "type": "ALIAS",
-                                      "content": {
-                                        "type": "SYMBOL",
-                                        "name": "_invalid_oct_encoding_issue"
-                                      },
-                                      "named": true,
-                                      "value": "syntax_issue"
-                                    }
+                                      {
+                                        "type": "FIELD",
+                                        "name": "issue",
+                                        "content": {
+                                          "type": "ALIAS",
+                                          "content": {
+                                            "type": "SYMBOL",
+                                            "name": "_invalid_oct_encoding_issue"
+                                          },
+                                          "named": true,
+                                          "value": "syntax_issue"
+                                        }
+                                      }
+                                    ]
                                   },
                                   {
                                     "type": "SEQ",
@@ -4134,30 +4279,35 @@
                                             "value": "digit0_7"
                                           },
                                           {
-                                            "type": "FIELD",
-                                            "name": "issue",
-                                            "content": {
-                                              "type": "ALIAS",
-                                              "content": {
-                                                "type": "SYMBOL",
-                                                "name": "_invalid_oct_digit_issue"
+                                            "type": "CHOICE",
+                                            "members": [
+                                              {
+                                                "type": "FIELD",
+                                                "name": "issue",
+                                                "content": {
+                                                  "type": "ALIAS",
+                                                  "content": {
+                                                    "type": "SYMBOL",
+                                                    "name": "_invalid_oct_digit_issue"
+                                                  },
+                                                  "named": true,
+                                                  "value": "syntax_issue"
+                                                }
                                               },
-                                              "named": true,
-                                              "value": "syntax_issue"
-                                            }
-                                          },
-                                          {
-                                            "type": "FIELD",
-                                            "name": "issue",
-                                            "content": {
-                                              "type": "ALIAS",
-                                              "content": {
-                                                "type": "SYMBOL",
-                                                "name": "_invalid_oct_encoding_issue"
-                                              },
-                                              "named": true,
-                                              "value": "syntax_issue"
-                                            }
+                                              {
+                                                "type": "FIELD",
+                                                "name": "issue",
+                                                "content": {
+                                                  "type": "ALIAS",
+                                                  "content": {
+                                                    "type": "SYMBOL",
+                                                    "name": "_invalid_oct_encoding_issue"
+                                                  },
+                                                  "named": true,
+                                                  "value": "syntax_issue"
+                                                }
+                                              }
+                                            ]
                                           },
                                           {
                                             "type": "SEQ",
@@ -4311,30 +4461,35 @@
                                                 "value": "digit0_7"
                                               },
                                               {
-                                                "type": "FIELD",
-                                                "name": "issue",
-                                                "content": {
-                                                  "type": "ALIAS",
-                                                  "content": {
-                                                    "type": "SYMBOL",
-                                                    "name": "_invalid_oct_digit_issue"
+                                                "type": "CHOICE",
+                                                "members": [
+                                                  {
+                                                    "type": "FIELD",
+                                                    "name": "issue",
+                                                    "content": {
+                                                      "type": "ALIAS",
+                                                      "content": {
+                                                        "type": "SYMBOL",
+                                                        "name": "_invalid_oct_digit_issue"
+                                                      },
+                                                      "named": true,
+                                                      "value": "syntax_issue"
+                                                    }
                                                   },
-                                                  "named": true,
-                                                  "value": "syntax_issue"
-                                                }
-                                              },
-                                              {
-                                                "type": "FIELD",
-                                                "name": "issue",
-                                                "content": {
-                                                  "type": "ALIAS",
-                                                  "content": {
-                                                    "type": "SYMBOL",
-                                                    "name": "_invalid_oct_encoding_issue"
-                                                  },
-                                                  "named": true,
-                                                  "value": "syntax_issue"
-                                                }
+                                                  {
+                                                    "type": "FIELD",
+                                                    "name": "issue",
+                                                    "content": {
+                                                      "type": "ALIAS",
+                                                      "content": {
+                                                        "type": "SYMBOL",
+                                                        "name": "_invalid_oct_encoding_issue"
+                                                      },
+                                                      "named": true,
+                                                      "value": "syntax_issue"
+                                                    }
+                                                  }
+                                                ]
                                               },
                                               {
                                                 "type": "SEQ",
@@ -4403,30 +4558,35 @@
                                                         "value": "digit0_7"
                                                       },
                                                       {
-                                                        "type": "FIELD",
-                                                        "name": "issue",
-                                                        "content": {
-                                                          "type": "ALIAS",
-                                                          "content": {
-                                                            "type": "SYMBOL",
-                                                            "name": "_invalid_oct_digit_issue"
+                                                        "type": "CHOICE",
+                                                        "members": [
+                                                          {
+                                                            "type": "FIELD",
+                                                            "name": "issue",
+                                                            "content": {
+                                                              "type": "ALIAS",
+                                                              "content": {
+                                                                "type": "SYMBOL",
+                                                                "name": "_invalid_oct_digit_issue"
+                                                              },
+                                                              "named": true,
+                                                              "value": "syntax_issue"
+                                                            }
                                                           },
-                                                          "named": true,
-                                                          "value": "syntax_issue"
-                                                        }
-                                                      },
-                                                      {
-                                                        "type": "FIELD",
-                                                        "name": "issue",
-                                                        "content": {
-                                                          "type": "ALIAS",
-                                                          "content": {
-                                                            "type": "SYMBOL",
-                                                            "name": "_invalid_oct_encoding_issue"
-                                                          },
-                                                          "named": true,
-                                                          "value": "syntax_issue"
-                                                        }
+                                                          {
+                                                            "type": "FIELD",
+                                                            "name": "issue",
+                                                            "content": {
+                                                              "type": "ALIAS",
+                                                              "content": {
+                                                                "type": "SYMBOL",
+                                                                "name": "_invalid_oct_encoding_issue"
+                                                              },
+                                                              "named": true,
+                                                              "value": "syntax_issue"
+                                                            }
+                                                          }
+                                                        ]
                                                       },
                                                       {
                                                         "type": "SEQ",
@@ -4592,30 +4752,35 @@
                                     "value": "digit0_1"
                                   },
                                   {
-                                    "type": "FIELD",
-                                    "name": "issue",
-                                    "content": {
-                                      "type": "ALIAS",
-                                      "content": {
-                                        "type": "SYMBOL",
-                                        "name": "_invalid_bin_digit_issue"
+                                    "type": "CHOICE",
+                                    "members": [
+                                      {
+                                        "type": "FIELD",
+                                        "name": "issue",
+                                        "content": {
+                                          "type": "ALIAS",
+                                          "content": {
+                                            "type": "SYMBOL",
+                                            "name": "_invalid_bin_digit_issue"
+                                          },
+                                          "named": true,
+                                          "value": "syntax_issue"
+                                        }
                                       },
-                                      "named": true,
-                                      "value": "syntax_issue"
-                                    }
-                                  },
-                                  {
-                                    "type": "FIELD",
-                                    "name": "issue",
-                                    "content": {
-                                      "type": "ALIAS",
-                                      "content": {
-                                        "type": "SYMBOL",
-                                        "name": "_invalid_bin_encoding_issue"
-                                      },
-                                      "named": true,
-                                      "value": "syntax_issue"
-                                    }
+                                      {
+                                        "type": "FIELD",
+                                        "name": "issue",
+                                        "content": {
+                                          "type": "ALIAS",
+                                          "content": {
+                                            "type": "SYMBOL",
+                                            "name": "_invalid_bin_encoding_issue"
+                                          },
+                                          "named": true,
+                                          "value": "syntax_issue"
+                                        }
+                                      }
+                                    ]
                                   },
                                   {
                                     "type": "SEQ",
@@ -4684,30 +4849,35 @@
                                             "value": "digit0_1"
                                           },
                                           {
-                                            "type": "FIELD",
-                                            "name": "issue",
-                                            "content": {
-                                              "type": "ALIAS",
-                                              "content": {
-                                                "type": "SYMBOL",
-                                                "name": "_invalid_bin_digit_issue"
+                                            "type": "CHOICE",
+                                            "members": [
+                                              {
+                                                "type": "FIELD",
+                                                "name": "issue",
+                                                "content": {
+                                                  "type": "ALIAS",
+                                                  "content": {
+                                                    "type": "SYMBOL",
+                                                    "name": "_invalid_bin_digit_issue"
+                                                  },
+                                                  "named": true,
+                                                  "value": "syntax_issue"
+                                                }
                                               },
-                                              "named": true,
-                                              "value": "syntax_issue"
-                                            }
-                                          },
-                                          {
-                                            "type": "FIELD",
-                                            "name": "issue",
-                                            "content": {
-                                              "type": "ALIAS",
-                                              "content": {
-                                                "type": "SYMBOL",
-                                                "name": "_invalid_bin_encoding_issue"
-                                              },
-                                              "named": true,
-                                              "value": "syntax_issue"
-                                            }
+                                              {
+                                                "type": "FIELD",
+                                                "name": "issue",
+                                                "content": {
+                                                  "type": "ALIAS",
+                                                  "content": {
+                                                    "type": "SYMBOL",
+                                                    "name": "_invalid_bin_encoding_issue"
+                                                  },
+                                                  "named": true,
+                                                  "value": "syntax_issue"
+                                                }
+                                              }
+                                            ]
                                           },
                                           {
                                             "type": "SEQ",
@@ -4861,30 +5031,35 @@
                                                 "value": "digit0_1"
                                               },
                                               {
-                                                "type": "FIELD",
-                                                "name": "issue",
-                                                "content": {
-                                                  "type": "ALIAS",
-                                                  "content": {
-                                                    "type": "SYMBOL",
-                                                    "name": "_invalid_bin_digit_issue"
+                                                "type": "CHOICE",
+                                                "members": [
+                                                  {
+                                                    "type": "FIELD",
+                                                    "name": "issue",
+                                                    "content": {
+                                                      "type": "ALIAS",
+                                                      "content": {
+                                                        "type": "SYMBOL",
+                                                        "name": "_invalid_bin_digit_issue"
+                                                      },
+                                                      "named": true,
+                                                      "value": "syntax_issue"
+                                                    }
                                                   },
-                                                  "named": true,
-                                                  "value": "syntax_issue"
-                                                }
-                                              },
-                                              {
-                                                "type": "FIELD",
-                                                "name": "issue",
-                                                "content": {
-                                                  "type": "ALIAS",
-                                                  "content": {
-                                                    "type": "SYMBOL",
-                                                    "name": "_invalid_bin_encoding_issue"
-                                                  },
-                                                  "named": true,
-                                                  "value": "syntax_issue"
-                                                }
+                                                  {
+                                                    "type": "FIELD",
+                                                    "name": "issue",
+                                                    "content": {
+                                                      "type": "ALIAS",
+                                                      "content": {
+                                                        "type": "SYMBOL",
+                                                        "name": "_invalid_bin_encoding_issue"
+                                                      },
+                                                      "named": true,
+                                                      "value": "syntax_issue"
+                                                    }
+                                                  }
+                                                ]
                                               },
                                               {
                                                 "type": "SEQ",
@@ -4953,30 +5128,35 @@
                                                         "value": "digit0_1"
                                                       },
                                                       {
-                                                        "type": "FIELD",
-                                                        "name": "issue",
-                                                        "content": {
-                                                          "type": "ALIAS",
-                                                          "content": {
-                                                            "type": "SYMBOL",
-                                                            "name": "_invalid_bin_digit_issue"
+                                                        "type": "CHOICE",
+                                                        "members": [
+                                                          {
+                                                            "type": "FIELD",
+                                                            "name": "issue",
+                                                            "content": {
+                                                              "type": "ALIAS",
+                                                              "content": {
+                                                                "type": "SYMBOL",
+                                                                "name": "_invalid_bin_digit_issue"
+                                                              },
+                                                              "named": true,
+                                                              "value": "syntax_issue"
+                                                            }
                                                           },
-                                                          "named": true,
-                                                          "value": "syntax_issue"
-                                                        }
-                                                      },
-                                                      {
-                                                        "type": "FIELD",
-                                                        "name": "issue",
-                                                        "content": {
-                                                          "type": "ALIAS",
-                                                          "content": {
-                                                            "type": "SYMBOL",
-                                                            "name": "_invalid_bin_encoding_issue"
-                                                          },
-                                                          "named": true,
-                                                          "value": "syntax_issue"
-                                                        }
+                                                          {
+                                                            "type": "FIELD",
+                                                            "name": "issue",
+                                                            "content": {
+                                                              "type": "ALIAS",
+                                                              "content": {
+                                                                "type": "SYMBOL",
+                                                                "name": "_invalid_bin_encoding_issue"
+                                                              },
+                                                              "named": true,
+                                                              "value": "syntax_issue"
+                                                            }
+                                                          }
+                                                        ]
                                                       },
                                                       {
                                                         "type": "SEQ",
@@ -5320,30 +5500,35 @@
                             "value": "digit"
                           },
                           {
-                            "type": "FIELD",
-                            "name": "issue",
-                            "content": {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_invalid_dec_digit_issue"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "FIELD",
+                                "name": "issue",
+                                "content": {
+                                  "type": "ALIAS",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_invalid_dec_digit_issue"
+                                  },
+                                  "named": true,
+                                  "value": "syntax_issue"
+                                }
                               },
-                              "named": true,
-                              "value": "syntax_issue"
-                            }
-                          },
-                          {
-                            "type": "FIELD",
-                            "name": "issue",
-                            "content": {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_invalid_dec_encoding_issue"
-                              },
-                              "named": true,
-                              "value": "syntax_issue"
-                            }
+                              {
+                                "type": "FIELD",
+                                "name": "issue",
+                                "content": {
+                                  "type": "ALIAS",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_invalid_dec_encoding_issue"
+                                  },
+                                  "named": true,
+                                  "value": "syntax_issue"
+                                }
+                              }
+                            ]
                           },
                           {
                             "type": "SEQ",
@@ -5412,30 +5597,35 @@
                                     "value": "digit"
                                   },
                                   {
-                                    "type": "FIELD",
-                                    "name": "issue",
-                                    "content": {
-                                      "type": "ALIAS",
-                                      "content": {
-                                        "type": "SYMBOL",
-                                        "name": "_invalid_dec_digit_issue"
+                                    "type": "CHOICE",
+                                    "members": [
+                                      {
+                                        "type": "FIELD",
+                                        "name": "issue",
+                                        "content": {
+                                          "type": "ALIAS",
+                                          "content": {
+                                            "type": "SYMBOL",
+                                            "name": "_invalid_dec_digit_issue"
+                                          },
+                                          "named": true,
+                                          "value": "syntax_issue"
+                                        }
                                       },
-                                      "named": true,
-                                      "value": "syntax_issue"
-                                    }
-                                  },
-                                  {
-                                    "type": "FIELD",
-                                    "name": "issue",
-                                    "content": {
-                                      "type": "ALIAS",
-                                      "content": {
-                                        "type": "SYMBOL",
-                                        "name": "_invalid_dec_encoding_issue"
-                                      },
-                                      "named": true,
-                                      "value": "syntax_issue"
-                                    }
+                                      {
+                                        "type": "FIELD",
+                                        "name": "issue",
+                                        "content": {
+                                          "type": "ALIAS",
+                                          "content": {
+                                            "type": "SYMBOL",
+                                            "name": "_invalid_dec_encoding_issue"
+                                          },
+                                          "named": true,
+                                          "value": "syntax_issue"
+                                        }
+                                      }
+                                    ]
                                   },
                                   {
                                     "type": "SEQ",
@@ -5589,30 +5779,35 @@
                                         "value": "digit"
                                       },
                                       {
-                                        "type": "FIELD",
-                                        "name": "issue",
-                                        "content": {
-                                          "type": "ALIAS",
-                                          "content": {
-                                            "type": "SYMBOL",
-                                            "name": "_invalid_dec_digit_issue"
+                                        "type": "CHOICE",
+                                        "members": [
+                                          {
+                                            "type": "FIELD",
+                                            "name": "issue",
+                                            "content": {
+                                              "type": "ALIAS",
+                                              "content": {
+                                                "type": "SYMBOL",
+                                                "name": "_invalid_dec_digit_issue"
+                                              },
+                                              "named": true,
+                                              "value": "syntax_issue"
+                                            }
                                           },
-                                          "named": true,
-                                          "value": "syntax_issue"
-                                        }
-                                      },
-                                      {
-                                        "type": "FIELD",
-                                        "name": "issue",
-                                        "content": {
-                                          "type": "ALIAS",
-                                          "content": {
-                                            "type": "SYMBOL",
-                                            "name": "_invalid_dec_encoding_issue"
-                                          },
-                                          "named": true,
-                                          "value": "syntax_issue"
-                                        }
+                                          {
+                                            "type": "FIELD",
+                                            "name": "issue",
+                                            "content": {
+                                              "type": "ALIAS",
+                                              "content": {
+                                                "type": "SYMBOL",
+                                                "name": "_invalid_dec_encoding_issue"
+                                              },
+                                              "named": true,
+                                              "value": "syntax_issue"
+                                            }
+                                          }
+                                        ]
                                       },
                                       {
                                         "type": "SEQ",
@@ -5681,30 +5876,35 @@
                                                 "value": "digit"
                                               },
                                               {
-                                                "type": "FIELD",
-                                                "name": "issue",
-                                                "content": {
-                                                  "type": "ALIAS",
-                                                  "content": {
-                                                    "type": "SYMBOL",
-                                                    "name": "_invalid_dec_digit_issue"
+                                                "type": "CHOICE",
+                                                "members": [
+                                                  {
+                                                    "type": "FIELD",
+                                                    "name": "issue",
+                                                    "content": {
+                                                      "type": "ALIAS",
+                                                      "content": {
+                                                        "type": "SYMBOL",
+                                                        "name": "_invalid_dec_digit_issue"
+                                                      },
+                                                      "named": true,
+                                                      "value": "syntax_issue"
+                                                    }
                                                   },
-                                                  "named": true,
-                                                  "value": "syntax_issue"
-                                                }
-                                              },
-                                              {
-                                                "type": "FIELD",
-                                                "name": "issue",
-                                                "content": {
-                                                  "type": "ALIAS",
-                                                  "content": {
-                                                    "type": "SYMBOL",
-                                                    "name": "_invalid_dec_encoding_issue"
-                                                  },
-                                                  "named": true,
-                                                  "value": "syntax_issue"
-                                                }
+                                                  {
+                                                    "type": "FIELD",
+                                                    "name": "issue",
+                                                    "content": {
+                                                      "type": "ALIAS",
+                                                      "content": {
+                                                        "type": "SYMBOL",
+                                                        "name": "_invalid_dec_encoding_issue"
+                                                      },
+                                                      "named": true,
+                                                      "value": "syntax_issue"
+                                                    }
+                                                  }
+                                                ]
                                               },
                                               {
                                                 "type": "SEQ",
@@ -5968,30 +6168,35 @@
               "value": "nan"
             },
             {
-              "type": "FIELD",
-              "name": "issue",
-              "content": {
-                "type": "ALIAS",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "_invalid_special_float_issue"
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "issue",
+                  "content": {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_invalid_special_float_issue"
+                    },
+                    "named": true,
+                    "value": "syntax_issue"
+                  }
                 },
-                "named": true,
-                "value": "syntax_issue"
-              }
-            },
-            {
-              "type": "FIELD",
-              "name": "issue",
-              "content": {
-                "type": "ALIAS",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "_incomplete_special_float_issue"
-                },
-                "named": true,
-                "value": "syntax_issue"
-              }
+                {
+                  "type": "FIELD",
+                  "name": "issue",
+                  "content": {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_incomplete_special_float_issue"
+                    },
+                    "named": true,
+                    "value": "syntax_issue"
+                  }
+                }
+              ]
             }
           ]
         }
@@ -6107,30 +6312,35 @@
           ]
         },
         {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_invalid_date_month_issue"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_invalid_date_month_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
             },
-            "named": true,
-            "value": "syntax_issue"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_incomplete_date_month_issue"
-            },
-            "named": true,
-            "value": "syntax_issue"
-          }
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_incomplete_date_month_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
+            }
+          ]
         }
       ]
     },
@@ -6165,30 +6375,35 @@
           ]
         },
         {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_invalid_date_mday_issue"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_invalid_date_mday_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
             },
-            "named": true,
-            "value": "syntax_issue"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_incomplete_date_mday_issue"
-            },
-            "named": true,
-            "value": "syntax_issue"
-          }
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_incomplete_date_mday_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
+            }
+          ]
         }
       ]
     },
@@ -6249,30 +6464,35 @@
           ]
         },
         {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_invalid_time_hour_issue"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_invalid_time_hour_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
             },
-            "named": true,
-            "value": "syntax_issue"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_incomplete_time_hour_issue"
-            },
-            "named": true,
-            "value": "syntax_issue"
-          }
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_incomplete_time_hour_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
+            }
+          ]
         }
       ]
     },
@@ -6307,30 +6527,35 @@
           ]
         },
         {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_invalid_time_minute_issue"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_invalid_time_minute_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
             },
-            "named": true,
-            "value": "syntax_issue"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_incomplete_time_minute_issue"
-            },
-            "named": true,
-            "value": "syntax_issue"
-          }
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_incomplete_time_minute_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
+            }
+          ]
         }
       ]
     },
@@ -6365,30 +6590,35 @@
           ]
         },
         {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_invalid_time_second_issue"
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_invalid_time_second_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
             },
-            "named": true,
-            "value": "syntax_issue"
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "issue",
-          "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_incomplete_time_second_issue"
-            },
-            "named": true,
-            "value": "syntax_issue"
-          }
+            {
+              "type": "FIELD",
+              "name": "issue",
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_incomplete_time_second_issue"
+                },
+                "named": true,
+                "value": "syntax_issue"
+              }
+            }
+          ]
         }
       ]
     },
@@ -8571,30 +8801,35 @@
               ]
             },
             {
-              "type": "FIELD",
-              "name": "issue",
-              "content": {
-                "type": "ALIAS",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "_invalid_array_table_close_issue"
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "issue",
+                  "content": {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_invalid_array_table_close_issue"
+                    },
+                    "named": true,
+                    "value": "syntax_issue"
+                  }
                 },
-                "named": true,
-                "value": "syntax_issue"
-              }
-            },
-            {
-              "type": "FIELD",
-              "name": "issue",
-              "content": {
-                "type": "ALIAS",
-                "content": {
-                  "type": "SYMBOL",
-                  "name": "_incomplete_array_table_close_issue"
-                },
-                "named": true,
-                "value": "syntax_issue"
-              }
+                {
+                  "type": "FIELD",
+                  "name": "issue",
+                  "content": {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_incomplete_array_table_close_issue"
+                    },
+                    "named": true,
+                    "value": "syntax_issue"
+                  }
+                }
+              ]
             }
           ]
         }

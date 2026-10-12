@@ -1,0 +1,860 @@
+==================
+Unexpected separator leaves trailing newline with array: "a=[,\n]"
+:cst
+==================
+a=[,
+]
+---
+
+0:0 - 1:1   toml
+0:0 - 1:1     expression
+0:0 - 1:1       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 1:1         value: val
+0:2 - 1:1           array
+0:2 - 0:3             "["
+0:3 - 0:4             array_values
+0:3 - 0:4               issue: syntax_issue
+0:3 - 0:4                 invalid_syntax
+0:3 - 0:4                   unexpected_separator `,`
+0:4 - 1:0             newline
+0:4 - 0:5               `\n`
+1:0 - 1:1             "]"
+
+==================
+Unexpected separator leaves trailing newline with array: "a=[1,,\n]"
+:cst
+==================
+a=[1,,
+]
+---
+
+0:0 - 1:1   toml
+0:0 - 1:1     expression
+0:0 - 1:1       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 1:1         value: val
+0:2 - 1:1           array
+0:2 - 0:3             "["
+0:3 - 0:6             array_values
+0:3 - 0:4               val
+0:3 - 0:4                 integer
+0:3 - 0:4                   dec_int
+0:3 - 0:4                     unsigned_dec_int
+0:3 - 0:4                       digit `1`
+0:4 - 0:5               ","
+0:5 - 0:6               issue: syntax_issue
+0:5 - 0:6                 invalid_syntax
+0:5 - 0:6                   unexpected_separator `,`
+0:6 - 1:0             newline
+0:6 - 0:7               `\n`
+1:0 - 1:1             "]"
+
+==================
+Unexpected separator is a reason leaf
+:cst
+==================
+a=[,1]
+---
+
+0:0 - 0:6   toml
+0:0 - 0:6     expression
+0:0 - 0:6       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:6         value: val
+0:2 - 0:6           array
+0:2 - 0:3             "["
+0:3 - 0:5             array_values
+0:3 - 0:4               issue: syntax_issue
+0:3 - 0:4                 invalid_syntax
+0:3 - 0:4                   unexpected_separator `,`
+0:4 - 0:5               val
+0:4 - 0:5                 integer
+0:4 - 0:5                   dec_int
+0:4 - 0:5                     unsigned_dec_int
+0:4 - 0:5                       digit `1`
+0:5 - 0:6             "]"
+
+==================
+List range includes leading layout: a=[ []]
+:cst
+==================
+a=[ []]
+---
+
+0:0 - 0:7   toml
+0:0 - 0:7     expression
+0:0 - 0:7       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:7         value: val
+0:2 - 0:7           array
+0:2 - 0:3             "["
+0:3 - 0:6             array_values
+0:4 - 0:6               val
+0:4 - 0:6                 array
+0:4 - 0:5                   "["
+0:5 - 0:6                   "]"
+0:6 - 0:7             "]"
+
+==================
+List range includes leading layout: a=[ {}]
+:cst
+==================
+a=[ {}]
+---
+
+0:0 - 0:7   toml
+0:0 - 0:7     expression
+0:0 - 0:7       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:7         value: val
+0:2 - 0:7           array
+0:2 - 0:3             "["
+0:3 - 0:6             array_values
+0:4 - 0:6               val
+0:4 - 0:6                 inline_table
+0:4 - 0:5                   "{"
+0:5 - 0:6                   "}"
+0:6 - 0:7             "]"
+
+==================
+List range includes leading layout: a=[ }]
+:cst
+==================
+a=[ }]
+---
+
+0:0 - 0:6   toml
+0:0 - 0:6     expression
+0:0 - 0:6       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:6         value: val
+0:2 - 0:6           array
+0:2 - 0:3             "["
+0:3 - 0:5             array_values
+0:4 - 0:5               issue: syntax_issue
+0:4 - 0:5                 invalid_syntax
+0:4 - 0:5                   invalid_character `}`
+0:5 - 0:6             "]"
+
+==================
+a bracket inside an array starts another array value
+:cst
+==================
+a=[1 [2]]
+---
+
+0:0 - 0:9   toml
+0:0 - 0:9     expression
+0:0 - 0:9       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:9         value: val
+0:2 - 0:9           array
+0:2 - 0:3             "["
+0:3 - 0:8             array_values
+0:3 - 0:4               val
+0:3 - 0:4                 integer
+0:3 - 0:4                   dec_int
+0:3 - 0:4                     unsigned_dec_int
+0:3 - 0:4                       digit `1`
+0:5 - 0:5               issue: syntax_issue
+0:5 - 0:5                 invalid_syntax
+0:5 - 0:5                   missing_array_separator
+0:5 - 0:8               val
+0:5 - 0:8                 array
+0:5 - 0:6                   "["
+0:6 - 0:7                   array_values
+0:6 - 0:7                     val
+0:6 - 0:7                       integer
+0:6 - 0:7                         dec_int
+0:6 - 0:7                           unsigned_dec_int
+0:6 - 0:7                             digit `2`
+0:7 - 0:8                   "]"
+0:8 - 0:9             "]"
+
+==================
+junk stops before the enclosing array's closing
+:cst
+==================
+a=[{b=1 x]
+---
+
+0:0  - 0:10   toml
+0:0  - 0:10     expression
+0:0  - 0:10       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:10         value: val
+0:2  - 0:10           array
+0:2  - 0:3              "["
+0:3  - 0:9              array_values
+0:3  - 0:9                val
+0:3  - 0:9                  inline_table
+0:3  - 0:4                    "{"
+0:4  - 0:9                    inline_table_keyvals
+0:4  - 0:7                      keyval
+0:4  - 0:5                        key: key
+0:4  - 0:5                          simple_key
+0:4  - 0:5                            unquoted_key `b`
+0:5  - 0:6                        "="
+0:6  - 0:7                        value: val
+0:6  - 0:7                          integer
+0:6  - 0:7                            dec_int
+0:6  - 0:7                              unsigned_dec_int
+0:6  - 0:7                                digit `1`
+0:8  - 0:9                      issue: syntax_issue
+0:8  - 0:9                        invalid_syntax
+0:8  - 0:9                          invalid_character `x`
+0:9  - 0:9                    issue: syntax_issue
+0:9  - 0:9                      invalid_syntax
+0:9  - 0:9                        missing_inline_table_close
+0:9  - 0:10             "]"
+
+==================
+a closing brace unwinds the innermost array only
+:cst
+==================
+a=[{x=[1}]
+---
+
+0:0  - 0:10   toml
+0:0  - 0:10     expression
+0:0  - 0:10       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:10         value: val
+0:2  - 0:10           array
+0:2  - 0:3              "["
+0:3  - 0:9              array_values
+0:3  - 0:9                val
+0:3  - 0:9                  inline_table
+0:3  - 0:4                    "{"
+0:4  - 0:8                    inline_table_keyvals
+0:4  - 0:8                      keyval
+0:4  - 0:5                        key: key
+0:4  - 0:5                          simple_key
+0:4  - 0:5                            unquoted_key `x`
+0:5  - 0:6                        "="
+0:6  - 0:8                        value: val
+0:6  - 0:8                          array
+0:6  - 0:7                            "["
+0:7  - 0:8                            array_values
+0:7  - 0:8                              val
+0:7  - 0:8                                integer
+0:7  - 0:8                                  dec_int
+0:7  - 0:8                                    unsigned_dec_int
+0:7  - 0:8                                      digit `1`
+0:8  - 0:8                            issue: syntax_issue
+0:8  - 0:8                              invalid_syntax
+0:8  - 0:8                                missing_array_close
+0:8  - 0:9                    "}"
+0:9  - 0:10             "]"
+
+==================
+consecutive unmatched closings form one issue
+:cst
+==================
+a=[1}}]
+---
+
+0:0 - 0:7   toml
+0:0 - 0:7     expression
+0:0 - 0:7       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:7         value: val
+0:2 - 0:7           array
+0:2 - 0:3             "["
+0:3 - 0:6             array_values
+0:3 - 0:4               val
+0:3 - 0:4                 integer
+0:3 - 0:4                   dec_int
+0:3 - 0:4                     unsigned_dec_int
+0:3 - 0:4                       digit `1`
+0:4 - 0:6               issue: syntax_issue
+0:4 - 0:6                 invalid_syntax
+0:4 - 0:6                   invalid_character `}}`
+0:6 - 0:7             "]"
+
+==================
+An unmatched brace stays inside an array before its real closing
+:cst
+==================
+a=[1}]
+---
+
+0:0 - 0:6   toml
+0:0 - 0:6     expression
+0:0 - 0:6       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:6         value: val
+0:2 - 0:6           array
+0:2 - 0:3             "["
+0:3 - 0:5             array_values
+0:3 - 0:4               val
+0:3 - 0:4                 integer
+0:3 - 0:4                   dec_int
+0:3 - 0:4                     unsigned_dec_int
+0:3 - 0:4                       digit `1`
+0:4 - 0:5               issue: syntax_issue
+0:4 - 0:5                 invalid_syntax
+0:4 - 0:5                   invalid_character `}`
+0:5 - 0:6             "]"
+
+==================
+an enclosing array closes after the table's missing brace
+:cst
+==================
+a=[{b=1]
+---
+
+0:0 - 0:8   toml
+0:0 - 0:8     expression
+0:0 - 0:8       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:8         value: val
+0:2 - 0:8           array
+0:2 - 0:3             "["
+0:3 - 0:7             array_values
+0:3 - 0:7               val
+0:3 - 0:7                 inline_table
+0:3 - 0:4                   "{"
+0:4 - 0:7                   inline_table_keyvals
+0:4 - 0:7                     keyval
+0:4 - 0:5                       key: key
+0:4 - 0:5                         simple_key
+0:4 - 0:5                           unquoted_key `b`
+0:5 - 0:6                       "="
+0:6 - 0:7                       value: val
+0:6 - 0:7                         integer
+0:6 - 0:7                           dec_int
+0:6 - 0:7                             unsigned_dec_int
+0:6 - 0:7                               digit `1`
+0:7 - 0:7                   issue: syntax_issue
+0:7 - 0:7                     invalid_syntax
+0:7 - 0:7                       missing_inline_table_close
+0:7 - 0:8             "]"
+
+==================
+an unmatched brace stays in the innermost array
+:cst
+==================
+a=[[1}]]
+---
+
+0:0 - 0:8   toml
+0:0 - 0:8     expression
+0:0 - 0:8       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:8         value: val
+0:2 - 0:8           array
+0:2 - 0:3             "["
+0:3 - 0:7             array_values
+0:3 - 0:7               val
+0:3 - 0:7                 array
+0:3 - 0:4                   "["
+0:4 - 0:6                   array_values
+0:4 - 0:5                     val
+0:4 - 0:5                       integer
+0:4 - 0:5                         dec_int
+0:4 - 0:5                           unsigned_dec_int
+0:4 - 0:5                             digit `1`
+0:5 - 0:6                     issue: syntax_issue
+0:5 - 0:6                       invalid_syntax
+0:5 - 0:6                         invalid_character `}`
+0:6 - 0:7                   "]"
+0:7 - 0:8             "]"
+
+==================
+an unmatched brace does not synthesize a value
+:cst
+==================
+a=[}]
+---
+
+0:0 - 0:5   toml
+0:0 - 0:5     expression
+0:0 - 0:5       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:5         value: val
+0:2 - 0:5           array
+0:2 - 0:3             "["
+0:3 - 0:4             array_values
+0:3 - 0:4               issue: syntax_issue
+0:3 - 0:4                 invalid_syntax
+0:3 - 0:4                   invalid_character `}`
+0:4 - 0:5             "]"
+
+==================
+an unmatched brace after a comma preserves the following value
+:cst
+==================
+a=[1,}2]
+---
+
+0:0 - 0:8   toml
+0:0 - 0:8     expression
+0:0 - 0:8       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:8         value: val
+0:2 - 0:8           array
+0:2 - 0:3             "["
+0:3 - 0:7             array_values
+0:3 - 0:4               val
+0:3 - 0:4                 integer
+0:3 - 0:4                   dec_int
+0:3 - 0:4                     unsigned_dec_int
+0:3 - 0:4                       digit `1`
+0:4 - 0:5               ","
+0:5 - 0:6               issue: syntax_issue
+0:5 - 0:6                 invalid_syntax
+0:5 - 0:6                   invalid_character `}`
+0:6 - 0:7               val
+0:6 - 0:7                 integer
+0:6 - 0:7                   dec_int
+0:6 - 0:7                     unsigned_dec_int
+0:6 - 0:7                       digit `2`
+0:7 - 0:8             "]"
+
+==================
+an unmatched brace after a trailing comma stays inside the array
+:cst
+==================
+a=[1,}]
+---
+
+0:0 - 0:7   toml
+0:0 - 0:7     expression
+0:0 - 0:7       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:7         value: val
+0:2 - 0:7           array
+0:2 - 0:3             "["
+0:3 - 0:6             array_values
+0:3 - 0:4               val
+0:3 - 0:4                 integer
+0:3 - 0:4                   dec_int
+0:3 - 0:4                     unsigned_dec_int
+0:3 - 0:4                       digit `1`
+0:4 - 0:5               ","
+0:5 - 0:6               issue: syntax_issue
+0:5 - 0:6                 invalid_syntax
+0:5 - 0:6                   invalid_character `}`
+0:6 - 0:7             "]"
+
+==================
+a newline after a trailing comma and an unmatched brace stays with the array
+:cst
+==================
+a=[1,}
+]
+---
+
+0:0 - 1:1   toml
+0:0 - 1:1     expression
+0:0 - 1:1       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 1:1         value: val
+0:2 - 1:1           array
+0:2 - 0:3             "["
+0:3 - 0:6             array_values
+0:3 - 0:4               val
+0:3 - 0:4                 integer
+0:3 - 0:4                   dec_int
+0:3 - 0:4                     unsigned_dec_int
+0:3 - 0:4                       digit `1`
+0:4 - 0:5               ","
+0:5 - 0:6               issue: syntax_issue
+0:5 - 0:6                 invalid_syntax
+0:5 - 0:6                   invalid_character `}`
+0:6 - 1:0             newline
+0:6 - 0:7               `\n`
+1:0 - 1:1             "]"
+
+==================
+Array owns leading layout, values, separators, and trailing comma
+==================
+a = [ true , false , ]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean))
+            (val
+              (boolean))))))))
+
+==================
+Array with comments and newlines around values and separators
+==================
+a = [
+# first
+true # value
+, # comma
+false # last
+,
+]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (newline)
+            (comment)
+            (newline)
+            (val
+              (boolean))
+            (comment)
+            (newline)
+            (comment)
+            (newline)
+            (val
+              (boolean))
+            (comment)
+            (newline))
+          (newline))))))
+
+==================
+Empty array with comment
+==================
+a = [# empty
+]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (comment)
+          (newline))))))
+
+==================
+Nested arrays with mixed values
+==================
+a = [[true], [1, "x", 07:32], []]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (array
+                (array_values
+                  (val
+                    (boolean)))))
+            (val
+              (array
+                (array_values
+                  (val
+                    (integer
+                      (dec_int
+                        (unsigned_dec_int
+                          (digit)))))
+                  (val
+                    (string
+                      (basic_string
+                        (basic_char
+                          (basic_unescaped)))))
+                  (val
+                    (date_time
+                      (local_time
+                        (partial_time
+                          (time_hour
+                            (digit)
+                            (digit))
+                          (time_minute
+                            (digit)
+                            (digit)))))))))
+            (val
+              (array))))))))
+
+==================
+Array missing separator
+==================
+a = [true false]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_array_separator)))
+            (val
+              (boolean))))))))
+
+==================
+Array leading comma
+==================
+a = [,true]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (boolean))))))))
+
+==================
+Array only comma
+==================
+a = [,]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))))))))
+
+==================
+Array double comma
+==================
+a = [true,,false]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean))
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (boolean))))))))
+
+==================
+Unclosed array
+==================
+a = [true
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean)))
+          issue: (syntax_issue
+            (incomplete_syntax
+              (missing_array_close))))))))
+
+==================
+Array comment consumes closing bracket
+==================
+a = [true # ]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean)))
+          (comment)
+          issue: (syntax_issue
+            (incomplete_syntax
+              (missing_array_close))))))))
+
+==================
+Array adjacent numeric values
+==================
+a = [1 2]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_array_separator)))
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))))))))
+
+==================
+Nested arrays missing both closings
+==================
+a = [[1
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (array
+                (array_values
+                  (val
+                    (integer
+                      (dec_int
+                        (unsigned_dec_int
+                          (digit))))))
+                issue: (syntax_issue
+                  (incomplete_syntax
+                    (missing_array_close))))))
+          issue: (syntax_issue
+            (incomplete_syntax
+              (missing_array_close))))))))
+
+==================
+Extra separator retains later array values
+==================
+a=[,1,,2]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))))))))

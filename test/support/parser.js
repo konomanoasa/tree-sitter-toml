@@ -3,6 +3,10 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { after, before } from "node:test";
 import { createTreeSitter, root } from "../../scripts/tree-sitter.js";
+import { parseCst } from "./cst.js";
+
+const buildTimeoutMs = 60_000;
+const parseTimeoutMs = 30_000;
 
 let runner;
 let runtime;
@@ -16,7 +20,7 @@ before(() => {
     process.platform === "win32" ? "parser.dll" : "parser",
   );
   const result = runner.run(["build", "--output", library, root], {
-    timeout: 60000,
+    timeout: buildTimeoutMs,
   });
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -70,71 +74,17 @@ function applyEdits(source, edits) {
   return bytes;
 }
 
-function publicNodes(cst, bytes) {
-  const starts = [0];
-  for (const [index, byte] of bytes.entries()) {
-    if (byte === 10) starts.push(index + 1);
-  }
-  const nodes = [];
-  const ancestors = [];
-  for (const line of cst.split("\n")) {
-    const position = /^([0-9]+):([0-9]+) +- +([0-9]+):([0-9]+) +/.exec(line);
-    if (!position) continue;
-    const body = line.slice(position[0].length);
-    const match =
-      /^(([a-z_0-9]+): )?•?([a-z_0-9]+|ERROR|MISSING|"([^"\\]|\\.)*")/.exec(
-        body,
-      );
-    if (!match) continue;
-    const depth = position[0].length + (body.startsWith("•") ? 1 : 0);
-    while (ancestors.length && ancestors.at(-1).depth >= depth) ancestors.pop();
-    const parent = ancestors.at(-1)?.index ?? null;
-    if (match[3] === "ERROR" || match[3] === "MISSING") {
-      ancestors.push({ depth, index: parent });
-      continue;
-    }
-    const named = !match[3].startsWith('"');
-    const start = starts[Number(position[1])] + Number(position[2]);
-    const end = starts[Number(position[3])] + Number(position[4]);
-    nodes.push({
-      kind: named ? match[3] : JSON.parse(match[3]),
-      named,
-      field: match[2] ?? null,
-      parent,
-      start,
-      end,
-    });
-    ancestors.push({ depth, index: nodes.length - 1 });
-  }
-  return nodes;
+function editedLexes(log) {
+  const [, edited] = log.split(/^parse_after_edit$/m);
+  assert.notEqual(
+    edited,
+    undefined,
+    "the debug log must mark the edited parse",
+  );
+  return edited.match(/^lex_(external|internal) /gm)?.length ?? 0;
 }
 
-function issues(nodes, cst) {
-  return nodes.flatMap((node, index) => {
-    if (node.kind !== "syntax_issue") return [];
-    const outcome = nodes[index + 1];
-    const reason = nodes[index + 2];
-    assert.equal(node.field, "issue", cst);
-    assert.equal(outcome.parent, index);
-    assert.equal(reason.parent, index + 1);
-    assert.ok(["invalid_syntax", "incomplete_syntax"].includes(outcome.kind));
-    assert.deepEqual(
-      [outcome.start, outcome.end, reason.start, reason.end],
-      [node.start, node.end, node.start, node.end],
-    );
-    return [
-      [
-        nodes[node.parent].kind,
-        outcome.kind,
-        reason.kind,
-        node.start,
-        node.end,
-      ],
-    ];
-  });
-}
-
-function parse(source, edits = []) {
+function parse(source, edits = [], { lexes = false } = {}) {
   const directory = mkdtempSync(join(runtime, "input-"));
   try {
     const path = join(directory, "input.toml");
@@ -149,6 +99,7 @@ function parse(source, edits = []) {
       library,
       "--lang-name",
       "toml",
+      ...(lexes ? ["--debug", "normal"] : []),
       path,
     ];
     let bytes = Buffer.from(source);
@@ -158,7 +109,7 @@ function parse(source, edits = []) {
     }
     const repeated = edits.length === 0;
     if (repeated) args.push(path);
-    const result = runner.run(args, { timeout: 30000 });
+    const result = runner.run(args, { timeout: parseTimeoutMs });
     assert.ifError(result.error);
     assert.ok(result.status === 0 || result.status === 1, result.stderr);
     const parsed = trees(result.stdout, path);
@@ -170,28 +121,64 @@ function parse(source, edits = []) {
     if (repeated) {
       assert.equal(parsed[1], parsed[0], "a repeated fresh parse must match");
     }
-    const cst = parsed[0];
-    const root =
-      /^[0-9]+:[0-9]+ +- +([0-9]+):([0-9]+) +•?(toml|ERROR)( |\n|$)/.exec(cst);
-    assert.ok(root, cst);
-    let row = 0;
-    for (const byte of bytes) if (byte === 10) row += 1;
-    assert.deepEqual(
-      root.slice(1, 3).map(Number),
-      [row, bytes.length - bytes.lastIndexOf(10) - 1],
-      "root must reach the edited source end",
-    );
-    const nodes = publicNodes(cst, bytes);
     return {
-      cst,
-      nodes,
-      issues: issues(nodes, cst),
-      // CLI status misses hidden missing tokens.
-      hasError: /^\S+\s+-\s+\S+\s+•/.test(cst),
+      ...parseCst(parsed[0], bytes),
+      ...(lexes && { lexes: editedLexes(result.stderr) }),
     };
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
 }
 
-export { applyEdits, parse };
+function assertIncrementalEqualsFresh(initial, edits, source) {
+  try {
+    const incremental = parse(initial, edits);
+    const fresh = parse(source);
+    assert.equal(incremental.hasError, false, incremental.cst);
+    assert.equal(fresh.hasError, false, fresh.cst);
+    assert.deepEqual(incremental.nodes, fresh.nodes);
+    return incremental;
+  } catch (error) {
+    if (error instanceof Error)
+      error.message += `\n${JSON.stringify({ initial, edits, source })}`;
+    throw error;
+  }
+}
+
+function assertEditHistory({ source, edits }) {
+  let result;
+  for (let count = 1; count <= edits.length; count++) {
+    const history = edits.slice(0, count);
+    result = assertIncrementalEqualsFresh(
+      source,
+      history,
+      applyEdits(source, history),
+    );
+  }
+  return result;
+}
+
+function assertValidHistory(initial, steps) {
+  let source = Buffer.from(initial);
+  const edits = [];
+  for (const { byte, deleteBytes, insert, source: expected, valid } of steps) {
+    const edit = { byte, deleteBytes, insert };
+    source = applyEdits(source, [edit]);
+    assert.equal(
+      source.toString(),
+      expected,
+      "edit fixture must produce the explicit expected input",
+    );
+    edits.push(edit);
+    const incremental = assertIncrementalEqualsFresh(initial, edits, expected);
+    assert.equal(incremental.issues.length === 0, valid, incremental.cst);
+  }
+}
+
+export {
+  applyEdits,
+  assertEditHistory,
+  assertIncrementalEqualsFresh,
+  assertValidHistory,
+  parse,
+};
