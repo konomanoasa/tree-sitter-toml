@@ -170,12 +170,7 @@ const issues = [
     "invalid_encoding",
     ($, marker) => seq($._unexpected_character_start, marker),
   ],
-  [
-    "stray_close",
-    "invalid_syntax",
-    "invalid_character",
-    ($, marker) => junkRun($, marker),
-  ],
+  ["stray_close", "invalid_syntax", "invalid_character", junkRun],
 ];
 
 const issueRules = Object.fromEntries(
@@ -315,16 +310,16 @@ const multiline = ($, delimiter, body, name) =>
 const quotes = (quote, mark) =>
   seq(alias(quote, mark), optional(alias(quote, mark)));
 
-const multilineBody = (content, quotes) =>
+const multilineBody = (content, quoteRun) =>
   choice(
     seq(
       repeat1(content),
-      repeat(seq(quotes, repeat1(content))),
-      optional(quotes),
+      repeat(seq(quoteRun, repeat1(content))),
+      optional(quoteRun),
     ),
     seq(
-      quotes,
-      repeat(seq(repeat1(content), quotes)),
+      quoteRun,
+      repeat(seq(repeat1(content), quoteRun)),
       optional(repeat1(content)),
     ),
   );
@@ -364,6 +359,7 @@ export default grammar({
     $._item_end,
     $._blank_line,
     $._broken_comment_start,
+    $.comment_text,
     $._comment_end,
     $._date_element_end,
     ...dateElements.map((name) => $[`_${name}_start`]),
@@ -428,7 +424,6 @@ export default grammar({
         repeat1(choice($.comment_text, invalidText($))),
         $._comment_end,
       ),
-    comment_text: () => /[\t\x20-\x7e\u0080-\u{d7ff}\u{e000}-\u{10ffff}]+/u,
     keyval: ($) =>
       seq(
         choice(field("key", $.key), issue($, "missing_pair_key")),
@@ -570,11 +565,7 @@ export default grammar({
             $.unsigned_dec_int,
             seq(
               repeat1(
-                choice(
-                  issue($, "invalid_dec_digit"),
-                  issue($, "leading_separator"),
-                  issue($, "invalid_dec_encoding"),
-                ),
+                choice(invalidDigit($, "dec"), issue($, "leading_separator")),
               ),
               optional($.unsigned_dec_int),
             ),

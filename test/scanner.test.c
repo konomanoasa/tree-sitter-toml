@@ -105,6 +105,39 @@ static void test_lifecycle_and_serialization(void) {
   tree_sitter_toml_external_scanner_destroy(scanner);
 }
 
+#ifdef TREE_SITTER_REUSE_ALLOCATOR
+static void *failing_calloc(size_t count, size_t size) {
+  (void)count;
+  (void)size;
+  return NULL;
+}
+
+static void test_failed_creation_allows_every_scanner_callback(void) {
+  const unsigned char untouched_byte = 0x5a;
+  ts_current_calloc = failing_calloc;
+  void *scanner = tree_sitter_toml_external_scanner_create();
+  ts_current_calloc = calloc;
+  assert(scanner == NULL);
+  char buffer[TREE_SITTER_SERIALIZATION_BUFFER_SIZE];
+  memset(buffer, untouched_byte, sizeof(buffer));
+  assert(tree_sitter_toml_external_scanner_serialize(scanner, buffer) == 0);
+  for (size_t index = 0; index < sizeof(buffer); index += 1) {
+    assert(buffer[index] == untouched_byte);
+  }
+  tree_sitter_toml_external_scanner_deserialize(scanner, NULL, 0);
+  tree_sitter_toml_external_scanner_deserialize(scanner, buffer, 9);
+  const bool valid_symbols[TOKEN_COUNT] = {[ARRAY_OPEN] = true};
+  const int32_t input[] = {'['};
+  struct MockLexer mock;
+  init_mock_lexer(&mock, input, sizeof(input) / sizeof(input[0]));
+  assert(
+    !tree_sitter_toml_external_scanner_scan(scanner, &mock.lexer, valid_symbols)
+  );
+  assert(mock.offset == 0);
+  tree_sitter_toml_external_scanner_destroy(scanner);
+}
+#endif
+
 static void test_quote_runs_preserve_content_and_closing_delimiters(void) {
   enum { MAX_QUOTE_RUN = 7 };
   const struct {
@@ -492,6 +525,9 @@ static void test_rejected_dotted_keys_do_not_repeat_suffix_lookahead(void) {
 
 int main(void) {
   test_lifecycle_and_serialization();
+#ifdef TREE_SITTER_REUSE_ALLOCATOR
+  test_failed_creation_allows_every_scanner_callback();
+#endif
   test_quote_runs_preserve_content_and_closing_delimiters();
   test_disabled_scans_do_not_consume_source();
   test_quote_tokens_select_the_matching_delimiter();

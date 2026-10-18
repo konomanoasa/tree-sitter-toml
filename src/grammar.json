@@ -386,11 +386,6 @@
         }
       ]
     },
-    "comment_text": {
-      "type": "PATTERN",
-      "value": "[\\t\\x20-\\x7e\\u0080-\\u{d7ff}\\u{e000}-\\u{10ffff}]+",
-      "flags": "u"
-    },
     "keyval": {
       "type": "SEQ",
       "members": [
@@ -2740,17 +2735,35 @@
                         "type": "CHOICE",
                         "members": [
                           {
-                            "type": "FIELD",
-                            "name": "issue",
-                            "content": {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_invalid_dec_digit_issue"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "FIELD",
+                                "name": "issue",
+                                "content": {
+                                  "type": "ALIAS",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_invalid_dec_digit_issue"
+                                  },
+                                  "named": true,
+                                  "value": "syntax_issue"
+                                }
                               },
-                              "named": true,
-                              "value": "syntax_issue"
-                            }
+                              {
+                                "type": "FIELD",
+                                "name": "issue",
+                                "content": {
+                                  "type": "ALIAS",
+                                  "content": {
+                                    "type": "SYMBOL",
+                                    "name": "_invalid_dec_encoding_issue"
+                                  },
+                                  "named": true,
+                                  "value": "syntax_issue"
+                                }
+                              }
+                            ]
                           },
                           {
                             "type": "FIELD",
@@ -2760,19 +2773,6 @@
                               "content": {
                                 "type": "SYMBOL",
                                 "name": "_leading_separator_issue"
-                              },
-                              "named": true,
-                              "value": "syntax_issue"
-                            }
-                          },
-                          {
-                            "type": "FIELD",
-                            "name": "issue",
-                            "content": {
-                              "type": "ALIAS",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "_invalid_dec_encoding_issue"
                               },
                               "named": true,
                               "value": "syntax_issue"
@@ -11191,6 +11191,10 @@
     {
       "type": "SYMBOL",
       "name": "_broken_comment_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "comment_text"
     },
     {
       "type": "SYMBOL",

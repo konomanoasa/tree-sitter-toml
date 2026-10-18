@@ -842,6 +842,7 @@ for (const [initial, insert] of [
   ["a=0e+", "e"],
   ["a=1e5", "e"],
   ["a=[1]", "x=2"],
+  ["a=1-2.5", " = 3"],
   ['a="""x"""""', '"'],
 ]) {
   test(`toml issues: append and remove ${JSON.stringify(insert)} at ${JSON.stringify(initial)}`, () => {
@@ -1487,6 +1488,23 @@ const boundaryCases = [
     "a=1_2=3",
     [["expression", "invalid_syntax", "invalid_character", 5, 7]],
   ],
+  ...[
+    ["a=1_2=3.0", "expression", 5, 9],
+    ["a=1=2e5", "expression", 3, 7],
+    ["a={b=1=2.0}", "inline_table_keyvals", 6, 10],
+  ].map(([source, owner, start, end]) => [
+    `a float after a stray equals does not reclassify the integer: ${source}`,
+    source,
+    [[owner, "invalid_syntax", "invalid_character", start, end]],
+  ]),
+  [
+    "an array float after a stray equals starts the next value",
+    "a=[1=1.0]",
+    [
+      ["val", "invalid_syntax", "invalid_character", 4, 5],
+      ["array_values", "invalid_syntax", "missing_array_separator", 5, 5],
+    ],
+  ],
   [
     "dash run keeps an exponent letter after other numeric junk",
     "a=[1-:e]",
@@ -1796,6 +1814,37 @@ const issueRecoveryCases = [
     "a key after a zero and a separator yields to a confirmed assignment",
     "a=0_x=1",
     [["toml", "invalid_syntax", "missing_newline", 3, 3]],
+  ],
+  ...["a=1-2.5=3", "a=1-2.5 = 3", "a=1__2.5=3", 'a=1-2."x"=3'].map((source) => [
+    `a dotted key after an integer keeps its dots out of the value: ${source}`,
+    source,
+    [["toml", "invalid_syntax", "missing_newline", 3, 3]],
+  ]),
+  [
+    "a dotted key after an integer keeps its missing last segment",
+    "a=1-2. = 3",
+    [
+      ["toml", "invalid_syntax", "missing_newline", 3, 3],
+      ["dotted_key", "invalid_syntax", "missing_key", 7, 7],
+    ],
+  ],
+  [
+    "an inline dotted key after an integer keeps its dots out of the value",
+    "a={b=1-2.5=3}",
+    [
+      [
+        "inline_table_keyvals",
+        "invalid_syntax",
+        "missing_inline_table_separator",
+        6,
+        6,
+      ],
+    ],
+  ],
+  [
+    "an unconfirmed key chain keeps its dot as the fraction",
+    "a=1-2.5",
+    [["unsigned_dec_int", "invalid_syntax", "invalid_number", 3, 4]],
   ],
 
   [

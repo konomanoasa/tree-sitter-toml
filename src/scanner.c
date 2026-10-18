@@ -45,6 +45,7 @@ enum TokenType {
   ITEM_END,
   BLANK_LINE,
   BROKEN_COMMENT_START,
+  COMMENT_TEXT,
   COMMENT_END,
   DATE_ELEMENT_END,
   DATE_FULLYEAR_START,
@@ -173,12 +174,17 @@ static bool is_newline(int32_t c) {
   return c == '\r' || c == '\n';
 }
 
+// UTF-16 may expose lone surrogates without the error sentinel.
+static bool is_invalid_encoding(int32_t c) {
+  return c == -1 || (c >= 0xd800 && c <= 0xdfff);
+}
+
 static bool is_control(int32_t c) {
   return (c >= 0 && c < 0x20 && !is_space(c) && !is_newline(c)) || c == 0x7f;
 }
 
-static bool is_comment_char(int32_t c) {
-  return c == '\t' || (c >= 0x20 && c != 0x7f);
+static bool is_alpha(int32_t c) {
+  return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 }
 
 static bool is_digit(int32_t c) {
@@ -195,11 +201,7 @@ static bool is_base_digit(int32_t c, enum Base base) {
 }
 
 static bool is_key_char(int32_t c) {
-  return (c >= 'A' && c <= 'Z') ||
-    (c >= 'a' && c <= 'z') ||
-    is_digit(c) ||
-    c == '_' ||
-    c == '-';
+  return is_alpha(c) || is_digit(c) || c == '_' || c == '-';
 }
 
 static bool is_scalar_boundary(int32_t c) {
@@ -216,7 +218,7 @@ static bool is_scalar_boundary(int32_t c) {
 }
 
 static bool is_invalid_key_char(int32_t c) {
-  return c != -1 &&
+  return !is_invalid_encoding(c) &&
     !is_key_char(c) &&
     !is_scalar_boundary(c) &&
     c != '.' &&
@@ -224,7 +226,7 @@ static bool is_invalid_key_char(int32_t c) {
 }
 
 static bool is_invalid_number_char(int32_t c, enum Base base) {
-  return c != -1 &&
+  return !is_invalid_encoding(c) &&
     !is_scalar_boundary(c) &&
     !is_base_digit(c, base) &&
     c != '_' &&
@@ -269,11 +271,7 @@ static bool emit(TSLexer *lexer, const bool *valid, enum TokenType token) {
   return true;
 }
 
-// Paired issues place the incomplete token immediately after the invalid token.
-static bool valid_issue(const bool *valid, enum TokenType invalid) {
-  return valid[invalid] || valid[invalid + 1];
-}
-
+// Paired outcomes are valid together, and incomplete follows invalid.
 static bool emit_issue(
   TSLexer *lexer,
   const bool *valid,
@@ -298,13 +296,19 @@ static void skip_spaces(TSLexer *lexer) {
   while (is_space(lexer->lookahead)) lexer->advance(lexer, false);
 }
 
+enum Step { STEP_REJECT, STEP_ACCEPT, STEP_NEXT };
+
+static enum Step decide(bool accepted) {
+  return accepted ? STEP_ACCEPT : STEP_REJECT;
+}
+
 static bool keyval_may_follow(const bool *valid) {
   return valid[EXPRESSION_END] || valid[MISSING_INLINE_TABLE_SEPARATOR];
 }
 
-static bool keyval_ahead(TSLexer *lexer, bool bare) {
-  bool has_key = bare;
+static bool keyval_ahead(TSLexer *lexer, bool has_key, bool bare) {
   for (;; bare = false) {
+    if (!bare) skip_spaces(lexer);
     const int32_t quote = lexer->lookahead;
     if (!bare && (quote == '"' || quote == '\'')) {
       lexer->advance(lexer, false);
@@ -332,11 +336,10 @@ static bool keyval_ahead(TSLexer *lexer, bool bare) {
     if (lexer->lookahead == '=') return has_key;
     if (lexer->lookahead != '.') return false;
     lexer->advance(lexer, false);
-    skip_spaces(lexer);
   }
 }
 
-// Consume rejected key chains once to avoid repeated suffix lookahead.
+// Avoid repeated lookahead over rejected key chains.
 static enum RejectedKey take_rejected_keys(TSLexer *lexer) {
   enum RejectedKey next = REJECTED_KEY;
   for (bool first = true;; first = false) {
@@ -350,7 +353,7 @@ static enum RejectedKey take_rejected_keys(TSLexer *lexer) {
         if (
           lexer->eof(lexer) ||
           is_newline(lexer->lookahead) ||
-          lexer->lookahead == -1
+          is_invalid_encoding(lexer->lookahead)
         )
           return NO_REJECTED_KEY;
         lexer->advance(lexer, false);
@@ -378,7 +381,7 @@ static bool adjacent_keyval(
 ) {
   if (!keyval_may_follow(valid)) return false;
   if (scanner->rejected_key != NO_REJECTED_KEY) return false;
-  if (keyval_ahead(lexer, bare)) return true;
+  if (keyval_ahead(lexer, bare, bare)) return true;
   scanner->rejected_key = REJECTED_KEY_CONTINUATION;
   return false;
 }
@@ -389,18 +392,22 @@ static bool end_before_keyval(TSLexer *lexer, const bool *valid) {
 
 static void
 continue_rejected_key(struct Scanner *scanner, int32_t c, bool spaced) {
-  if (scanner->rejected_key == REJECTED_KEY && is_key_char(c))
-    scanner->rejected_key = REJECTED_KEY_CONTINUATION;
-  else if (
-    (
-      scanner->rejected_key == REJECTED_KEY && c != '.' && c != '"' && c != '\''
-    ) ||
-    (scanner->rejected_key == REJECTED_DOT && c != '.') ||
-    (scanner->rejected_key == REJECTED_KEY_CONTINUATION &&
-      c != '.' &&
-      (spaced || !is_key_char(c)))
-  )
-    scanner->rejected_key = NO_REJECTED_KEY;
+  switch (scanner->rejected_key) {
+    case NO_REJECTED_KEY:
+      return;
+    case REJECTED_KEY:
+      if (is_key_char(c)) scanner->rejected_key = REJECTED_KEY_CONTINUATION;
+      else if (c != '.' && c != '"' && c != '\'')
+        scanner->rejected_key = NO_REJECTED_KEY;
+      return;
+    case REJECTED_DOT:
+      if (c != '.') scanner->rejected_key = NO_REJECTED_KEY;
+      return;
+    case REJECTED_KEY_CONTINUATION:
+      if (c != '.' && (spaced || !is_key_char(c)))
+        scanner->rejected_key = NO_REJECTED_KEY;
+      return;
+  }
 }
 
 static void resume_rejected_key(
@@ -481,7 +488,7 @@ static bool
 take_encoding(TSLexer *lexer, const bool *valid, enum TokenType token) {
   do {
     lexer->advance(lexer, false);
-  } while (!lexer->eof(lexer) && lexer->lookahead == -1);
+  } while (!lexer->eof(lexer) && is_invalid_encoding(lexer->lookahead));
   lexer->mark_end(lexer);
   return emit(lexer, valid, token);
 }
@@ -500,24 +507,46 @@ static bool scan_decoding_failure(
   return valid[token] && take_encoding(lexer, valid, token);
 }
 
+static enum Step
+scan_invalid_text(TSLexer *lexer, const bool *valid, int32_t c) {
+  if (is_invalid_encoding(c))
+    return decide(
+      valid[INVALID_ENCODING] && take_encoding(lexer, valid, INVALID_ENCODING)
+    );
+  if (!lexer->eof(lexer) && is_control(c))
+    return decide(
+      valid[INVALID_CHARACTER] &&
+      take_invalid_characters(lexer, valid, INVALID_CHARACTER)
+    );
+  return STEP_NEXT;
+}
+
 static bool scan_broken_comment(TSLexer *lexer, const bool *valid) {
   bool invalid = false;
   while (!lexer->eof(lexer) && !is_newline(lexer->lookahead)) {
-    if (!is_comment_char(lexer->lookahead)) invalid = true;
+    if (is_invalid_encoding(lexer->lookahead) || is_control(lexer->lookahead))
+      invalid = true;
     lexer->advance(lexer, false);
   }
   return invalid && emit(lexer, valid, BROKEN_COMMENT_START);
 }
 
 static bool scan_comment_body(TSLexer *lexer, const bool *valid, int32_t c) {
-  if (c == -1)
-    return valid[INVALID_ENCODING] &&
-      take_encoding(lexer, valid, INVALID_ENCODING);
+  const enum Step result = scan_invalid_text(lexer, valid, c);
+  if (result != STEP_NEXT) return result == STEP_ACCEPT;
   if (lexer->eof(lexer) || is_newline(c))
     return emit(lexer, valid, COMMENT_END);
-  return !is_comment_char(c) &&
-    valid[INVALID_CHARACTER] &&
-    take_invalid_characters(lexer, valid, INVALID_CHARACTER);
+  do {
+    lexer->advance(lexer, false);
+    c = lexer->lookahead;
+  } while (
+    !lexer->eof(lexer) &&
+    !is_newline(c) &&
+    !is_control(c) &&
+    !is_invalid_encoding(c)
+  );
+  lexer->mark_end(lexer);
+  return emit(lexer, valid, COMMENT_TEXT);
 }
 
 static bool scan_blank_line(TSLexer *lexer, const bool *valid) {
@@ -527,11 +556,16 @@ static bool scan_blank_line(TSLexer *lexer, const bool *valid) {
   return emit(lexer, valid, BLANK_LINE);
 }
 
-static bool scan_carriage_return(TSLexer *lexer, const bool *valid) {
+static bool scan_partial_pair(
+  TSLexer *lexer,
+  const bool *valid,
+  int32_t second,
+  enum TokenType invalid
+) {
   lexer->advance(lexer, false);
-  if (lexer->lookahead == '\n') return false;
+  if (lexer->lookahead == second) return false;
   lexer->mark_end(lexer);
-  return emit_issue(lexer, valid, INVALID_LINE_ENDING, lexer->eof(lexer));
+  return emit_issue(lexer, valid, invalid, lexer->eof(lexer));
 }
 
 static bool
@@ -552,7 +586,7 @@ scan_hex_escape(TSLexer *lexer, const bool *valid, unsigned remaining) {
   const uint64_t upper = lower | ((UINT64_C(1) << (remaining * 4)) - 1);
   const bool completable =
     lower <= 0x10ffff && !(lower >= 0xd800 && upper <= 0xdfff);
-  if (completable && lexer->lookahead == -1)
+  if (completable && is_invalid_encoding(lexer->lookahead))
     return emit(lexer, valid, ESCAPE_PREFIX);
   lexer->mark_end(lexer);
   return emit_issue(
@@ -566,7 +600,7 @@ scan_hex_escape(TSLexer *lexer, const bool *valid, unsigned remaining) {
 static bool scan_escape(TSLexer *lexer, const bool *valid) {
   lexer->advance(lexer, false);
   const int32_t c = lexer->lookahead;
-  if (c == -1) return emit(lexer, valid, ESCAPE_PREFIX);
+  if (is_invalid_encoding(c)) return emit(lexer, valid, ESCAPE_PREFIX);
   if (
     c == '"' ||
     c == '\\' ||
@@ -615,30 +649,25 @@ static bool scan_quote(TSLexer *lexer, const bool *valid, int32_t quote) {
 }
 
 static bool in_string_body(const bool *valid) {
-  return valid_issue(valid, INVALID_ESCAPE) ||
+  return valid[INVALID_ESCAPE] ||
     valid[ESCAPE_PREFIX] ||
     valid[INVALID_UNICODE_ESCAPE] ||
     valid[MLB_QUOTE] ||
     valid[MLL_QUOTE] ||
-    valid_issue(valid, INVALID_MISSING_BASIC_STRING_CLOSE) ||
-    valid_issue(valid, INVALID_MISSING_LITERAL_STRING_CLOSE) ||
+    valid[INVALID_MISSING_BASIC_STRING_CLOSE] ||
+    valid[INVALID_MISSING_LITERAL_STRING_CLOSE] ||
     valid[MISSING_ML_BASIC_STRING_CLOSE] ||
     valid[MISSING_ML_LITERAL_STRING_CLOSE];
 }
 
 static bool scan_string_body(TSLexer *lexer, const bool *valid, int32_t c) {
-  if (c == -1)
-    return valid[INVALID_ENCODING] &&
-      take_encoding(lexer, valid, INVALID_ENCODING);
-  if (!lexer->eof(lexer) && is_control(c))
-    return valid[INVALID_CHARACTER] &&
-      take_invalid_characters(lexer, valid, INVALID_CHARACTER);
-  if (c == '\\' && valid_issue(valid, INVALID_ESCAPE))
-    return scan_escape(lexer, valid);
+  const enum Step result = scan_invalid_text(lexer, valid, c);
+  if (result != STEP_NEXT) return result == STEP_ACCEPT;
+  if (c == '\\' && valid[INVALID_ESCAPE]) return scan_escape(lexer, valid);
   if ((c == '"' && valid[MLB_QUOTE]) || (c == '\'' && valid[MLL_QUOTE]))
     return scan_quote(lexer, valid, c);
   if (c == '\r' && valid[INVALID_LINE_ENDING])
-    return scan_carriage_return(lexer, valid);
+    return scan_partial_pair(lexer, valid, '\n', INVALID_LINE_ENDING);
   if (
     (lexer->eof(lexer) || is_newline(c)) &&
     (emit_missing(lexer, valid, INVALID_MISSING_BASIC_STRING_CLOSE) ||
@@ -657,12 +686,15 @@ static enum TokenType value_start_token(bool date, bool floating) {
 static bool scan_number_start(TSLexer *lexer, const bool *valid) {
   const int32_t first = lexer->lookahead;
   const bool sign = first == '+' || first == '-';
+  const bool keyval = valid[INVALID_MISSING_VALUE] || keyval_may_follow(valid);
   bool radix = false, floating = first == '.', date = false;
   bool initial_digits = true, word = false, digit = false;
+  bool key = false, separator = false;
+  int32_t previous = 0;
   unsigned length = 0;
   while (
     !lexer->eof(lexer) &&
-    lexer->lookahead != -1 &&
+    !is_invalid_encoding(lexer->lookahead) &&
     !is_scalar_boundary(lexer->lookahead)
   ) {
     const int32_t c = lexer->lookahead;
@@ -672,19 +704,21 @@ static bool scan_number_start(TSLexer *lexer, const bool *valid) {
     if (
       !radix &&
       length > 0 &&
-      ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) &&
+      is_alpha(c) &&
       !special &&
       !(date && (c == 'T' || c == 't' || c == 'Z' || c == 'z'))
     ) {
-      const bool assignment =
-        (valid[INVALID_MISSING_VALUE] || keyval_may_follow(valid)) &&
-        keyval_ahead(lexer, false);
+      const bool assignment = keyval && keyval_ahead(lexer, false, false);
+      if (assignment && key) floating = false;
       if (
         !assignment && (c == 'e' || c == 'E') && !word && (digit || length == 1)
       )
         floating = true;
       return emit(lexer, valid, value_start_token(date, floating));
     }
+    if (c == '=' && (key || is_digit(previous))) break;
+    if (key && (is_digit(c) ? separator : !is_key_char(c) && c != '.'))
+      key = false;
     if (!radix && (c == '.' || special)) floating = true;
     if (initial_digits && length > 0 && (c == ':' || (length == 4 && c == '-')))
       date = true;
@@ -692,9 +726,20 @@ static bool scan_number_start(TSLexer *lexer, const bool *valid) {
     else digit = true;
     if (is_digit(c) || c == '.') word = false;
     else if (length > 0 && c != '_') word = word || is_key_char(c);
+    const bool key_start = keyval &&
+      !key &&
+      digit &&
+      !floating &&
+      !radix &&
+      !date &&
+      (c == '-' || (c == '_' && is_digit(previous)));
+    key = key || key_start;
+    separator = key_start && c == '_';
+    previous = c;
     lexer->advance(lexer, false);
     if (length < 5) length++;
   }
+  if (key && keyval_ahead(lexer, true, previous != '.')) floating = false;
   if (
     first == '0' &&
     initial_digits &&
@@ -717,7 +762,7 @@ static bool scan_word_value(TSLexer *lexer, const bool *valid) {
   bool prefix = word[0] != '\0';
   while (
     !lexer->eof(lexer) &&
-    lexer->lookahead != -1 &&
+    !is_invalid_encoding(lexer->lookahead) &&
     !is_scalar_boundary(lexer->lookahead)
   ) {
     if (!word[position] || lexer->lookahead != word[position]) prefix = false;
@@ -737,11 +782,21 @@ static bool scan_word_value(TSLexer *lexer, const bool *valid) {
   );
 }
 
-static bool scan_value_start(TSLexer *lexer, const bool *valid) {
-  const int32_t c = lexer->lookahead;
+static enum Step scan_value_start(
+  TSLexer *lexer,
+  const bool *valid,
+  int32_t c,
+  bool value_start
+) {
+  if (value_start && (c == '"' || c == '\'')) return STEP_REJECT;
+  const bool scalar =
+    value_start && !lexer->eof(lexer) && !is_scalar_boundary(c);
+  const bool special_float =
+    valid[INVALID_SPECIAL_FLOAT] && (c == 'i' || c == 'n');
+  if (!scalar && !special_float) return STEP_NEXT;
   if (is_digit(c) || c == '+' || c == '-' || c == '.')
-    return scan_number_start(lexer, valid);
-  return scan_word_value(lexer, valid);
+    return decide(scan_number_start(lexer, valid));
+  return decide(scan_word_value(lexer, valid));
 }
 
 static bool scan_digits_marker(
@@ -830,7 +885,7 @@ static bool continue_invalid_digits(
 ) {
   if (
     lexer->eof(lexer) ||
-    c == -1 ||
+    is_invalid_encoding(c) ||
     is_scalar_boundary(c) ||
     is_base_digit(c, base) ||
     (c == '_' && valid[base_token(DEC_CONTINUATION, base)])
@@ -923,6 +978,65 @@ static bool continue_number(
   return emit(lexer, valid, continuation);
 }
 
+static enum Step scan_value_continuation(
+  struct Scanner *scanner,
+  TSLexer *lexer,
+  const bool *valid,
+  enum Base base,
+  int32_t c,
+  bool trailing_junk
+) {
+  const bool radix_digits =
+    base != DEC && valid_base_token(valid, INVALID_DEC_DIGIT, base);
+  if (
+    (lexer->eof(lexer) ||
+      is_scalar_boundary(c) ||
+      ((c == '.' || c == 'e' || c == 'E') && !radix_digits)) &&
+    emit_missing(lexer, valid, INVALID_MISSING_DIGITS)
+  )
+    return STEP_ACCEPT;
+  if (c == '=') {
+    if (valid[UNEXPECTED_CHARACTER_START] && emit(lexer, valid, NUMBER_END))
+      return STEP_ACCEPT;
+    if (valid[INVALID_CHARACTER] && !trailing_junk)
+      return decide(take(lexer, valid, INVALID_CHARACTER));
+  }
+  if (
+    valid_base_token(valid, INVALID_DEC_CONTINUATION, base) &&
+    continue_invalid_digits(scanner, lexer, valid, base, c)
+  )
+    return STEP_ACCEPT;
+  scanner->word_continuation = false;
+  if (valid_base_token(valid, DEC_JUNK_CONTINUATION, base))
+    return decide(continue_number_junk(scanner, lexer, valid, base, c));
+  if (
+    valid_base_token(valid, DEC_CONTINUATION, base) &&
+    !lexer->eof(lexer) &&
+    !is_scalar_boundary(c)
+  )
+    return decide(continue_number(scanner, lexer, valid, base, c));
+  return STEP_NEXT;
+}
+
+static enum Step scan_control_character(
+  struct Scanner *scanner,
+  TSLexer *lexer,
+  const bool *valid,
+  enum Base base,
+  int32_t c,
+  bool trailing_junk
+) {
+  if (lexer->eof(lexer) || !is_control(c)) return STEP_NEXT;
+  if (valid_base_token(valid, INVALID_DEC_DIGIT, base))
+    return decide(take_invalid_digits(scanner, lexer, valid, base));
+  const enum TokenType token = valid[INVALID_KEY_CHARACTER]
+    ? INVALID_KEY_CHARACTER
+    : valid[INVALID_CHARACTER] && !trailing_junk ? INVALID_CHARACTER
+                                                 : UNEXPECTED_CHARACTER;
+  if (!valid[token]) return STEP_NEXT;
+  return decide(take_invalid_characters(lexer, valid, token));
+}
+
 static bool scan_leading_zero(TSLexer *lexer, const bool *valid) {
   lexer->advance(lexer, false);
   while (lexer->lookahead == '_') lexer->advance(lexer, false);
@@ -963,6 +1077,39 @@ static bool take_separator_run(
   return emit(lexer, valid, incomplete ? INCOMPLETE_NUMBER : invalid);
 }
 
+static enum Step scan_number_element(
+  struct Scanner *scanner,
+  TSLexer *lexer,
+  const bool *valid,
+  enum Base base,
+  int32_t c
+) {
+  if ((c == 'e' || c == 'E') && valid[EXPONENT_START]) {
+    if (adjacent_keyval(scanner, lexer, valid, false))
+      return decide(end_before_keyval(lexer, valid));
+    return decide(emit_element_start(scanner, lexer, valid, EXPONENT_START));
+  }
+  if (
+    c == '.' && emit_element_start(scanner, lexer, valid, FLOAT_FRACTION_START)
+  )
+    return STEP_ACCEPT;
+  if (c == '0' && valid[LEADING_ZERO])
+    return decide(scan_leading_zero(lexer, valid));
+  if (c == '_' && valid[LEADING_SEPARATOR])
+    return decide(take_leading_separator(scanner, lexer, valid, base));
+  if (
+    valid_base_token(valid, INVALID_DEC_DIGIT, base) &&
+    !lexer->eof(lexer) &&
+    !is_scalar_boundary(c) &&
+    !is_base_digit(c, base) &&
+    !(c == '_' && valid[INCOMPLETE_NUMBER])
+  )
+    return decide(take_invalid_digits(scanner, lexer, valid, base));
+  if (c == '_' && valid[INCOMPLETE_NUMBER])
+    return decide(take_separator_run(scanner, lexer, valid, base));
+  return STEP_NEXT;
+}
+
 static bool scan_date_element(TSLexer *lexer, const bool *valid) {
   unsigned count = 0, value = 0;
   while (is_digit(lexer->lookahead)) {
@@ -983,13 +1130,8 @@ static bool scan_date_element(TSLexer *lexer, const bool *valid) {
   const unsigned maximum = date_elements[index].maximum;
   if (count == 2 && value >= minimum && value <= maximum)
     return emit(lexer, valid, date_elements[index].start);
-  unsigned lower = value, upper = value;
-  for (unsigned i = count; i < 2; i++) {
-    lower *= 10;
-    upper = upper * 10 + 9;
-  }
   const bool incomplete =
-    count < 2 && lexer->eof(lexer) && lower <= maximum && upper >= minimum;
+    count == 1 && lexer->eof(lexer) && value * 10 <= maximum;
   return emit_issue(lexer, valid, date_elements[index].invalid, incomplete);
 }
 
@@ -1040,6 +1182,32 @@ static bool scan_time_suffix(
   return false;
 }
 
+static enum Step scan_date_time(
+  struct Scanner *scanner,
+  TSLexer *lexer,
+  const bool *valid,
+  int32_t c
+) {
+  if (valid[DATE_ELEMENT_END])
+    return decide(!is_digit(c) && emit(lexer, valid, DATE_ELEMENT_END));
+  if (c != '-' && valid[INVALID_MISSING_DATE_SEPARATOR])
+    return decide(emit_missing(lexer, valid, INVALID_MISSING_DATE_SEPARATOR));
+  if (c != ':' && valid[INVALID_MISSING_TIME_SEPARATOR])
+    return decide(emit_missing(lexer, valid, INVALID_MISSING_TIME_SEPARATOR));
+  if (
+    !is_digit(c) &&
+    (valid_date_element_start(valid) || valid[TIME_FRACTION_DIGITS_START]) &&
+    valid[INVALID_MISSING_DIGITS]
+  )
+    return decide(emit_missing(lexer, valid, INVALID_MISSING_DIGITS));
+  if (is_digit(c) && emit(lexer, valid, TIME_FRACTION_DIGITS_START))
+    return STEP_ACCEPT;
+  if (is_digit(c) && valid_date_element_start(valid))
+    return decide(scan_date_element(lexer, valid));
+  if (valid[DATE_END]) return decide(scan_date_end(scanner, lexer, valid, c));
+  return STEP_NEXT;
+}
+
 static bool emit_missing_close(
   uint32_t *count,
   TSLexer *lexer,
@@ -1049,26 +1217,6 @@ static bool emit_missing_close(
   if (!emit_missing(lexer, valid, token)) return false;
   if (*count) --*count;
   return true;
-}
-
-static bool take_close(
-  uint32_t *count,
-  TSLexer *lexer,
-  const bool *valid,
-  enum TokenType token
-) {
-  if (*count) --*count;
-  return take(lexer, valid, token);
-}
-
-static bool take_open(
-  uint32_t *count,
-  TSLexer *lexer,
-  const bool *valid,
-  enum TokenType token
-) {
-  ++*count;
-  return take(lexer, valid, token);
 }
 
 static bool take_stray_close(TSLexer *lexer, const bool *valid, int32_t c) {
@@ -1108,11 +1256,88 @@ static bool scan_missing_close(
       ));
 }
 
-static bool scan_array_table_close(TSLexer *lexer, const bool *valid) {
-  lexer->advance(lexer, false);
-  if (lexer->lookahead == ']') return false;
-  lexer->mark_end(lexer);
-  return emit_issue(lexer, valid, INVALID_ARRAY_TABLE_CLOSE, lexer->eof(lexer));
+static enum Step scan_closer(
+  struct Scanner *scanner,
+  TSLexer *lexer,
+  const bool *valid,
+  int32_t c,
+  bool spaced
+) {
+  const bool array = c == ']';
+  uint32_t *opened = array ? &scanner->arrays : &scanner->inline_tables;
+  const enum TokenType close = array ? ARRAY_CLOSE : INLINE_TABLE_CLOSE;
+  if (valid[close]) {
+    if (*opened) --*opened;
+    return decide(take(lexer, valid, close));
+  }
+  if (
+    *opened &&
+    emit_missing_close(
+      array ? &scanner->inline_tables : &scanner->arrays,
+      lexer,
+      valid,
+      array ? INVALID_MISSING_INLINE_TABLE_CLOSE : INVALID_MISSING_ARRAY_CLOSE
+    )
+  )
+    return STEP_ACCEPT;
+  if (
+    !*opened && (valid[STRAY_CLOSE] || valid[UNEXPECTED_CHARACTER_CONTINUATION])
+  )
+    return decide(!spaced && take_stray_close(lexer, valid, c));
+  return STEP_NEXT;
+}
+
+static enum Step scan_opener(
+  struct Scanner *scanner,
+  TSLexer *lexer,
+  const bool *valid,
+  int32_t c,
+  bool spaced
+) {
+  if (valid[UNEXPECTED_VALUE])
+    return decide(!spaced && emit(lexer, valid, UNEXPECTED_VALUE));
+  const bool array = c == '[';
+  const enum TokenType open = array ? ARRAY_OPEN : INLINE_TABLE_OPEN;
+  if (!valid[open]) return STEP_NEXT;
+  if (spaced) return STEP_REJECT;
+  ++*(array ? &scanner->arrays : &scanner->inline_tables);
+  return decide(take(lexer, valid, open));
+}
+
+static enum Step scan_keyval_part(
+  TSLexer *lexer,
+  const bool *valid,
+  int32_t c,
+  bool spaced,
+  bool end
+) {
+  if (
+    (end || c == '#' || c == ']' || c == '}' || c == ',') &&
+    (emit_missing(lexer, valid, INVALID_MISSING_VALUE) ||
+      emit_missing(lexer, valid, INVALID_MISSING_ASSIGNMENT_OPERATOR) ||
+      emit_missing(lexer, valid, INVALID_MISSING_KEY))
+  )
+    return STEP_ACCEPT;
+  if (c == '=' && valid[MISSING_PAIR_KEY])
+    return decide(!spaced && emit(lexer, valid, MISSING_PAIR_KEY));
+  if (c == '.' && valid[DOT_SEPARATOR])
+    return decide(take(lexer, valid, DOT_SEPARATOR));
+  if (c == '.' && valid[MISSING_DOTTED_KEY])
+    return decide(!spaced && emit(lexer, valid, MISSING_DOTTED_KEY));
+  if (
+    (c == '=' || c == '.' || c == '[' || c == '{' || c == ',') &&
+    emit_missing(lexer, valid, INVALID_MISSING_KEY)
+  )
+    return STEP_ACCEPT;
+  if (
+    !end &&
+    c != '.' &&
+    c != '=' &&
+    (spaced || !is_key_char(c) || !valid[INVALID_KEY_CHARACTER]) &&
+    emit_missing(lexer, valid, INVALID_MISSING_ASSIGNMENT_OPERATOR)
+  )
+    return STEP_ACCEPT;
+  return STEP_NEXT;
 }
 
 static bool scan_missing_separator(
@@ -1121,12 +1346,11 @@ static bool scan_missing_separator(
   int32_t c,
   bool spaced
 ) {
-  return emit(lexer, valid, MISSING_ARRAY_SEPARATOR) ||
-    (((!valid[UNEXPECTED_CHARACTER_START] &&
-        (spaced || !valid[UNEXPECTED_CHARACTER_CONTINUATION])) ||
-       c == '[' ||
-       c == '{') &&
-      emit(lexer, valid, MISSING_INLINE_TABLE_SEPARATOR));
+  if (emit(lexer, valid, MISSING_ARRAY_SEPARATOR)) return true;
+  const bool item_ended = !valid[UNEXPECTED_CHARACTER_START] &&
+    (spaced || !valid[UNEXPECTED_CHARACTER_CONTINUATION]);
+  return (item_ended || c == '[' || c == '{') &&
+    emit(lexer, valid, MISSING_INLINE_TABLE_SEPARATOR);
 }
 
 static bool starts_junk(
@@ -1143,7 +1367,7 @@ static bool starts_junk(
     c == '{' ||
     c == '\\' ||
     is_control(c) ||
-    c == -1 ||
+    is_invalid_encoding(c) ||
     (keyval_may_follow(valid) &&
       !number_continuation &&
       (c == '"' || c == '\'' || !is_scalar_boundary(c)));
@@ -1160,12 +1384,13 @@ static bool scan_junk_start(
     (is_key_char(c) || c == '"' || c == '\'' || c == '.') &&
     scanner->rejected_key == NO_REJECTED_KEY
   ) {
-    if (keyval_ahead(lexer, false)) return end_before_keyval(lexer, valid);
+    if (keyval_ahead(lexer, false, false))
+      return end_before_keyval(lexer, valid);
     scanner->rejected_key =
       is_key_char(c) ? REJECTED_KEY_CONTINUATION : REJECTED_KEY;
   }
   return (!spaced &&
-           c != -1 &&
+           !is_invalid_encoding(c) &&
            emit(lexer, valid, UNEXPECTED_CHARACTER_CONTINUATION)) ||
     emit(lexer, valid, UNEXPECTED_CHARACTER_START);
 }
@@ -1189,257 +1414,33 @@ static bool take_unexpected_character(
   return emit(lexer, valid, UNEXPECTED_CHARACTER);
 }
 
-void *tree_sitter_toml_external_scanner_create(void) {
-  return ts_calloc(1, sizeof(struct Scanner));
-}
-
-void tree_sitter_toml_external_scanner_destroy(void *payload) {
-  ts_free(payload);
-}
-
-unsigned
-tree_sitter_toml_external_scanner_serialize(void *payload, char *buffer) {
-  const struct Scanner *scanner = payload;
-  if (
-    scanner->rejected_key == NO_REJECTED_KEY &&
-    !scanner->word_continuation &&
-    !scanner->arrays &&
-    !scanner->inline_tables
-  )
-    return 0;
-  buffer[0] =
-    (char)(scanner->rejected_key | (scanner->word_continuation ? 4 : 0));
-  for (unsigned i = 0; i < 4; i++) {
-    buffer[1 + i] = (char)(scanner->arrays >> (8 * i));
-    buffer[5 + i] = (char)(scanner->inline_tables >> (8 * i));
-  }
-  return 9;
-}
-
-void tree_sitter_toml_external_scanner_deserialize(
-  void *payload,
-  const char *buffer,
-  unsigned length
-) {
-  struct Scanner *scanner = payload;
-  *scanner = (struct Scanner){0};
-  if (length != 9) return;
-  scanner->rejected_key = (enum RejectedKey)(buffer[0] & 3);
-  scanner->word_continuation = (buffer[0] & 4) != 0;
-  for (unsigned i = 0; i < 4; i++) {
-    scanner->arrays |= (uint32_t)(uint8_t)buffer[1 + i] << (8 * i);
-    scanner->inline_tables |= (uint32_t)(uint8_t)buffer[5 + i] << (8 * i);
-  }
-}
-
-bool tree_sitter_toml_external_scanner_scan(
-  void *payload,
+static bool scan_after_layout(
+  struct Scanner *scanner,
   TSLexer *lexer,
-  const bool *valid
+  const bool *valid,
+  enum Base base
 ) {
-  struct Scanner *scanner = payload;
-  if (valid[ERROR_SENTINEL]) return false;
-  const enum Base base = active_base(valid);
-  const bool value_start =
-    valid[INTEGER_START] || valid[FLOAT_START] || valid[DATE_START];
-  resume_rejected_key(scanner, lexer, valid, value_start, base != NO_BASE);
-  int32_t c = lexer->lookahead;
-  lexer->mark_end(lexer);
-  if (in_string_body(valid)) return scan_string_body(lexer, valid, c);
-  if (valid[COMMENT_END]) return scan_comment_body(lexer, valid, c);
-  const bool trailing_junk = !value_start &&
-    valid[INVALID_CHARACTER] &&
-    valid[UNEXPECTED_CHARACTER_START];
-
-  if (scan_digits_marker(scanner, lexer, valid, base, c)) return true;
-  if (
-    c == -1 &&
-    !valid_base_token(valid, DEC_CONTINUATION, base) &&
-    scan_decoding_failure(lexer, valid, base, trailing_junk)
-  )
-    return true;
-  if (c == '#' && valid[BROKEN_COMMENT_START])
-    return scan_broken_comment(lexer, valid);
-  if (valid[BLANK_LINE] && is_space(c)) return scan_blank_line(lexer, valid);
-
-  if (valid[DATE_ELEMENT_END])
-    return !is_digit(c) && emit(lexer, valid, DATE_ELEMENT_END);
-  if (c != '-' && valid_issue(valid, INVALID_MISSING_DATE_SEPARATOR))
-    return emit_missing(lexer, valid, INVALID_MISSING_DATE_SEPARATOR);
-  if (c != ':' && valid_issue(valid, INVALID_MISSING_TIME_SEPARATOR))
-    return emit_missing(lexer, valid, INVALID_MISSING_TIME_SEPARATOR);
-  if (
-    !is_digit(c) &&
-    (valid_date_element_start(valid) || valid[TIME_FRACTION_DIGITS_START]) &&
-    valid_issue(valid, INVALID_MISSING_DIGITS)
-  )
-    return emit_missing(lexer, valid, INVALID_MISSING_DIGITS);
-  if (is_digit(c) && emit(lexer, valid, TIME_FRACTION_DIGITS_START))
-    return true;
-  if (is_digit(c) && valid_date_element_start(valid))
-    return scan_date_element(lexer, valid);
-  if (valid[DATE_END]) return scan_date_end(scanner, lexer, valid, c);
-
-  const bool radix_digits =
-    base != DEC && valid_base_token(valid, INVALID_DEC_DIGIT, base);
-  if (
-    (lexer->eof(lexer) ||
-      is_scalar_boundary(c) ||
-      ((c == '.' || c == 'e' || c == 'E') && !radix_digits)) &&
-    emit_missing(lexer, valid, INVALID_MISSING_DIGITS)
-  )
-    return true;
-  if (c == '=') {
-    if (valid[UNEXPECTED_CHARACTER_START] && emit(lexer, valid, NUMBER_END))
-      return true;
-    if (valid[INVALID_CHARACTER] && !trailing_junk)
-      return take(lexer, valid, INVALID_CHARACTER);
-  }
-  if (
-    valid_base_token(valid, INVALID_DEC_CONTINUATION, base) &&
-    continue_invalid_digits(scanner, lexer, valid, base, c)
-  )
-    return true;
-  scanner->word_continuation = false;
-  if (valid_base_token(valid, DEC_JUNK_CONTINUATION, base))
-    return continue_number_junk(scanner, lexer, valid, base, c);
-  if (
-    valid_base_token(valid, DEC_CONTINUATION, base) &&
-    !lexer->eof(lexer) &&
-    !is_scalar_boundary(c)
-  )
-    return continue_number(scanner, lexer, valid, base, c);
-
-  if (!lexer->eof(lexer) && is_control(c)) {
-    if (valid_base_token(valid, INVALID_DEC_DIGIT, base))
-      return take_invalid_digits(scanner, lexer, valid, base);
-    const enum TokenType token = valid[INVALID_KEY_CHARACTER]
-      ? INVALID_KEY_CHARACTER
-      : valid[INVALID_CHARACTER] && !trailing_junk ? INVALID_CHARACTER
-                                                   : UNEXPECTED_CHARACTER;
-    if (valid[token]) return take_invalid_characters(lexer, valid, token);
-  }
-  if (value_start) {
-    if (c == '"' || c == '\'') return false;
-    if (!lexer->eof(lexer) && !is_scalar_boundary(c))
-      return scan_value_start(lexer, valid);
-  }
-  if (valid[INVALID_SPECIAL_FLOAT] && (c == 'i' || c == 'n'))
-    return scan_value_start(lexer, valid);
-  if (scan_time_suffix(scanner, lexer, valid, c)) return true;
-  if ((c == 'e' || c == 'E') && valid[EXPONENT_START]) {
-    if (adjacent_keyval(scanner, lexer, valid, false))
-      return end_before_keyval(lexer, valid);
-    return emit_element_start(scanner, lexer, valid, EXPONENT_START);
-  }
-  if (
-    c == '.' && emit_element_start(scanner, lexer, valid, FLOAT_FRACTION_START)
-  )
-    return true;
-  if (c == '0' && valid[LEADING_ZERO]) return scan_leading_zero(lexer, valid);
-  if (c == '_' && valid[LEADING_SEPARATOR])
-    return take_leading_separator(scanner, lexer, valid, base);
-  if (
-    valid_base_token(valid, INVALID_DEC_DIGIT, base) &&
-    !lexer->eof(lexer) &&
-    !is_scalar_boundary(c) &&
-    !is_base_digit(c, base) &&
-    !(c == '_' && valid[INCOMPLETE_NUMBER])
-  )
-    return take_invalid_digits(scanner, lexer, valid, base);
-  if (c == '_' && valid[INCOMPLETE_NUMBER])
-    return take_separator_run(scanner, lexer, valid, base);
-  if (
-    !lexer->eof(lexer) && valid[INVALID_KEY_CHARACTER] && is_invalid_key_char(c)
-  )
-    return take_invalid_characters(lexer, valid, INVALID_KEY_CHARACTER);
-  if (c == '\r' && valid[INVALID_LINE_ENDING])
-    return scan_carriage_return(lexer, valid);
-
   bool spaced = false;
   while (is_space(lexer->lookahead)) {
     lexer->advance(lexer, true);
     spaced = true;
   }
   lexer->mark_end(lexer);
-  c = lexer->lookahead;
+  const int32_t c = lexer->lookahead;
   continue_rejected_key(scanner, c, spaced);
   const bool end = lexer->eof(lexer) || is_newline(c);
 
   if (scan_missing_close(scanner, lexer, valid, c, end)) return true;
   if (c == ']' && valid[INVALID_ARRAY_TABLE_CLOSE])
-    return scan_array_table_close(lexer, valid);
-  if (c == ']' && valid[ARRAY_CLOSE])
-    return take_close(&scanner->arrays, lexer, valid, ARRAY_CLOSE);
-  if (c == '}' && valid[INLINE_TABLE_CLOSE])
-    return take_close(
-      &scanner->inline_tables,
-      lexer,
-      valid,
-      INLINE_TABLE_CLOSE
-    );
-  if (
-    c == '}' &&
-    scanner->inline_tables &&
-    emit_missing_close(
-      &scanner->arrays,
-      lexer,
-      valid,
-      INVALID_MISSING_ARRAY_CLOSE
-    )
-  )
-    return true;
-  if (
-    c == ']' &&
-    scanner->arrays &&
-    emit_missing_close(
-      &scanner->inline_tables,
-      lexer,
-      valid,
-      INVALID_MISSING_INLINE_TABLE_CLOSE
-    )
-  )
-    return true;
-  if (
-    (valid[STRAY_CLOSE] || valid[UNEXPECTED_CHARACTER_CONTINUATION]) &&
-    ((c == ']' && !scanner->arrays) || (c == '}' && !scanner->inline_tables))
-  )
-    return !spaced && take_stray_close(lexer, valid, c);
-  // Leave leading layout to the list before starting its item.
-  if ((c == '[' || c == '{') && valid[UNEXPECTED_VALUE])
-    return !spaced && emit(lexer, valid, UNEXPECTED_VALUE);
-  if (c == '[' && valid[ARRAY_OPEN])
-    return !spaced && take_open(&scanner->arrays, lexer, valid, ARRAY_OPEN);
-  if (c == '{' && valid[INLINE_TABLE_OPEN])
-    return !spaced &&
-      take_open(&scanner->inline_tables, lexer, valid, INLINE_TABLE_OPEN);
-
-  if (
-    (end || c == '#' || c == ']' || c == '}' || c == ',') &&
-    (emit_missing(lexer, valid, INVALID_MISSING_VALUE) ||
-      emit_missing(lexer, valid, INVALID_MISSING_ASSIGNMENT_OPERATOR) ||
-      emit_missing(lexer, valid, INVALID_MISSING_KEY))
-  )
-    return true;
-  if (c == '=' && valid[MISSING_PAIR_KEY])
-    return !spaced && emit(lexer, valid, MISSING_PAIR_KEY);
-  if (c == '.' && valid[DOT_SEPARATOR])
-    return take(lexer, valid, DOT_SEPARATOR);
-  if (c == '.' && valid[MISSING_DOTTED_KEY])
-    return !spaced && emit(lexer, valid, MISSING_DOTTED_KEY);
-  if (
-    (c == '=' || c == '.' || c == '[' || c == '{' || c == ',') &&
-    emit_missing(lexer, valid, INVALID_MISSING_KEY)
-  )
-    return true;
-  if (
-    !end &&
-    c != '.' &&
-    c != '=' &&
-    (spaced || !is_key_char(c) || !valid[INVALID_KEY_CHARACTER]) &&
-    emit_missing(lexer, valid, INVALID_MISSING_ASSIGNMENT_OPERATOR)
-  )
-    return true;
+    return scan_partial_pair(lexer, valid, ']', INVALID_ARRAY_TABLE_CLOSE);
+  enum Step result = STEP_NEXT;
+  if (c == ']' || c == '}')
+    result = scan_closer(scanner, lexer, valid, c, spaced);
+  else if (c == '[' || c == '{')
+    result = scan_opener(scanner, lexer, valid, c, spaced);
+  if (result == STEP_NEXT)
+    result = scan_keyval_part(lexer, valid, c, spaced, end);
+  if (result != STEP_NEXT) return result == STEP_ACCEPT;
 
   const bool number_continuation = !spaced &&
     !is_scalar_boundary(c) &&
@@ -1470,4 +1471,103 @@ bool tree_sitter_toml_external_scanner_scan(
   )
     return emit(lexer, valid, EXPRESSION_END);
   return !end && emit(lexer, valid, MISSING_NEWLINE);
+}
+
+void *tree_sitter_toml_external_scanner_create(void) {
+  return ts_calloc(1, sizeof(struct Scanner));
+}
+
+void tree_sitter_toml_external_scanner_destroy(void *payload) {
+  ts_free(payload);
+}
+
+unsigned
+tree_sitter_toml_external_scanner_serialize(void *payload, char *buffer) {
+  const struct Scanner *scanner = payload;
+  if (!scanner) return 0;
+  if (
+    scanner->rejected_key == NO_REJECTED_KEY &&
+    !scanner->word_continuation &&
+    !scanner->arrays &&
+    !scanner->inline_tables
+  )
+    return 0;
+  buffer[0] =
+    (char)(scanner->rejected_key | (scanner->word_continuation ? 4 : 0));
+  for (unsigned i = 0; i < 4; i++) {
+    buffer[1 + i] = (char)(scanner->arrays >> (8 * i));
+    buffer[5 + i] = (char)(scanner->inline_tables >> (8 * i));
+  }
+  return 9;
+}
+
+void tree_sitter_toml_external_scanner_deserialize(
+  void *payload,
+  const char *buffer,
+  unsigned length
+) {
+  struct Scanner *scanner = payload;
+  if (!scanner) return;
+  *scanner = (struct Scanner){0};
+  if (length != 9) return;
+  scanner->rejected_key = (enum RejectedKey)(buffer[0] & 3);
+  scanner->word_continuation = (buffer[0] & 4) != 0;
+  for (unsigned i = 0; i < 4; i++) {
+    scanner->arrays |= (uint32_t)(uint8_t)buffer[1 + i] << (8 * i);
+    scanner->inline_tables |= (uint32_t)(uint8_t)buffer[5 + i] << (8 * i);
+  }
+}
+
+bool tree_sitter_toml_external_scanner_scan(
+  void *payload,
+  TSLexer *lexer,
+  const bool *valid
+) {
+  struct Scanner *scanner = payload;
+  if (!scanner || valid[ERROR_SENTINEL]) return false;
+  const enum Base base = active_base(valid);
+  const bool value_start =
+    valid[INTEGER_START] || valid[FLOAT_START] || valid[DATE_START];
+  resume_rejected_key(scanner, lexer, valid, value_start, base != NO_BASE);
+  const int32_t c = lexer->lookahead;
+  lexer->mark_end(lexer);
+  if (in_string_body(valid)) return scan_string_body(lexer, valid, c);
+  if (valid[COMMENT_TEXT] || valid[COMMENT_END])
+    return scan_comment_body(lexer, valid, c);
+  const bool trailing_junk = !value_start &&
+    valid[INVALID_CHARACTER] &&
+    valid[UNEXPECTED_CHARACTER_START];
+
+  if (scan_digits_marker(scanner, lexer, valid, base, c)) return true;
+  if (
+    is_invalid_encoding(c) &&
+    !valid_base_token(valid, DEC_CONTINUATION, base) &&
+    scan_decoding_failure(lexer, valid, base, trailing_junk)
+  )
+    return true;
+  if (c == '#' && valid[BROKEN_COMMENT_START])
+    return scan_broken_comment(lexer, valid);
+  if (valid[BLANK_LINE] && is_space(c)) return scan_blank_line(lexer, valid);
+
+  enum Step result = scan_date_time(scanner, lexer, valid, c);
+  if (result == STEP_NEXT)
+    result =
+      scan_value_continuation(scanner, lexer, valid, base, c, trailing_junk);
+  if (result == STEP_NEXT)
+    result =
+      scan_control_character(scanner, lexer, valid, base, c, trailing_junk);
+  if (result == STEP_NEXT)
+    result = scan_value_start(lexer, valid, c, value_start);
+  if (result == STEP_NEXT && scan_time_suffix(scanner, lexer, valid, c))
+    result = STEP_ACCEPT;
+  if (result == STEP_NEXT)
+    result = scan_number_element(scanner, lexer, valid, base, c);
+  if (result != STEP_NEXT) return result == STEP_ACCEPT;
+  if (
+    !lexer->eof(lexer) && valid[INVALID_KEY_CHARACTER] && is_invalid_key_char(c)
+  )
+    return take_invalid_characters(lexer, valid, INVALID_KEY_CHARACTER);
+  if (c == '\r' && valid[INVALID_LINE_ENDING])
+    return scan_partial_pair(lexer, valid, '\n', INVALID_LINE_ENDING);
+  return scan_after_layout(scanner, lexer, valid, base);
 }
