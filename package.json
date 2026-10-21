@@ -1,6 +1,6 @@
 {
   "name": "@konomanoasa/tree-sitter-toml",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "type": "module",
   "description": "Tree-sitter grammar for TOML.",
   "license": "MIT",
