@@ -271,7 +271,6 @@ static bool emit(TSLexer *lexer, const bool *valid, enum TokenType token) {
   return true;
 }
 
-// Paired outcomes are valid together, and incomplete follows invalid.
 static bool emit_issue(
   TSLexer *lexer,
   const bool *valid,
@@ -339,7 +338,6 @@ static bool keyval_ahead(TSLexer *lexer, bool has_key, bool bare) {
   }
 }
 
-// Avoid repeated lookahead over rejected key chains.
 static enum RejectedKey take_rejected_keys(TSLexer *lexer) {
   enum RejectedKey next = REJECTED_KEY;
   for (bool first = true;; first = false) {

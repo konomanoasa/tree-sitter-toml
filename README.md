@@ -15,8 +15,6 @@ npm install @konomanoasa/tree-sitter-toml
 
 ## Development
 
-Development uses Node.js 24.21.0 or later.
-
 ```sh
 npm install
 npm run build
@@ -30,7 +28,7 @@ npm test
 
 ## Used By
 
-[toml-ts-mode](https://github.com/konomanoasa/toml-ts-mode): Emacs major mode.
+[toml-ts-mode](https://github.com/konomanoasa/toml-ts-mode)
 
 ## License
 
