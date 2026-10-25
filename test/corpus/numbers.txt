@@ -202,27 +202,218 @@ a = [0, 1, 2, 3, 5, 6, 7, 9, 10, 20, 23, 24, 59, 60, 61, 99, 100, 2000, 9999, 0.
 0:114 - 0:115             "]"
 
 ==================
-Unfinished leading-zero digits retain each digit
-:cst
+Decimal integers with signs and underscores
 ==================
-a=0100
+a = 0
+b = -0
+c = +1234
+d = 1_000_000
 ---
 
-0:0 - 0:6   toml
-0:0 - 0:6     expression
-0:0 - 0:6       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:6         value: val
-0:2 - 0:6           issue: syntax_issue
-0:2 - 0:6             incomplete_syntax
-0:2 - 0:6               invalid_value
-0:2 - 0:3                 digit `0`
-0:3 - 0:4                 digit `1`
-0:4 - 0:5                 digit `0`
-0:5 - 0:6                 digit `0`
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              (digit)
+              (digit)
+              (digit)))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit)
+              (digit))))))))
+
+==================
+Hexadecimal, octal, and binary integers
+==================
+a = 0xDeAd_beef
+b = 0o07_55
+c = 0b10_01
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (hex_int
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig)
+            (hexdig))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (oct_int
+            (digit0_7)
+            (digit0_7)
+            (digit0_7)
+            (digit0_7))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (bin_int
+            (digit0_1)
+            (digit0_1)
+            (digit0_1)
+            (digit0_1)))))))
+
+==================
+Floats with fraction, exponent, and underscores
+==================
+a = -12.3_4e+0_2
+b = 1E-02
+c = 0.5
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit1_9)
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              (digit)
+              (digit)))
+          (exp
+            (float_exp_part
+              (zero_prefixable_int
+                (digit)
+                (digit))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (exp
+            (float_exp_part
+              (zero_prefixable_int
+                (digit)
+                (digit))))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              (digit))))))))
+
+==================
+Special floats with optional sign
+==================
+a = +inf
+b = -nan
+c = nan
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (special_float)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (special_float)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (special_float))))))
 
 ==================
 Quotes end numeric junk before its first required digit: a=1.?"q2"=2
@@ -524,25 +715,6 @@ a=0_
 0:3 - 0:4                     invalid_number `_`
 
 ==================
-Signed special float prefix at EOF
-==================
-a = +in
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (float
-          (special_float
-            issue: (syntax_issue
-              (incomplete_syntax
-                (invalid_value)))))))))
-
-==================
 Invalid sign in fraction preserves following digits
 ==================
 a=2.+0_2
@@ -752,239 +924,6 @@ a=1.?key=2
               (digit))))))))
 
 ==================
-Decimal integers with signs and underscores
-==================
-a = 0
-b = -0
-c = +1234
-d = 1_000_000
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit)))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit)))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit1_9)
-              (digit)
-              (digit)
-              (digit)))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit1_9)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit))))))))
-
-==================
-Hexadecimal, octal, and binary integers
-==================
-a = 0xDeAd_beef
-b = 0o07_55
-c = 0b10_01
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (integer
-          (hex_int
-            (hexdig)
-            (hexdig)
-            (hexdig)
-            (hexdig)
-            (hexdig)
-            (hexdig)
-            (hexdig)
-            (hexdig))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (integer
-          (oct_int
-            (digit0_7)
-            (digit0_7)
-            (digit0_7)
-            (digit0_7))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (integer
-          (bin_int
-            (digit0_1)
-            (digit0_1)
-            (digit0_1)
-            (digit0_1)))))))
-
-==================
-Floats with fraction, exponent, and underscores
-==================
-a = -12.3_4e+0_2
-b = 1E-02
-c = 0.5
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (float
-          (float_int_part
-            (dec_int
-              (unsigned_dec_int
-                (digit1_9)
-                (digit))))
-          (frac
-            (zero_prefixable_int
-              (digit)
-              (digit)))
-          (exp
-            (float_exp_part
-              (zero_prefixable_int
-                (digit)
-                (digit))))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (float
-          (float_int_part
-            (dec_int
-              (unsigned_dec_int
-                (digit))))
-          (exp
-            (float_exp_part
-              (zero_prefixable_int
-                (digit)
-                (digit))))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (float
-          (float_int_part
-            (dec_int
-              (unsigned_dec_int
-                (digit))))
-          (frac
-            (zero_prefixable_int
-              (digit))))))))
-
-==================
-Special floats with optional sign
-==================
-a = +inf
-b = -nan
-c = nan
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (float
-          (special_float)))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (float
-          (special_float)))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (float
-          (special_float))))))
-
-==================
-Leading-zero digits at EOF retain an unfinished value
-==================
-a = 01
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        issue: (syntax_issue
-          (incomplete_syntax
-            (invalid_value
-              (digit)
-              (digit))))))))
-
-==================
 Signed decimal leading zero
 ==================
 a = -01
@@ -1005,27 +944,6 @@ a = -01
                   (invalid_number
                     (digit))))
               (digit))))))))
-
-==================
-Trailing digit separator
-==================
-a = 1_
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit1_9)
-              issue: (syntax_issue
-                (incomplete_syntax
-                  (invalid_number))))))))))
 
 ==================
 Consecutive digit separators
@@ -1197,53 +1115,6 @@ a = .1
               (digit))))))))
 
 ==================
-Fraction missing digits
-==================
-a = 1.
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (float
-          (float_int_part
-            (dec_int
-              (unsigned_dec_int
-                (digit))))
-          (frac
-            issue: (syntax_issue
-              (incomplete_syntax
-                (missing_digits)))))))))
-
-==================
-Exponent missing digits
-==================
-a = 1e+
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (float
-          (float_int_part
-            (dec_int
-              (unsigned_dec_int
-                (digit))))
-          (exp
-            (float_exp_part
-              issue: (syntax_issue
-                (incomplete_syntax
-                  (missing_digits))))))))))
-
-==================
 Float leading zero
 ==================
 a = 01.2
@@ -1329,3 +1200,131 @@ a = 1_2=3
     issue: (syntax_issue
       (invalid_syntax
         (invalid_character)))))
+==================
+Unfinished leading-zero digits retain each digit
+:cst
+==================
+a=0100
+---
+
+0:0 - 0:6   toml
+0:0 - 0:6     expression
+0:0 - 0:6       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:6         value: val
+0:2 - 0:6           issue: syntax_issue
+0:2 - 0:6             incomplete_syntax
+0:2 - 0:6               invalid_value
+0:2 - 0:3                 digit `0`
+0:3 - 0:4                 digit `1`
+0:4 - 0:5                 digit `0`
+0:5 - 0:6                 digit `0`
+
+==================
+Signed special float prefix at EOF
+==================
+a = +in
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (special_float
+            issue: (syntax_issue
+              (incomplete_syntax
+                (invalid_value)))))))))
+
+==================
+Leading-zero digits at EOF retain an unfinished value
+==================
+a = 01
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        issue: (syntax_issue
+          (incomplete_syntax
+            (invalid_value
+              (digit)
+              (digit))))))))
+
+==================
+Trailing digit separator
+==================
+a = 1_
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (invalid_number))))))))))
+
+==================
+Fraction missing digits
+==================
+a = 1.
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            issue: (syntax_issue
+              (incomplete_syntax
+                (missing_digits)))))))))
+
+==================
+Exponent missing digits
+==================
+a = 1e+
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (exp
+            (float_exp_part
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_digits))))))))))

@@ -1,4 +1,172 @@
 ==================
+List range includes leading layout: a=[ []]
+:cst
+==================
+a=[ []]
+---
+
+0:0 - 0:7   toml
+0:0 - 0:7     expression
+0:0 - 0:7       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:7         value: val
+0:2 - 0:7           array
+0:2 - 0:3             "["
+0:3 - 0:6             array_values
+0:4 - 0:6               val
+0:4 - 0:6                 array
+0:4 - 0:5                   "["
+0:5 - 0:6                   "]"
+0:6 - 0:7             "]"
+
+==================
+List range includes leading layout: a=[ {}]
+:cst
+==================
+a=[ {}]
+---
+
+0:0 - 0:7   toml
+0:0 - 0:7     expression
+0:0 - 0:7       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:7         value: val
+0:2 - 0:7           array
+0:2 - 0:3             "["
+0:3 - 0:6             array_values
+0:4 - 0:6               val
+0:4 - 0:6                 inline_table
+0:4 - 0:5                   "{"
+0:5 - 0:6                   "}"
+0:6 - 0:7             "]"
+
+==================
+Array owns leading layout, values, separators, and trailing comma
+==================
+a = [ true , false , ]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (boolean))
+            (val
+              (boolean))))))))
+
+==================
+Array with comments and newlines around values and separators
+==================
+a = [
+# first
+true # value
+, # comma
+false # last
+,
+]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (newline)
+            (comment)
+            (newline)
+            (val
+              (boolean))
+            (comment)
+            (newline)
+            (comment)
+            (newline)
+            (val
+              (boolean))
+            (comment)
+            (newline))
+          (newline))))))
+
+==================
+Empty array with comment
+==================
+a = [# empty
+]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (comment)
+          (newline))))))
+
+==================
+Nested arrays with mixed values
+==================
+a = [[true], [1, "x", 07:32], []]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (array
+                (array_values
+                  (val
+                    (boolean)))))
+            (val
+              (array
+                (array_values
+                  (val
+                    (integer
+                      (dec_int
+                        (unsigned_dec_int
+                          (digit)))))
+                  (val
+                    (string
+                      (basic_string
+                        (basic_char
+                          (basic_unescaped)))))
+                  (val
+                    (date_time
+                      (local_time
+                        (partial_time
+                          (time_hour
+                            (digit)
+                            (digit))
+                          (time_minute
+                            (digit)
+                            (digit)))))))))
+            (val
+              (array))))))))
+
+==================
 Unexpected separator leaves trailing newline with array: "a=[,\n]"
 :cst
 ==================
@@ -83,54 +251,6 @@ a=[,1]
 0:4 - 0:5                     unsigned_dec_int
 0:4 - 0:5                       digit `1`
 0:5 - 0:6             "]"
-
-==================
-List range includes leading layout: a=[ []]
-:cst
-==================
-a=[ []]
----
-
-0:0 - 0:7   toml
-0:0 - 0:7     expression
-0:0 - 0:7       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:7         value: val
-0:2 - 0:7           array
-0:2 - 0:3             "["
-0:3 - 0:6             array_values
-0:4 - 0:6               val
-0:4 - 0:6                 array
-0:4 - 0:5                   "["
-0:5 - 0:6                   "]"
-0:6 - 0:7             "]"
-
-==================
-List range includes leading layout: a=[ {}]
-:cst
-==================
-a=[ {}]
----
-
-0:0 - 0:7   toml
-0:0 - 0:7     expression
-0:0 - 0:7       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:7         value: val
-0:2 - 0:7           array
-0:2 - 0:3             "["
-0:3 - 0:6             array_values
-0:4 - 0:6               val
-0:4 - 0:6                 inline_table
-0:4 - 0:5                   "{"
-0:5 - 0:6                   "}"
-0:6 - 0:7             "]"
 
 ==================
 List range includes leading layout: a=[ }]
@@ -520,126 +640,6 @@ a=[1,}
 1:0 - 1:1             "]"
 
 ==================
-Array owns leading layout, values, separators, and trailing comma
-==================
-a = [ true , false , ]
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (array
-          (array_values
-            (val
-              (boolean))
-            (val
-              (boolean))))))))
-
-==================
-Array with comments and newlines around values and separators
-==================
-a = [
-# first
-true # value
-, # comma
-false # last
-,
-]
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (array
-          (array_values
-            (newline)
-            (comment)
-            (newline)
-            (val
-              (boolean))
-            (comment)
-            (newline)
-            (comment)
-            (newline)
-            (val
-              (boolean))
-            (comment)
-            (newline))
-          (newline))))))
-
-==================
-Empty array with comment
-==================
-a = [# empty
-]
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (array
-          (comment)
-          (newline))))))
-
-==================
-Nested arrays with mixed values
-==================
-a = [[true], [1, "x", 07:32], []]
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (array
-          (array_values
-            (val
-              (array
-                (array_values
-                  (val
-                    (boolean)))))
-            (val
-              (array
-                (array_values
-                  (val
-                    (integer
-                      (dec_int
-                        (unsigned_dec_int
-                          (digit)))))
-                  (val
-                    (string
-                      (basic_string
-                        (basic_char
-                          (basic_unescaped)))))
-                  (val
-                    (date_time
-                      (local_time
-                        (partial_time
-                          (time_hour
-                            (digit)
-                            (digit))
-                          (time_minute
-                            (digit)
-                            (digit)))))))))
-            (val
-              (array))))))))
-
-==================
 Array missing separator
 ==================
 a = [true false]
@@ -726,6 +726,66 @@ a = [true,,false]
               (boolean))))))))
 
 ==================
+Array adjacent numeric values
+==================
+a = [1 2]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_array_separator)))
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))))))))
+
+==================
+Extra separator retains later array values
+==================
+a=[,1,,2]
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (array
+          (array_values
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_separator)))
+            (val
+              (integer
+                (dec_int
+                  (unsigned_dec_int
+                    (digit)))))))))))
+==================
 Unclosed array
 ==================
 a = [true
@@ -769,35 +829,6 @@ a = [true # ]
               (missing_array_close))))))))
 
 ==================
-Array adjacent numeric values
-==================
-a = [1 2]
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (array
-          (array_values
-            (val
-              (integer
-                (dec_int
-                  (unsigned_dec_int
-                    (digit)))))
-            issue: (syntax_issue
-              (invalid_syntax
-                (missing_array_separator)))
-            (val
-              (integer
-                (dec_int
-                  (unsigned_dec_int
-                    (digit)))))))))))
-
-==================
 Nested arrays missing both closings
 ==================
 a = [[1
@@ -826,35 +857,3 @@ a = [[1
           issue: (syntax_issue
             (incomplete_syntax
               (missing_array_close))))))))
-
-==================
-Extra separator retains later array values
-==================
-a=[,1,,2]
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (array
-          (array_values
-            issue: (syntax_issue
-              (invalid_syntax
-                (unexpected_separator)))
-            (val
-              (integer
-                (dec_int
-                  (unsigned_dec_int
-                    (digit)))))
-            issue: (syntax_issue
-              (invalid_syntax
-                (unexpected_separator)))
-            (val
-              (integer
-                (dec_int
-                  (unsigned_dec_int
-                    (digit)))))))))))

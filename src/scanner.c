@@ -145,7 +145,7 @@ enum RejectedKey {
 
 struct Scanner {
   enum RejectedKey rejected_key;
-  // Key lookahead must not reclassify an invalid word as an exponent.
+  // Prevent exponent recognition inside invalid words.
   bool word_continuation;
   uint32_t arrays;
   uint32_t inline_tables;
@@ -266,7 +266,7 @@ static bool valid_date_element_start(const bool *valid) {
 static bool emit(TSLexer *lexer, const bool *valid, enum TokenType token) {
   if (!valid[token]) return false;
   lexer->result_symbol = token;
-  // Include the final lookahead character in edit invalidation.
+  // Invalidate edits to the final lookahead character.
   if (!lexer->eof(lexer)) lexer->advance(lexer, false);
   return true;
 }
@@ -429,7 +429,7 @@ static void resume_rejected_key(
     continue_rejected_key(scanner, lexer->lookahead, false);
 }
 
-// Clear finished chains before zero-width tokens to preserve subtree reuse.
+// Clear finished chains before zero-width tokens to allow reuse.
 static void end_rejected_chain(struct Scanner *scanner, TSLexer *lexer) {
   const enum RejectedKey rejected = scanner->rejected_key;
   if (rejected == NO_REJECTED_KEY) return;
@@ -950,7 +950,6 @@ static bool continue_number(
       return emit(lexer, valid, continuation);
     }
   }
-  // Keep key lookahead inside the number for reparsing.
   if (!is_base_digit(c, base) && is_key_char(c) && keyval_may_follow(valid)) {
     if (adjacent_keyval(scanner, lexer, valid, c == '_'))
       return emit(lexer, valid, NUMBER_END);

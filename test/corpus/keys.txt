@@ -1,4 +1,98 @@
 ==================
+Bare keys with letters, digits, underscores, and dashes
+==================
+9_a-b = true
+1234 = false
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
+
+==================
+Quoted keys, empty and with escape
+==================
+"" = true
+'' = false
+"\x61" = true
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (basic_string))))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (literal_string))))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (basic_string
+              (basic_char
+                (escaped
+                  (escape_seq_char
+                    (hexdig)
+                    (hexdig))))))))
+      value: (val
+        (boolean)))))
+
+==================
+Dotted key with whitespace around dots and quoted segments
+==================
+a 	. "b.c" . 'd' = true
+---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          (simple_key
+            (quoted_key
+              (basic_string
+                (basic_char
+                  (basic_unescaped))
+                (basic_char
+                  (basic_unescaped))
+                (basic_char
+                  (basic_unescaped)))))
+          (simple_key
+            (quoted_key
+              (literal_string
+                (literal_char))))))
+      value: (val
+        (boolean)))))
+
+==================
 vertical tab as whitespace
 :cst
 ==================
@@ -18,60 +112,6 @@ a= true
 0:4 - 0:8         value: val
 0:4 - 0:8           boolean
 0:4 - 0:8             "true"
-
-==================
-quote run without a keyval
-:cst
-==================
-x """ y
----
-
-0:0 - 0:7   toml
-0:0 - 0:7     expression
-0:0 - 0:7       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `x`
-0:2 - 0:2         issue: syntax_issue
-0:2 - 0:2           invalid_syntax
-0:2 - 0:2             missing_assignment_operator
-0:2 - 0:7         value: val
-0:2 - 0:7           string
-0:2 - 0:7             ml_basic_string
-0:2 - 0:5               "\"\"\""
-0:5 - 0:7               ml_basic_body
-0:5 - 0:6                 mlb_content
-0:5 - 0:6                   basic_char
-0:5 - 0:6                     basic_unescaped ` `
-0:6 - 0:7                 mlb_content
-0:6 - 0:7                   basic_char
-0:6 - 0:7                     basic_unescaped `y`
-0:7 - 0:7               issue: syntax_issue
-0:7 - 0:7                 incomplete_syntax
-0:7 - 0:7                   missing_ml_basic_string_close
-
-==================
-quote pair as the whole document
-:cst
-==================
-""
----
-
-0:0 - 0:2   toml
-0:0 - 0:2     expression
-0:0 - 0:2       keyval
-0:0 - 0:2         key: key
-0:0 - 0:2           simple_key
-0:0 - 0:2             quoted_key
-0:0 - 0:2               basic_string
-0:0 - 0:1                 "\""
-0:1 - 0:2                 "\""
-0:2 - 0:2         issue: syntax_issue
-0:2 - 0:2           incomplete_syntax
-0:2 - 0:2             missing_assignment_operator
-0:2 - 0:2         issue: syntax_issue
-0:2 - 0:2           incomplete_syntax
-0:2 - 0:2             missing_value
 
 ==================
 Value recovery retains key structure: a=1 .x=2
@@ -533,100 +573,6 @@ a=1 x..y=2 z.=3
               (digit))))))))
 
 ==================
-Bare keys with letters, digits, underscores, and dashes
-==================
-9_a-b = true
-1234 = false
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (boolean))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (boolean)))))
-
-==================
-Quoted keys, empty and with escape
-==================
-"" = true
-'' = false
-"\x61" = true
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (quoted_key
-            (basic_string))))
-      value: (val
-        (boolean))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (quoted_key
-            (literal_string))))
-      value: (val
-        (boolean))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (quoted_key
-            (basic_string
-              (basic_char
-                (escaped
-                  (escape_seq_char
-                    (hexdig)
-                    (hexdig))))))))
-      value: (val
-        (boolean)))))
-
-==================
-Dotted key with whitespace around dots and quoted segments
-==================
-a 	. "b.c" . 'd' = true
----
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (dotted_key
-          (simple_key
-            (unquoted_key))
-          (simple_key
-            (quoted_key
-              (basic_string
-                (basic_char
-                  (basic_unescaped))
-                (basic_char
-                  (basic_unescaped))
-                (basic_char
-                  (basic_unescaped)))))
-          (simple_key
-            (quoted_key
-              (literal_string
-                (literal_char))))))
-      value: (val
-        (boolean)))))
-
-==================
 Non ASCII bare key
 ==================
 日本 = true
@@ -747,3 +693,56 @@ b = true
           (unquoted_key)))
       value: (val
         (boolean)))))
+==================
+quote run without a keyval
+:cst
+==================
+x """ y
+---
+
+0:0 - 0:7   toml
+0:0 - 0:7     expression
+0:0 - 0:7       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `x`
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           invalid_syntax
+0:2 - 0:2             missing_assignment_operator
+0:2 - 0:7         value: val
+0:2 - 0:7           string
+0:2 - 0:7             ml_basic_string
+0:2 - 0:5               "\"\"\""
+0:5 - 0:7               ml_basic_body
+0:5 - 0:6                 mlb_content
+0:5 - 0:6                   basic_char
+0:5 - 0:6                     basic_unescaped ` `
+0:6 - 0:7                 mlb_content
+0:6 - 0:7                   basic_char
+0:6 - 0:7                     basic_unescaped `y`
+0:7 - 0:7               issue: syntax_issue
+0:7 - 0:7                 incomplete_syntax
+0:7 - 0:7                   missing_ml_basic_string_close
+
+==================
+quote pair as the whole document
+:cst
+==================
+""
+---
+
+0:0 - 0:2   toml
+0:0 - 0:2     expression
+0:0 - 0:2       keyval
+0:0 - 0:2         key: key
+0:0 - 0:2           simple_key
+0:0 - 0:2             quoted_key
+0:0 - 0:2               basic_string
+0:0 - 0:1                 "\""
+0:1 - 0:2                 "\""
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           incomplete_syntax
+0:2 - 0:2             missing_assignment_operator
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           incomplete_syntax
+0:2 - 0:2             missing_value

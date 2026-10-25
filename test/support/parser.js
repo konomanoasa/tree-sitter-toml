@@ -149,11 +149,15 @@ function assertEditHistory({ source, edits }) {
   let result;
   for (let count = 1; count <= edits.length; count++) {
     const history = edits.slice(0, count);
-    result = assertIncrementalEqualsFresh(
-      source,
-      history,
-      applyEdits(source, history),
-    );
+    try {
+      result = assertIncrementalEqualsFresh(
+        source,
+        history,
+        applyEdits(source, history),
+      );
+    } catch (error) {
+      throw new Error(`edit ${count}/${edits.length}`, { cause: error });
+    }
   }
   return result;
 }

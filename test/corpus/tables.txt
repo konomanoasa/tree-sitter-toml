@@ -1,4 +1,87 @@
 ==================
+Standard table header with whitespace, quoted dotted segment, and comment
+==================
+[ a . "b.c" ] # header
+x = true
+---
+
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (dotted_key
+            (simple_key
+              (unquoted_key))
+            (simple_key
+              (quoted_key
+                (basic_string
+                  (basic_char
+                    (basic_unescaped))
+                  (basic_char
+                    (basic_unescaped))
+                  (basic_char
+                    (basic_unescaped)))))))))
+    (comment))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
+
+==================
+Array table headers with whitespace and dotted key
+==================
+[[a]]
+x = true
+[[ a . b ]]
+---
+
+(toml
+  (expression
+    (table
+      (array_table
+        key: (key
+          (simple_key
+            (unquoted_key))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean))))
+  (newline)
+  (expression
+    (table
+      (array_table
+        key: (key
+          (dotted_key
+            (simple_key
+              (unquoted_key))
+            (simple_key
+              (unquoted_key))))))))
+
+==================
+Empty quoted table name
+==================
+[""]
+---
+
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (quoted_key
+              (basic_string))))))))
+
+==================
 A standard table header follows a completed value without a newline
 :cst
 ==================
@@ -149,72 +232,6 @@ a=[][]
 0:5 - 0:6           "]"
 
 ==================
-an unfinished header follows a completed value
-:cst
-==================
-a=1 [b
----
-
-0:0 - 0:6   toml
-0:0 - 0:4     expression
-0:0 - 0:3       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:3         value: val
-0:2 - 0:3           integer
-0:2 - 0:3             dec_int
-0:2 - 0:3               unsigned_dec_int
-0:2 - 0:3                 digit `1`
-0:4 - 0:4     issue: syntax_issue
-0:4 - 0:4       invalid_syntax
-0:4 - 0:4         missing_newline
-0:4 - 0:6     expression
-0:4 - 0:6       table
-0:4 - 0:6         std_table
-0:4 - 0:5           "["
-0:5 - 0:6           key: key
-0:5 - 0:6             simple_key
-0:5 - 0:6               unquoted_key `b`
-0:6 - 0:6           issue: syntax_issue
-0:6 - 0:6             incomplete_syntax
-0:6 - 0:6               missing_std_table_close
-
-==================
-a header opening alone follows a completed value
-:cst
-==================
-a=1 [
----
-
-0:0 - 0:5   toml
-0:0 - 0:4     expression
-0:0 - 0:3       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:3         value: val
-0:2 - 0:3           integer
-0:2 - 0:3             dec_int
-0:2 - 0:3               unsigned_dec_int
-0:2 - 0:3                 digit `1`
-0:4 - 0:4     issue: syntax_issue
-0:4 - 0:4       invalid_syntax
-0:4 - 0:4         missing_newline
-0:4 - 0:5     expression
-0:4 - 0:5       table
-0:4 - 0:5         std_table
-0:4 - 0:5           "["
-0:5 - 0:5           issue: syntax_issue
-0:5 - 0:5             incomplete_syntax
-0:5 - 0:5               missing_key
-0:5 - 0:5           issue: syntax_issue
-0:5 - 0:5             incomplete_syntax
-0:5 - 0:5               missing_std_table_close
-
-==================
 a table header does not supply an array opening
 :cst
 ==================
@@ -259,23 +276,6 @@ a={b=1]}
 1:7 - 1:8             "}"
 
 ==================
-Partial array table closing delimiter at EOF
-==================
-[[a]
----
-
-(toml
-  (expression
-    (table
-      (array_table
-        key: (key
-          (simple_key
-            (unquoted_key)))
-        issue: (syntax_issue
-          (incomplete_syntax
-            (invalid_delimiter)))))))
-
-==================
 Extra header key preserves key structure
 ==================
 [a b]
@@ -294,89 +294,6 @@ Extra header key preserves key structure
               (key
                 (simple_key
                   (unquoted_key))))))))))
-
-==================
-Standard table header with whitespace, quoted dotted segment, and comment
-==================
-[ a . "b.c" ] # header
-x = true
----
-
-(toml
-  (expression
-    (table
-      (std_table
-        key: (key
-          (dotted_key
-            (simple_key
-              (unquoted_key))
-            (simple_key
-              (quoted_key
-                (basic_string
-                  (basic_char
-                    (basic_unescaped))
-                  (basic_char
-                    (basic_unescaped))
-                  (basic_char
-                    (basic_unescaped)))))))))
-    (comment))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (boolean)))))
-
-==================
-Array table headers with whitespace and dotted key
-==================
-[[a]]
-x = true
-[[ a . b ]]
----
-
-(toml
-  (expression
-    (table
-      (array_table
-        key: (key
-          (simple_key
-            (unquoted_key))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (boolean))))
-  (newline)
-  (expression
-    (table
-      (array_table
-        key: (key
-          (dotted_key
-            (simple_key
-              (unquoted_key))
-            (simple_key
-              (unquoted_key))))))))
-
-==================
-Empty quoted table name
-==================
-[""]
----
-
-(toml
-  (expression
-    (table
-      (std_table
-        key: (key
-          (simple_key
-            (quoted_key
-              (basic_string))))))))
 
 ==================
 Table header missing key
@@ -597,3 +514,85 @@ Table header followed by key value pair
           (unquoted_key)))
       value: (val
         (boolean)))))
+==================
+an unfinished header follows a completed value
+:cst
+==================
+a=1 [b
+---
+
+0:0 - 0:6   toml
+0:0 - 0:4     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:4 - 0:4     issue: syntax_issue
+0:4 - 0:4       invalid_syntax
+0:4 - 0:4         missing_newline
+0:4 - 0:6     expression
+0:4 - 0:6       table
+0:4 - 0:6         std_table
+0:4 - 0:5           "["
+0:5 - 0:6           key: key
+0:5 - 0:6             simple_key
+0:5 - 0:6               unquoted_key `b`
+0:6 - 0:6           issue: syntax_issue
+0:6 - 0:6             incomplete_syntax
+0:6 - 0:6               missing_std_table_close
+
+==================
+a header opening alone follows a completed value
+:cst
+==================
+a=1 [
+---
+
+0:0 - 0:5   toml
+0:0 - 0:4     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:4 - 0:4     issue: syntax_issue
+0:4 - 0:4       invalid_syntax
+0:4 - 0:4         missing_newline
+0:4 - 0:5     expression
+0:4 - 0:5       table
+0:4 - 0:5         std_table
+0:4 - 0:5           "["
+0:5 - 0:5           issue: syntax_issue
+0:5 - 0:5             incomplete_syntax
+0:5 - 0:5               missing_key
+0:5 - 0:5           issue: syntax_issue
+0:5 - 0:5             incomplete_syntax
+0:5 - 0:5               missing_std_table_close
+
+==================
+Partial array table closing delimiter at EOF
+==================
+[[a]
+---
+
+(toml
+  (expression
+    (table
+      (array_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (incomplete_syntax
+            (invalid_delimiter)))))))

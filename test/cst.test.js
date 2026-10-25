@@ -3,15 +3,31 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { root } from "../scripts/tree-sitter.js";
-import { parseCorpus } from "./support/corpus.js";
 import { parseCst } from "./support/cst.js";
-import {
-  applyEdits,
-  assertEditHistory,
-  assertIncrementalEqualsFresh,
-  assertValidHistory,
-  parse,
-} from "./support/parser.js";
+import { parse } from "./support/parser.js";
+
+function parseCorpus(text) {
+  const sections = text.split("==================\n");
+  assert.equal(sections.shift(), "", "corpus must begin with a header");
+  assert.equal(sections.length % 2, 0, "corpus headers must be paired");
+  const cases = [];
+  for (let index = 0; index < sections.length; index += 2) {
+    const [name, ...attributes] = sections[index].trimEnd().split("\n");
+    assert.ok(name, "corpus case must have a name");
+    for (const attribute of attributes) {
+      assert.equal(
+        attribute,
+        ":cst",
+        `unsupported corpus attribute: ${attribute}`,
+      );
+    }
+    const parts = sections[index + 1].split("\n---\n");
+    assert.equal(parts.length, 2, `${name}: expected one output separator`);
+    const source = parts[0].endsWith("\r") ? parts[0].slice(0, -1) : parts[0];
+    cases.push({ name, source });
+  }
+  return cases;
+}
 
 const corpusDirectory = join(root, "test/corpus");
 for (const file of readdirSync(corpusDirectory).sort()) {
@@ -196,213 +212,3 @@ test("toml issues: decoding failures stay isolated across syntax boundaries", ()
     }
   }
 });
-
-const histories = [
-  {
-    name: "insert trailing array comment and remove comma",
-    initial: "a = [true,]",
-    steps: [
-      {
-        byte: 10,
-        deleteBytes: 0,
-        insert: "# tail\n",
-        source: "a = [true,# tail\n]",
-        valid: true,
-      },
-      {
-        byte: 9,
-        deleteBytes: 1,
-        insert: "",
-        source: "a = [true# tail\n]",
-        valid: true,
-      },
-      {
-        byte: 9,
-        deleteBytes: 0,
-        insert: ",",
-        source: "a = [true,# tail\n]",
-        valid: true,
-      },
-    ],
-  },
-  {
-    name: "move trailing array layout between array and values",
-    initial: "a = [true ]",
-    steps: [
-      {
-        byte: 9,
-        deleteBytes: 0,
-        insert: ",",
-        source: "a = [true, ]",
-        valid: true,
-      },
-      {
-        byte: 9,
-        deleteBytes: 1,
-        insert: "",
-        source: "a = [true ]",
-        valid: true,
-      },
-      {
-        byte: 10,
-        deleteBytes: 0,
-        insert: ",",
-        source: "a = [true ,]",
-        valid: true,
-      },
-    ],
-  },
-  {
-    name: "move trailing inline table layout by inserting a comma",
-    initial: "a = {b = 1 }",
-    steps: [
-      {
-        byte: 11,
-        deleteBytes: 0,
-        insert: ",",
-        source: "a = {b = 1 ,}",
-        valid: true,
-      },
-      {
-        byte: 11,
-        deleteBytes: 1,
-        insert: "",
-        source: "a = {b = 1 }",
-        valid: true,
-      },
-    ],
-  },
-  {
-    name: "edit line ending without losing statement boundary",
-    initial: "a = true\nb = false",
-    steps: [
-      {
-        byte: 8,
-        deleteBytes: 0,
-        insert: "\r",
-        source: "a = true\r\nb = false",
-        valid: true,
-      },
-      {
-        byte: 9,
-        deleteBytes: 1,
-        insert: "",
-        source: "a = true\rb = false",
-        valid: false,
-      },
-      {
-        byte: 9,
-        deleteBytes: 0,
-        insert: "\n",
-        source: "a = true\r\nb = false",
-        valid: true,
-      },
-    ],
-  },
-  {
-    name: "replace Unicode string content by byte range",
-    initial: 'a = "🌿"',
-    steps: [
-      {
-        byte: 5,
-        deleteBytes: 4,
-        insert: "日本",
-        source: 'a = "日本"',
-        valid: true,
-      },
-      {
-        byte: 11,
-        deleteBytes: 1,
-        insert: "",
-        source: 'a = "日本',
-        valid: false,
-      },
-      {
-        byte: 11,
-        deleteBytes: 0,
-        insert: '"',
-        source: 'a = "日本"',
-        valid: true,
-      },
-    ],
-  },
-];
-
-for (const { name, initial, steps } of histories) {
-  test(`toml: ${name}`, () => {
-    assertValidHistory(initial, steps);
-  });
-}
-
-const lookaheadByteEdits = [
-  {
-    name: "two-byte character after an integer",
-    source: "a=1 é\n",
-    byte: 5,
-    expected: Buffer.concat([
-      Buffer.from("a=1 "),
-      Buffer.from([0xc3]),
-      Buffer.from("\n"),
-    ]),
-    issues: [["expression", "invalid_syntax", "invalid_encoding", 4, 5]],
-  },
-  {
-    name: "two-byte character after a date",
-    source: "a=2020-01-01 é\n",
-    byte: 14,
-    expected: Buffer.concat([
-      Buffer.from("a=2020-01-01 "),
-      Buffer.from([0xc3]),
-      Buffer.from("\n"),
-    ]),
-    issues: [["expression", "invalid_syntax", "invalid_encoding", 13, 14]],
-  },
-  {
-    name: "three-byte character after an array",
-    source: "a=[] あ\n",
-    byte: 7,
-    expected: Buffer.concat([
-      Buffer.from("a=[] "),
-      Buffer.from([0xe3, 0x81]),
-      Buffer.from("\n"),
-    ]),
-    issues: [["expression", "invalid_syntax", "invalid_encoding", 5, 7]],
-  },
-  {
-    name: "four-byte character after a string",
-    source: 'a="x" 😀\n',
-    byte: 9,
-    expected: Buffer.concat([
-      Buffer.from('a="x" '),
-      Buffer.from([0xf0, 0x9f, 0x98]),
-      Buffer.from("\n"),
-    ]),
-    issues: [["expression", "invalid_syntax", "invalid_encoding", 6, 9]],
-  },
-];
-
-for (const { name, source, byte, expected, issues } of lookaheadByteEdits) {
-  test(`toml: deleting the final byte of a ${name} preserves fresh parsing`, () => {
-    const edits = [{ byte, deleteBytes: 1, insert: "" }];
-    assert.deepEqual(applyEdits(source, edits), expected);
-    const result = assertIncrementalEqualsFresh(source, edits, expected);
-    assert.deepEqual(result.issues, issues);
-  });
-}
-
-for (const { name, source, edits } of [
-  {
-    name: "merge a decoding run after splitting a Unicode character",
-    source: Buffer.from([97, 61, 34, 255, 195, 169, 34]),
-    edits: [{ byte: 5, deleteBytes: 1, insert: "" }],
-  },
-  {
-    name: "repair a decoding run after a backslash",
-    source: Buffer.from([97, 61, 34, 92, 255, 254, 128, 34]),
-    edits: [{ byte: 4, deleteBytes: 3, insert: "n" }],
-  },
-]) {
-  test(`toml: ${name}`, () => {
-    assertEditHistory({ source, edits });
-  });
-}

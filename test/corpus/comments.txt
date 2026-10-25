@@ -1,4 +1,13 @@
 ==================
+Comment with Unicode and tab at end of file
+==================
+# 日本語	🌿
+---
+
+(toml
+  (expression
+    (comment)))
+==================
 control character in comment
 :cst
 ==================
@@ -12,13 +21,3 @@ control character in comment
 0:2 - 0:3         issue: syntax_issue
 0:2 - 0:3           invalid_syntax
 0:2 - 0:3             invalid_character ``
-
-==================
-Comment with Unicode and tab at end of file
-==================
-# 日本語	🌿
----
-
-(toml
-  (expression
-    (comment)))
