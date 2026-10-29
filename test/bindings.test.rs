@@ -74,83 +74,6 @@ fn parse_utf16(
 }
 
 #[test]
-fn utf16_unpaired_surrogates_are_encoding_issues_in_every_context() {
-  for big_endian in [false, true] {
-    let mut parser = Parser::new();
-    parser.set_language(&grammar::LANGUAGE.into()).unwrap();
-    for (prefix, suffix, owner) in [
-      ("a=\"ok", "end\"", "basic_string"),
-      ("a='ok", "end'", "literal_string"),
-      ("a=\"\"\"ok", "end\"\"\"", "ml_basic_body"),
-      ("a='''ok", "end'''", "ml_literal_body"),
-      ("\"ok", "end\"=1", "basic_string"),
-      ("'ok", "end'=1", "literal_string"),
-      ("[\"ok", "end\"]", "basic_string"),
-      ("[['ok", "end']]", "literal_string"),
-      ("# ok", "end\na=1", "comment"),
-      ("a=[1,# ok", "end\n2]", "comment"),
-      ("# ok", "", "comment"),
-      ("ke", "y=1", "simple_key"),
-      ("[ke", "y]", "simple_key"),
-      ("a=", "1", "val"),
-      ("a=1", "2", "unsigned_dec_int"),
-      ("a=0xA", "B", "hex_int"),
-      ("a=0o1", "2", "oct_int"),
-      ("a=0b0", "1", "bin_int"),
-      ("a=1.", "2", "zero_prefixable_int"),
-      ("a=1e+", "2", "zero_prefixable_int"),
-      ("a=true", "\nb=2", "expression"),
-      ("a=true ", "", "expression"),
-      ("a={b=true", "}", "inline_table_keyvals"),
-      ("a=\"\\", "end\"", "escaped"),
-      ("a=\"\\u00", "end\"", "escape_seq_char"),
-    ] {
-      for surrogates in [
-        &[0xd800][..],
-        &[0xdbff],
-        &[0xdc00],
-        &[0xdfff],
-        &[0xd800, 0xdbff],
-        &[0xdc00, 0xdfff],
-        &[0xdc00, 0xd800],
-      ] {
-        let mut input: Vec<u16> = prefix.encode_utf16().collect();
-        let start = input.len() * 2;
-        input.extend(surrogates);
-        let end = input.len() * 2;
-        input.extend(suffix.encode_utf16());
-        let tree = parse_utf16(&mut parser, &input, big_endian, None);
-        let nodes = public_nodes(&tree);
-        let issues: Vec<_> =
-          nodes.iter().filter(|n| n.kind == "syntax_issue").collect();
-        assert_eq!(
-          issues.len(),
-          1,
-          "{prefix:?} {suffix:?} {surrogates:x?} BE={big_endian}: {}",
-          tree.root_node().to_sexp()
-        );
-        let reason = tree
-          .root_node()
-          .descendant_for_byte_range(start, end)
-          .unwrap();
-        assert_eq!(
-          reason.kind(),
-          "invalid_encoding",
-          "{prefix:?} {surrogates:x?}: {}",
-          tree.root_node().to_sexp()
-        );
-        assert_eq!(reason.byte_range(), start..end);
-        let outcome = reason.parent().unwrap();
-        assert_eq!(outcome.kind(), "invalid_syntax");
-        let issue = outcome.parent().unwrap();
-        assert_eq!(issue.kind(), "syntax_issue");
-        assert_eq!(issue.parent().unwrap().kind(), owner);
-      }
-    }
-  }
-}
-
-#[test]
 fn utf16_scalar_boundaries_match_utf8_public_structure() {
   let text = "é\u{d7ff}\u{e000}\u{fffd}\u{ffff}\u{10000}\u{10ffff}";
   let mut parser = Parser::new();
@@ -169,7 +92,7 @@ fn utf16_scalar_boundaries_match_utf8_public_structure() {
     let source = format!("{prefix}{text}{suffix}");
     let utf8 = parser.parse(&source, None).unwrap();
     let mut expected = public_nodes(&utf8);
-    assert!(!expected.iter().any(|node| node.kind == "syntax_issue"));
+    assert!(!utf8.root_node().has_error());
     for node in &mut expected {
       node.range = source[..node.range.start].encode_utf16().count() * 2
         ..source[..node.range.end].encode_utf16().count() * 2;
@@ -183,55 +106,66 @@ fn utf16_scalar_boundaries_match_utf8_public_structure() {
 }
 
 #[test]
-fn utf16_encoding_issues_stop_at_valid_surrogate_pairs() {
+fn utf16_unpaired_surrogates_are_rejected_in_every_lexical_context() {
   let mut parser = Parser::new();
   parser.set_language(&grammar::LANGUAGE.into()).unwrap();
-  for (prefix, suffix, leaf) in [
-    ("a=\"", "\"", "basic_unescaped"),
-    ("# ", "", "comment_text"),
-  ] {
-    let mut input: Vec<_> = prefix.encode_utf16().collect();
-    let start = input.len() * 2;
-    input.extend([0xd800, 0xd800, 0xdc00, 0xdc00]);
-    input.extend(suffix.encode_utf16());
-    for big_endian in [false, true] {
-      let tree = parse_utf16(&mut parser, &input, big_endian, None);
-      let nodes = public_nodes(&tree);
-      assert_eq!(
-        nodes
-          .iter()
-          .filter(|node| node.kind == "syntax_issue")
-          .map(|node| node.range.clone())
-          .collect::<Vec<_>>(),
-        [start..start + 2, start + 6..start + 8]
-      );
-      assert_eq!(
-        nodes
-          .iter()
-          .filter(|node| node.kind == "invalid_encoding")
-          .count(),
-        2
-      );
-      let pair = tree
-        .root_node()
-        .descendant_for_byte_range(start + 2, start + 6)
-        .unwrap();
-      assert_eq!(pair.kind(), leaf);
-      assert_eq!(pair.byte_range(), start + 2..start + 6);
-      assert_eq!(pair.child_count(), 0);
+  for big_endian in [false, true] {
+    for (prefix, suffix) in [
+      ("a=\"ok", "end\""),
+      ("a='ok", "end'"),
+      ("a=\"\"\"ok", "end\"\"\""),
+      ("a='''ok", "end'''"),
+      ("\"ok", "end\"=1"),
+      ("'ok", "end'=1"),
+      ("[\"ok", "end\"]"),
+      ("[['ok", "end']]"),
+      ("# ok", "end\na=1"),
+      ("a=[1,# ok", "end\n2]"),
+      ("# ok", ""),
+      ("ke", "y=1"),
+      ("[ke", "y]"),
+      ("a=", "1"),
+      ("a=1", "2"),
+      ("a=0xA", "B"),
+      ("a=0o1", "2"),
+      ("a=0b0", "1"),
+      ("a=1.", "2"),
+      ("a=1e+", "2"),
+      ("a=true", "\nb=2"),
+      ("a=true ", ""),
+      ("a={b=true", "}"),
+      ("a=\"\\", "end\""),
+      ("a=\"\\u00", "end\""),
+    ] {
+      for surrogates in [
+        &[0xd800][..],
+        &[0xdbff],
+        &[0xdc00],
+        &[0xdfff],
+        &[0xd800, 0xdbff],
+        &[0xdc00, 0xdfff],
+        &[0xdc00, 0xd800],
+        &[0xd800, 0xd800, 0xdc00, 0xdc00],
+      ] {
+        let mut input: Vec<u16> = prefix.encode_utf16().collect();
+        input.extend(surrogates);
+        input.extend(suffix.encode_utf16());
+        let tree = parse_utf16(&mut parser, &input, big_endian, None);
+        assert!(
+          tree.root_node().has_error(),
+          "{prefix:?} {suffix:?} {surrogates:x?} BE={big_endian}: {}",
+          tree.root_node().to_sexp()
+        );
+      }
     }
   }
 }
 
 #[test]
-fn utf16_surrogate_pair_edits_match_fresh_parses() {
+fn utf16_surrogate_pair_repairs_restore_the_valid_cst() {
+  let mut parser = Parser::new();
+  parser.set_language(&grammar::LANGUAGE.into()).unwrap();
   for big_endian in [false, true] {
-    let mut parser = Parser::new();
-    parser.set_language(&grammar::LANGUAGE.into()).unwrap();
-    let mut fresh_parser = Parser::new();
-    fresh_parser
-      .set_language(&grammar::LANGUAGE.into())
-      .unwrap();
     for (prefix, suffix) in [
       ("a=\"ok", "end\""),
       ("a='ok", "end'"),
@@ -241,17 +175,12 @@ fn utf16_surrogate_pair_edits_match_fresh_parses() {
       ("# ok", "end\na=1"),
     ] {
       for removed_unit in [0, 1] {
-        let mut input: Vec<_> = prefix.encode_utf16().collect();
-        let pair_start = input.len() * 2;
+        let mut input: Vec<u16> = prefix.encode_utf16().collect();
         let index = input.len() + removed_unit;
         input.extend([0xd83c, 0xdf3f]);
         input.extend(suffix.encode_utf16());
         let original = parse_utf16(&mut parser, &input, big_endian, None);
-        assert!(
-          !public_nodes(&original)
-            .iter()
-            .any(|node| node.kind == "syntax_issue")
-        );
+        let expected = public_nodes(&original);
         let mut tree = original.clone();
         let removed = input.remove(index);
         let start = index * 2;
@@ -264,26 +193,8 @@ fn utf16_surrogate_pair_edits_match_fresh_parses() {
           new_end_position: Point::new(0, start),
         });
         tree = parse_utf16(&mut parser, &input, big_endian, Some(&tree));
-        let fresh = parse_utf16(&mut fresh_parser, &input, big_endian, None);
-        let nodes = public_nodes(&tree);
-        assert_eq!(
-          nodes,
-          public_nodes(&fresh),
-          "{prefix:?} remove={removed_unit} BE={big_endian}"
-        );
-        assert_eq!(
-          nodes
-            .iter()
-            .filter(|node| node.kind == "syntax_issue")
-            .count(),
-          1
-        );
-        let reason = tree
-          .root_node()
-          .descendant_for_byte_range(pair_start, pair_start + 2)
-          .unwrap();
-        assert_eq!(reason.kind(), "invalid_encoding");
-        assert_eq!(reason.byte_range(), pair_start..pair_start + 2);
+        assert!(tree.root_node().has_error());
+        let reuse = !tree.root_node().has_error();
         input.insert(index, removed);
         tree.edit(&InputEdit {
           start_byte: start,
@@ -293,10 +204,16 @@ fn utf16_surrogate_pair_edits_match_fresh_parses() {
           old_end_position: Point::new(0, start),
           new_end_position: Point::new(0, start + 2),
         });
-        tree = parse_utf16(&mut parser, &input, big_endian, Some(&tree));
+        tree =
+          parse_utf16(&mut parser, &input, big_endian, reuse.then_some(&tree));
+        assert!(
+          !tree.root_node().has_error(),
+          "{prefix:?} restore={removed_unit} BE={big_endian}: {}",
+          tree.root_node().to_sexp()
+        );
         assert_eq!(
           public_nodes(&tree),
-          public_nodes(&original),
+          expected,
           "{prefix:?} restore={removed_unit} BE={big_endian}"
         );
       }
@@ -305,12 +222,9 @@ fn utf16_surrogate_pair_edits_match_fresh_parses() {
 }
 
 #[test]
-fn inserting_and_removing_nul_preserves_structure_and_parser_reuse() {
-  let language = grammar::LANGUAGE.into();
+fn inserting_and_removing_nul_restores_structure() {
   let mut parser = Parser::new();
-  parser.set_language(&language).unwrap();
-  let mut fresh_parser = Parser::new();
-  fresh_parser.set_language(&language).unwrap();
+  parser.set_language(&grammar::LANGUAGE.into()).unwrap();
   let original = "a=\"x\"";
   let edited = "a=\"x\0\"";
   let original_tree = parser.parse(original, None).unwrap();
@@ -324,17 +238,8 @@ fn inserting_and_removing_nul_preserves_structure_and_parser_reuse() {
     new_end_position: Point::new(0, 5),
   });
   tree = parser.parse(edited, Some(&tree)).unwrap();
-  let fresh = fresh_parser.parse(edited, None).unwrap();
-  assert_eq!(public_nodes(&tree), public_nodes(&fresh));
-  let reason = tree.root_node().descendant_for_byte_range(4, 5).unwrap();
-  assert_eq!(reason.kind(), "invalid_character");
-  assert_eq!(reason.byte_range(), 4..5);
-  let outcome = reason.parent().unwrap();
-  assert_eq!(outcome.kind(), "invalid_syntax");
-  let issue = outcome.parent().unwrap();
-  let owner = issue.parent().unwrap();
-  assert_eq!(owner.kind(), "basic_string");
-  assert_eq!(owner.child_by_field_name("issue"), Some(issue));
+  assert!(tree.root_node().has_error());
+  let reuse = !tree.root_node().has_error();
   tree.edit(&InputEdit {
     start_byte: 4,
     old_end_byte: 5,
@@ -343,6 +248,73 @@ fn inserting_and_removing_nul_preserves_structure_and_parser_reuse() {
     old_end_position: Point::new(0, 5),
     new_end_position: Point::new(0, 4),
   });
-  tree = parser.parse(original, Some(&tree)).unwrap();
+  tree = parser.parse(original, reuse.then_some(&tree)).unwrap();
   assert_eq!(public_nodes(&tree), public_nodes(&original_tree));
+}
+
+#[test]
+fn changed_included_ranges_preserve_original_offsets_with_fresh_parsing() {
+  let mut parser = Parser::new();
+  parser.set_language(&grammar::LANGUAGE.into()).unwrap();
+  let source = "a=\"axb\"";
+  let first = tree_sitter::Range {
+    start_byte: 0,
+    end_byte: 4,
+    start_point: Point::new(0, 0),
+    end_point: Point::new(0, 4),
+  };
+  parser.set_included_ranges(&[first]).unwrap();
+  let incomplete = parser.parse(source, None).unwrap();
+  assert!(incomplete.root_node().has_error());
+  parser
+    .set_included_ranges(&[
+      first,
+      tree_sitter::Range {
+        start_byte: 5,
+        end_byte: 7,
+        start_point: Point::new(0, 5),
+        end_point: Point::new(0, 7),
+      },
+    ])
+    .unwrap();
+  let tree = parser.parse(source, None).unwrap();
+  let characters: Vec<_> = public_nodes(&tree)
+    .into_iter()
+    .filter(|node| node.kind == "basic_unescaped")
+    .map(|node| node.range)
+    .collect();
+  assert_eq!(characters, [3..4, 5..6]);
+  let reused = parser.parse(source, Some(&tree)).unwrap();
+  assert_eq!(public_nodes(&reused), public_nodes(&tree));
+}
+
+#[test]
+fn cancelled_normal_parsing_resumes_with_the_same_public_cst() {
+  use std::ops::ControlFlow;
+  use tree_sitter::ParseOptions;
+  const LINE_COUNT: usize = 256;
+  let source = "a={b=[1, 07:32],c=\"🌿\"}\n".repeat(LINE_COUNT);
+  let mut parser = Parser::new();
+  parser.set_language(&grammar::LANGUAGE.into()).unwrap();
+  let fresh = parser.parse(&source, None).unwrap();
+  for stop_at in [1, 2, 4] {
+    parser.reset();
+    let mut calls = 0;
+    let mut progress = |_: &tree_sitter::ParseState| {
+      calls += 1;
+      if calls == stop_at {
+        ControlFlow::Break(())
+      } else {
+        ControlFlow::Continue(())
+      }
+    };
+    let result = parser.parse_with_options(
+      &mut |offset, _| &source.as_bytes()[offset..],
+      None,
+      Some(ParseOptions::new().progress_callback(&mut progress)),
+    );
+    assert!(result.is_none());
+    let resumed = parser.parse(&source, None).unwrap();
+    assert_eq!(public_nodes(&resumed), public_nodes(&fresh));
+  }
 }

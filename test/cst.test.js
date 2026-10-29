@@ -15,16 +15,15 @@ function parseCorpus(text) {
     const [name, ...attributes] = sections[index].trimEnd().split("\n");
     assert.ok(name, "corpus case must have a name");
     for (const attribute of attributes) {
-      assert.equal(
-        attribute,
-        ":cst",
+      assert.ok(
+        [":cst", ":error"].includes(attribute),
         `unsupported corpus attribute: ${attribute}`,
       );
     }
     const parts = sections[index + 1].split("\n---\n");
     assert.equal(parts.length, 2, `${name}: expected one output separator`);
     const source = parts[0].endsWith("\r") ? parts[0].slice(0, -1) : parts[0];
-    cases.push({ name, source });
+    cases.push({ name, source, valid: !attributes.includes(":error") });
   }
   return cases;
 }
@@ -35,10 +34,10 @@ for (const file of readdirSync(corpusDirectory).sort()) {
   const entries = parseCorpus(
     readFileSync(join(corpusDirectory, file), "utf8"),
   );
-  for (const { name, source } of entries) {
-    test(`toml: corpus source coverage, issue ownership and fresh determinism: ${file}: ${name}`, () => {
+  for (const { name, source, valid } of entries) {
+    test(`toml: corpus acceptance, source extent and fresh determinism: ${file}: ${name}`, () => {
       const tree = parse(source);
-      assert.equal(tree.hasError, false, tree.cst);
+      assert.equal(tree.hasError, !valid, tree.cst);
     });
   }
 }
@@ -54,10 +53,10 @@ test("corpus inputs retain BOM, NUL, whitespace and line endings", () => {
     "a=1\r\r\n---\nignored output\n",
   ].join("");
   assert.deepEqual(parseCorpus(text), [
-    { name: "Empty", source: "" },
-    { name: "Layout", source: "\uFEFF \t\v\f\r\na=1\n\n" },
-    { name: "NUL", source: 'a="\0"' },
-    { name: "Final CR", source: "a=1\r" },
+    { name: "Empty", source: "", valid: true },
+    { name: "Layout", source: "\uFEFF \t\v\f\r\na=1\n\n", valid: true },
+    { name: "NUL", source: 'a="\0"', valid: true },
+    { name: "Final CR", source: "a=1\r", valid: true },
   ]);
 });
 
@@ -73,142 +72,71 @@ test("corpus input reader rejects unsupported conditions and framing", () => {
   }
 });
 
-const invalidBytes = Buffer.from([0xff, 0xfe, 0x80]);
+test("toml: node metadata contains normal syntax and no diagnostic fields or nodes", () => {
+  const types = JSON.parse(
+    readFileSync(join(root, "src/node-types.json"), "utf8"),
+  );
+  assert.ok(types.some(({ type }) => type === "toml"));
+  for (const { type, fields } of types) {
+    assert.doesNotMatch(
+      type,
+      /^(syntax_issue|invalid_|incomplete_|missing_|unexpected_)/,
+    );
+    assert.ok(!fields || !("issue" in fields), type);
+  }
+});
 
-test("CST decoding preserves fields, anonymous quotes, UTF-8 byte ranges, CRLF, and issues", () => {
-  const source = '"é"=\r\n';
-  const cst = [
-    "0:0 - 1:0   toml",
-    "0:0 - 0:5     expression",
-    "0:0 - 0:5       keyval",
-    "0:0 - 0:4         key: key",
-    "0:0 - 0:4           simple_key",
-    "0:0 - 0:4             quoted_key",
-    "0:0 - 0:4               basic_string",
-    '0:0 - 0:1                 "\\""',
-    "0:1 - 0:3                 basic_char",
-    "0:1 - 0:3                   basic_unescaped `é`",
-    '0:3 - 0:4                 "\\""',
-    '0:4 - 0:5         "="',
-    "0:5 - 0:5         issue: syntax_issue",
-    "0:5 - 0:5           invalid_syntax",
-    "0:5 - 0:5             missing_value",
-    "0:5 - 1:0     newline",
-    "0:5 - 0:7       `\\r\\n`",
-  ].join("\n");
-  const result = parseCst(cst, source);
-  assert.equal(result.hasError, false);
+test("CST decoding keeps an ERROR parent and nested anonymous leaves", () => {
+  const source = "a?";
+  const tree = parseCst(
+    [
+      "0:0 - 0:2   •toml",
+      "0:0 - 0:2     ERROR",
+      "0:0 - 0:1       unquoted_key `a`",
+      '0:1 - 0:2       "?"',
+    ].join("\n"),
+    source,
+  );
+  assert.equal(tree.hasError, true);
   assert.deepEqual(
-    result.nodes.map(({ kind, named, field, parent, start, end }) => [
+    tree.nodes.map(({ kind, parent, named, start, end }) => [
       kind,
-      named,
-      field,
       parent,
+      named,
       start,
       end,
     ]),
     [
-      ["toml", true, null, null, 0, 7],
-      ["expression", true, null, 0, 0, 5],
-      ["keyval", true, null, 1, 0, 5],
-      ["key", true, "key", 2, 0, 4],
-      ["simple_key", true, null, 3, 0, 4],
-      ["quoted_key", true, null, 4, 0, 4],
-      ["basic_string", true, null, 5, 0, 4],
-      ['"', false, null, 6, 0, 1],
-      ["basic_char", true, null, 6, 1, 3],
-      ["basic_unescaped", true, null, 8, 1, 3],
-      ['"', false, null, 6, 3, 4],
-      ["=", false, null, 2, 4, 5],
-      ["syntax_issue", true, "issue", 2, 5, 5],
-      ["invalid_syntax", true, null, 12, 5, 5],
-      ["missing_value", true, null, 13, 5, 5],
-      ["newline", true, null, 0, 5, 7],
+      ["toml", null, true, 0, 2],
+      ["ERROR", 0, true, 0, 2],
+      ["unquoted_key", 1, true, 0, 1],
+      ["?", 1, false, 1, 2],
     ],
   );
-  assert.deepEqual(result.issues, [
-    ["keyval", "invalid_syntax", "missing_value", 5, 5],
-  ]);
 });
 
-test("CST decoding detects the native error flag and rejects a truncated root", () => {
-  assert.equal(parseCst("0:0 - 0:1   •toml", "a").hasError, true);
-  assert.throws(
-    () => parseCst("0:0 - 0:0   toml", "a"),
-    /root must reach the edited source end/,
-  );
-});
-
-for (const [name, prefix, suffix, owner] of [
-  ["bare key", "ke", "y=1", "simple_key"],
-  ["comment", "# a", "b", "comment"],
-  ["basic string", 'a="x', 'y"', "basic_string"],
-  ["literal string", "a='x", "y'", "literal_string"],
-  ["multiline basic string", 'a="""x', 'y"""', "ml_basic_body"],
-  ["multiline literal string", "a='''x", "y'''", "ml_literal_body"],
-  ["value", "a=", " ", "val"],
-  ["document after a complete value", "a=true", "", "expression"],
-  [
-    "inline table after a complete value",
-    "a={b=true",
-    "}",
-    "inline_table_keyvals",
-  ],
-  ["decimal digits", "a=12", "3", "unsigned_dec_int"],
-  ["hexadecimal digits", "a=0xA", "B", "hex_int"],
-  ["octal digits", "a=0o1", "2", "oct_int"],
-  ["binary digits", "a=0b0", "1", "bin_int"],
-  ["exponent", "a=1e", "2", "zero_prefixable_int"],
-]) {
-  test(`toml issues: a decoding failure run in ${name} has its own range and reason`, () => {
-    const source = Buffer.concat([
-      Buffer.from(prefix),
-      invalidBytes,
-      Buffer.from(suffix),
-    ]);
-    const result = parse(source);
-    assert.equal(result.hasError, false, result.cst);
-    assert.deepEqual(
-      result.issues,
-      [
-        [
-          owner,
-          "invalid_syntax",
-          "invalid_encoding",
-          Buffer.byteLength(prefix),
-          Buffer.byteLength(prefix) + invalidBytes.length,
-        ],
-      ],
-      result.cst,
-    );
-  });
-}
-
-test("toml issues: decoding failures stay isolated across syntax boundaries", () => {
-  for (const source of [
-    "name = 123\n",
-    "a = 2026-10-05T12:34:56+09:00\n",
-    "a = [true, 0x1F, -1.2e+3]\n",
-    "a = {b=2, c=3}\n",
-    "[a.b]\n",
-    "[[a.b]]\n",
-    "# comment\n",
-    String.raw`a="x\u1234y"`,
+test("toml: decoding failures cannot be accepted inside a normal token", () => {
+  for (const [prefix, suffix] of [
+    ['a="x', 'y"'],
+    ["a='x", "y'"],
+    ["# x", "y\nb=1"],
+    ["a=1", "2"],
+    ["ke", "y=1"],
+    ['a="\\u00', 'FF"'],
   ]) {
-    for (let byte = 0; byte <= source.length; byte++) {
-      const input = Buffer.concat([
-        Buffer.from(source.slice(0, byte)),
-        invalidBytes,
-        Buffer.from(source.slice(byte)),
+    for (const invalid of [
+      [0xff],
+      [0xc0, 0x80],
+      [0xed, 0xa0, 0x80],
+      [0xf4, 0x90, 0x80, 0x80],
+    ]) {
+      const source = Buffer.concat([
+        Buffer.from(prefix),
+        Buffer.from(invalid),
+        Buffer.from(suffix),
       ]);
-      const result = parse(input);
-      assert.deepEqual(
-        result.issues
-          .filter(([, , reason]) => reason === "invalid_encoding")
-          .map(([, , , start, end]) => [start, end]),
-        [[byte, byte + invalidBytes.length]],
-        `${JSON.stringify({ source, byte })}\n${result.cst}`,
-      );
+      const tree = parse(source);
+      assert.equal(tree.hasError, true, tree.cst);
     }
   }
 });

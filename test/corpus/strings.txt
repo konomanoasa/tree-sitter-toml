@@ -645,612 +645,158 @@ b = '''''='''
               (mll_content
                 (literal_char)))))))))
 ==================
-bare carriage return in multiline basic string
-:cst
+Reject "a = \"\"\"one\rtwo\"\"\""
+:error
 ==================
 a = """onetwo"""
 ---
 
-0:0  - 0:17   toml
-0:0  - 0:17     expression
-0:0  - 0:17       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:2  - 0:3          "="
-0:4  - 0:17         value: val
-0:4  - 0:17           string
-0:4  - 0:17             ml_basic_string
-0:4  - 0:7                "\"\"\""
-0:7  - 0:14               ml_basic_body
-0:7  - 0:8                  mlb_content
-0:7  - 0:8                    basic_char
-0:7  - 0:8                      basic_unescaped `o`
-0:8  - 0:9                  mlb_content
-0:8  - 0:9                    basic_char
-0:8  - 0:9                      basic_unescaped `n`
-0:9  - 0:10                 mlb_content
-0:9  - 0:10                   basic_char
-0:9  - 0:10                     basic_unescaped `e`
-0:10 - 0:11                 issue: syntax_issue
-0:10 - 0:11                   invalid_syntax
-0:10 - 0:11                     invalid_line_ending `\r`
-0:11 - 0:12                 mlb_content
-0:11 - 0:12                   basic_char
-0:11 - 0:12                     basic_unescaped `t`
-0:12 - 0:13                 mlb_content
-0:12 - 0:13                   basic_char
-0:12 - 0:13                     basic_unescaped `w`
-0:13 - 0:14                 mlb_content
-0:13 - 0:14                   basic_char
-0:13 - 0:14                     basic_unescaped `o`
-0:14 - 0:17               "\"\"\""
-
 ==================
-bare carriage return in multiline literal string
-:cst
+Reject "a = '''one\rtwo'''"
+:error
 ==================
 a = '''onetwo'''
 ---
 
-0:0  - 0:17   toml
-0:0  - 0:17     expression
-0:0  - 0:17       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:2  - 0:3          "="
-0:4  - 0:17         value: val
-0:4  - 0:17           string
-0:4  - 0:17             ml_literal_string
-0:4  - 0:7                "'''"
-0:7  - 0:14               ml_literal_body
-0:7  - 0:8                  mll_content
-0:7  - 0:8                    literal_char `o`
-0:8  - 0:9                  mll_content
-0:8  - 0:9                    literal_char `n`
-0:9  - 0:10                 mll_content
-0:9  - 0:10                   literal_char `e`
-0:10 - 0:11                 issue: syntax_issue
-0:10 - 0:11                   invalid_syntax
-0:10 - 0:11                     invalid_line_ending `\r`
-0:11 - 0:12                 mll_content
-0:11 - 0:12                   literal_char `t`
-0:12 - 0:13                 mll_content
-0:12 - 0:13                   literal_char `w`
-0:13 - 0:14                 mll_content
-0:13 - 0:14                   literal_char `o`
-0:14 - 0:17               "'''"
-
 ==================
-control character in basic string
-:cst
+Reject "a = \"\u0001\""
+:error
 ==================
 a = ""
 ---
 
-0:0 - 0:7   toml
-0:0 - 0:7     expression
-0:0 - 0:7       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:2 - 0:3         "="
-0:4 - 0:7         value: val
-0:4 - 0:7           string
-0:4 - 0:7             basic_string
-0:4 - 0:5               "\""
-0:5 - 0:6               issue: syntax_issue
-0:5 - 0:6                 invalid_syntax
-0:5 - 0:6                   invalid_character ``
-0:6 - 0:7               "\""
-
 ==================
-delete character in literal string
-:cst
+Reject "a = ''"
+:error
 ==================
 a = ''
 ---
 
-0:0 - 0:7   toml
-0:0 - 0:7     expression
-0:0 - 0:7       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:2 - 0:3         "="
-0:4 - 0:7         value: val
-0:4 - 0:7           string
-0:4 - 0:7             literal_string
-0:4 - 0:5               "'"
-0:5 - 0:6               issue: syntax_issue
-0:5 - 0:6                 invalid_syntax
-0:5 - 0:6                   invalid_character ``
-0:6 - 0:7               "'"
-
 ==================
-stray delimiter after a multiline basic string
-:cst
+Reject "a = \"\"\"x\"\"\" \"\"\""
+:error
 ==================
 a = """x""" """
 ---
 
-0:0  - 0:15   toml
-0:0  - 0:15     expression
-0:0  - 0:11       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:2  - 0:3          "="
-0:4  - 0:11         value: val
-0:4  - 0:11           string
-0:4  - 0:11             ml_basic_string
-0:4  - 0:7                "\"\"\""
-0:7  - 0:8                ml_basic_body
-0:7  - 0:8                  mlb_content
-0:7  - 0:8                    basic_char
-0:7  - 0:8                      basic_unescaped `x`
-0:8  - 0:11               "\"\"\""
-0:12 - 0:15       issue: syntax_issue
-0:12 - 0:15         invalid_syntax
-0:12 - 0:15           invalid_character `\"\"\"`
-
 ==================
-stray delimiter after a multiline literal string
-:cst
+Reject "a = '''x''', '''"
+:error
 ==================
 a = '''x''', '''
 ---
 
-0:0  - 0:16   toml
-0:0  - 0:16     expression
-0:0  - 0:11       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:2  - 0:3          "="
-0:4  - 0:11         value: val
-0:4  - 0:11           string
-0:4  - 0:11             ml_literal_string
-0:4  - 0:7                "'''"
-0:7  - 0:8                ml_literal_body
-0:7  - 0:8                  mll_content
-0:7  - 0:8                    literal_char `x`
-0:8  - 0:11               "'''"
-0:11 - 0:12       issue: syntax_issue
-0:11 - 0:12         invalid_syntax
-0:11 - 0:12           invalid_character `,`
-0:13 - 0:16       issue: syntax_issue
-0:13 - 0:16         invalid_syntax
-0:13 - 0:16           invalid_character `'''`
-
 ==================
-Unknown escape
+Reject "a = \"\\q\""
+:error
 ==================
 a = "\q"
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (basic_string
-            issue: (syntax_issue
-              (invalid_syntax
-                (invalid_escape)))))))))
-
 ==================
-Short hex escape
+Reject "a = \"\\x0\""
+:error
 ==================
 a = "\x0"
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (basic_string
-            issue: (syntax_issue
-              (invalid_syntax
-                (invalid_escape)))))))))
-
 ==================
-Invalid Unicode hex digit
+Reject "a = \"\\u00GG\""
+:error
 ==================
 a = "\u00GG"
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (basic_string
-            issue: (syntax_issue
-              (invalid_syntax
-                (invalid_escape)))
-            (basic_char
-              (basic_unescaped))
-            (basic_char
-              (basic_unescaped))))))))
-
 ==================
-Six closing basic quotes
+Reject "a = \"\"\"x\"\"\"\"\"\""
+:error
 ==================
 a = """x""""""
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (ml_basic_string
-            (ml_basic_body
-              (mlb_content
-                (basic_char
-                  (basic_unescaped)))
-              (mlb_quotes))))))
-    issue: (syntax_issue
-      (invalid_syntax
-        (invalid_character)))))
-
 ==================
-Six closing literal quotes
+Reject "a = '''x''''''"
+:error
 ==================
 a = '''x''''''
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (ml_literal_string
-            (ml_literal_body
-              (mll_content
-                (literal_char))
-              (mll_quotes))))))
-    issue: (syntax_issue
-      (invalid_syntax
-        (invalid_character)))))
-
 ==================
-Backslash followed by non whitespace before newline
+Reject "a = \"\"\"one\\ two\n\"\"\""
+:error
 ==================
 a = """one\ two
 """
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (ml_basic_string
-            (ml_basic_body
-              (mlb_content
-                (basic_char
-                  (basic_unescaped)))
-              (mlb_content
-                (basic_char
-                  (basic_unescaped)))
-              (mlb_content
-                (basic_char
-                  (basic_unescaped)))
-              issue: (syntax_issue
-                (invalid_syntax
-                  (invalid_escape)))
-              (mlb_content
-                (basic_char
-                  (basic_unescaped)))
-              (mlb_content
-                (basic_char
-                  (basic_unescaped)))
-              (mlb_content
-                (basic_char
-                  (basic_unescaped)))
-              (mlb_content
-                (basic_char
-                  (basic_unescaped)))
-              (mlb_content
-                (newline)))))))))
-
 ==================
-EOF escape \uD8 is classified by scalar completion
-:cst
+Reject "a=\"\\uD8"
+:error
 ==================
 a="\uD8
 ---
 
-0:0 - 0:7   toml
-0:0 - 0:7     expression
-0:0 - 0:7       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:7         value: val
-0:2 - 0:7           string
-0:2 - 0:7             basic_string
-0:2 - 0:3               "\""
-0:3 - 0:7               issue: syntax_issue
-0:3 - 0:7                 invalid_syntax
-0:3 - 0:7                   invalid_escape `\\uD8`
-0:7 - 0:7               issue: syntax_issue
-0:7 - 0:7                 incomplete_syntax
-0:7 - 0:7                   missing_basic_string_close
-
 ==================
-EOF escape \U0011 is classified by scalar completion
-:cst
+Reject "a=\"\\U0011"
+:error
 ==================
 a="\U0011
 ---
 
-0:0 - 0:9   toml
-0:0 - 0:9     expression
-0:0 - 0:9       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:9         value: val
-0:2 - 0:9           string
-0:2 - 0:9             basic_string
-0:2 - 0:3               "\""
-0:3 - 0:9               issue: syntax_issue
-0:3 - 0:9                 invalid_syntax
-0:3 - 0:9                   invalid_escape `\\U0011`
-0:9 - 0:9               issue: syntax_issue
-0:9 - 0:9                 incomplete_syntax
-0:9 - 0:9                   missing_basic_string_close
-
 ==================
-EOF escape \U1 is classified by scalar completion
-:cst
+Reject "a=\"\\U1"
+:error
 ==================
 a="\U1
 ---
 
-0:0 - 0:6   toml
-0:0 - 0:6     expression
-0:0 - 0:6       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:6         value: val
-0:2 - 0:6           string
-0:2 - 0:6             basic_string
-0:2 - 0:3               "\""
-0:3 - 0:6               issue: syntax_issue
-0:3 - 0:6                 invalid_syntax
-0:3 - 0:6                   invalid_escape `\\U1`
-0:6 - 0:6               issue: syntax_issue
-0:6 - 0:6                 incomplete_syntax
-0:6 - 0:6                   missing_basic_string_close
-
 ==================
-EOF escape \uD is classified by scalar completion
-:cst
+Reject "a=\"\\uD"
+:error
 ==================
 a="\uD
 ---
 
-0:0 - 0:6   toml
-0:0 - 0:6     expression
-0:0 - 0:6       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:6         value: val
-0:2 - 0:6           string
-0:2 - 0:6             basic_string
-0:2 - 0:3               "\""
-0:3 - 0:6               issue: syntax_issue
-0:3 - 0:6                 incomplete_syntax
-0:3 - 0:6                   invalid_escape `\\uD`
-0:6 - 0:6               issue: syntax_issue
-0:6 - 0:6                 incomplete_syntax
-0:6 - 0:6                   missing_basic_string_close
-
 ==================
-EOF escape \U0010 is classified by scalar completion
-:cst
+Reject "a=\"\\U0010"
+:error
 ==================
 a="\U0010
 ---
 
-0:0 - 0:9   toml
-0:0 - 0:9     expression
-0:0 - 0:9       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:9         value: val
-0:2 - 0:9           string
-0:2 - 0:9             basic_string
-0:2 - 0:3               "\""
-0:3 - 0:9               issue: syntax_issue
-0:3 - 0:9                 incomplete_syntax
-0:3 - 0:9                   invalid_escape `\\U0010`
-0:9 - 0:9               issue: syntax_issue
-0:9 - 0:9                 incomplete_syntax
-0:9 - 0:9                   missing_basic_string_close
-
 ==================
-Incomplete Unicode escape and string closing
+Reject "a = \"\\u12"
+:error
 ==================
 a = "\u12
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (basic_string
-            issue: (syntax_issue
-              (incomplete_syntax
-                (invalid_escape)))
-            issue: (syntax_issue
-              (incomplete_syntax
-                (missing_basic_string_close)))))))))
-
 ==================
-Unclosed basic string
+Reject "a = \"hello"
+:error
 ==================
 a = "hello
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (basic_string
-            (basic_char
-              (basic_unescaped))
-            (basic_char
-              (basic_unescaped))
-            (basic_char
-              (basic_unescaped))
-            (basic_char
-              (basic_unescaped))
-            (basic_char
-              (basic_unescaped))
-            issue: (syntax_issue
-              (incomplete_syntax
-                (missing_basic_string_close)))))))))
-
 ==================
-Unclosed literal string
+Reject "a = 'hello"
+:error
 ==================
 a = 'hello
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (literal_string
-            (literal_char)
-            (literal_char)
-            (literal_char)
-            (literal_char)
-            (literal_char)
-            issue: (syntax_issue
-              (incomplete_syntax
-                (missing_literal_string_close)))))))))
-
 ==================
-Newline in basic string
+Reject "a = \"one\ntwo\""
+:error
 ==================
 a = "one
 two"
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (basic_string
-            (basic_char
-              (basic_unescaped))
-            (basic_char
-              (basic_unescaped))
-            (basic_char
-              (basic_unescaped))
-            issue: (syntax_issue
-              (invalid_syntax
-                (missing_basic_string_close))))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_assignment_operator)))
-      value: (val
-        (string
-          (basic_string
-            issue: (syntax_issue
-              (incomplete_syntax
-                (missing_basic_string_close)))))))))
-
 ==================
-Newline in literal string
+Reject "a = 'one\ntwo'"
+:error
 ==================
 a = 'one
 two'
 ---
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (literal_string
-            (literal_char)
-            (literal_char)
-            (literal_char)
-            issue: (syntax_issue
-              (invalid_syntax
-                (missing_literal_string_close))))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_assignment_operator)))
-      value: (val
-        (string
-          (literal_string
-            issue: (syntax_issue
-              (incomplete_syntax
-                (missing_literal_string_close)))))))))

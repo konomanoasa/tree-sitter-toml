@@ -17,9 +17,6 @@ import { grammars, packageName, root } from "./tree-sitter.js";
 const enumerators = {};
 const tokenCount = "TOKEN_COUNT";
 
-// Included helpers may lack callers.
-const scannerDiagnosticArguments = ["-Wno-unused-function"];
-
 const commandTimeoutMs = 60_000;
 const diagnosticTimeoutMs = 180_000;
 const commandOutputLimitBytes = 64 * 1024 * 1024;
@@ -187,10 +184,7 @@ function checkDiagnostics(clang, clangd, directory) {
         "-I",
         variant.includeDirectory,
         ...warningArguments,
-        // Included helpers may lack callers.
-        ...(source === variant.source
-          ? scannerDiagnosticArguments
-          : ["-Wno-unused-function", ...variant.contractArguments]),
+        ...(source === scannerContract ? variant.contractArguments : []),
         "-fsyntax-only",
         source,
       ],

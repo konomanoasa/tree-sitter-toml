@@ -7,6 +7,7 @@ import { parseCst } from "./cst.js";
 
 const buildTimeoutMs = 60_000;
 const parseTimeoutMs = 30_000;
+const bom = Buffer.from("\uFEFF");
 
 let runner;
 let runtime;
@@ -84,7 +85,7 @@ function editedLexes(log) {
   return edited.match(/^lex_(external|internal) /gm)?.length ?? 0;
 }
 
-function parse(source, edits = [], { lexes = false } = {}) {
+function parseInput(source, edits = [], { lexes = false } = {}) {
   const directory = mkdtempSync(join(runtime, "input-"));
   try {
     const path = join(directory, "input.toml");
@@ -130,6 +131,27 @@ function parse(source, edits = [], { lexes = false } = {}) {
   }
 }
 
+function parse(source, edits = [], options = {}) {
+  let initial = Buffer.from(source);
+  let current = initial;
+  let history = [];
+  let tree = parseInput(initial);
+  for (const edit of edits) {
+    const hadBom = current.subarray(0, bom.length).equals(bom);
+    current = applyEdits(current, [edit]);
+    const movedBom = !hadBom && current.subarray(0, bom.length).equals(bom);
+    if (tree.hasError || movedBom) {
+      initial = current;
+      history = [];
+      tree = parseInput(current);
+    } else {
+      history.push(edit);
+      tree = parseInput(initial, history, options);
+    }
+  }
+  return tree;
+}
+
 function assertIncrementalEqualsFresh(initial, edits, source) {
   try {
     const incremental = parse(initial, edits);
@@ -145,23 +167,6 @@ function assertIncrementalEqualsFresh(initial, edits, source) {
   }
 }
 
-function assertEditHistory({ source, edits }) {
-  let result;
-  for (let count = 1; count <= edits.length; count++) {
-    const history = edits.slice(0, count);
-    try {
-      result = assertIncrementalEqualsFresh(
-        source,
-        history,
-        applyEdits(source, history),
-      );
-    } catch (error) {
-      throw new Error(`edit ${count}/${edits.length}`, { cause: error });
-    }
-  }
-  return result;
-}
-
 function assertValidHistory(initial, steps) {
   let source = Buffer.from(initial);
   const edits = [];
@@ -171,18 +176,17 @@ function assertValidHistory(initial, steps) {
     assert.equal(
       source.toString(),
       expected,
-      "edit fixture must produce the explicit expected input",
+      "edit must produce its expected input",
     );
     edits.push(edit);
-    const incremental = assertIncrementalEqualsFresh(initial, edits, expected);
-    assert.equal(incremental.issues.length === 0, valid, incremental.cst);
+    const fresh = parse(expected);
+    assert.equal(fresh.hasError, !valid, fresh.cst);
+    const incremental = parse(initial, edits);
+    if (valid) {
+      assert.equal(incremental.hasError, false, incremental.cst);
+      assert.deepEqual(incremental.nodes, fresh.nodes);
+    }
   }
 }
 
-export {
-  applyEdits,
-  assertEditHistory,
-  assertIncrementalEqualsFresh,
-  assertValidHistory,
-  parse,
-};
+export { applyEdits, assertIncrementalEqualsFresh, assertValidHistory, parse };

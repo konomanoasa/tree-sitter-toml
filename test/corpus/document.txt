@@ -230,162 +230,38 @@ b = false
         (boolean)))))
 
 ==================
-bare carriage return between expressions
-:cst
+Reject "a = true\rb = false"
+:error
 ==================
 a = trueb = false
 ---
 
-0:0  - 0:18   toml
-0:0  - 0:8      expression
-0:0  - 0:8        keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:2  - 0:3          "="
-0:4  - 0:8          value: val
-0:4  - 0:8            boolean
-0:4  - 0:8              "true"
-0:8  - 0:9      issue: syntax_issue
-0:8  - 0:9        invalid_syntax
-0:8  - 0:9          invalid_line_ending `\r`
-0:9  - 0:18     expression
-0:9  - 0:18       keyval
-0:9  - 0:10         key: key
-0:9  - 0:10           simple_key
-0:9  - 0:10             unquoted_key `b`
-0:11 - 0:12         "="
-0:13 - 0:18         value: val
-0:13 - 0:18           boolean
-0:13 - 0:18             "false"
-
 ==================
-quote run after a complete value
-:cst
+Reject "a = 1 \"\"\"x\"\"\""
+:error
 ==================
 a = 1 """x"""
 ---
 
-0:0  - 0:13   toml
-0:0  - 0:13     expression
-0:0  - 0:5        keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:2  - 0:3          "="
-0:4  - 0:5          value: val
-0:4  - 0:5            integer
-0:4  - 0:5              dec_int
-0:4  - 0:5                unsigned_dec_int
-0:4  - 0:5                  digit `1`
-0:6  - 0:13       issue: syntax_issue
-0:6  - 0:13         invalid_syntax
-0:6  - 0:13           invalid_character `\"\"\"x\"\"\"`
-
 ==================
-a completed array does not supply an opening to a later table
-:cst
+Reject "a=[{}]\nb={x=1]}"
+:error
 ==================
 a=[{}]
 b={x=1]}
 ---
 
-0:0 - 1:8   toml
-0:0 - 0:6     expression
-0:0 - 0:6       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:6         value: val
-0:2 - 0:6           array
-0:2 - 0:3             "["
-0:3 - 0:5             array_values
-0:3 - 0:5               val
-0:3 - 0:5                 inline_table
-0:3 - 0:4                   "{"
-0:4 - 0:5                   "}"
-0:5 - 0:6             "]"
-0:6 - 1:0     newline
-0:6 - 0:7       `\n`
-1:0 - 1:8     expression
-1:0 - 1:8       keyval
-1:0 - 1:1         key: key
-1:0 - 1:1           simple_key
-1:0 - 1:1             unquoted_key `b`
-1:1 - 1:2         "="
-1:2 - 1:8         value: val
-1:2 - 1:8           inline_table
-1:2 - 1:3             "{"
-1:3 - 1:7             inline_table_keyvals
-1:3 - 1:6               keyval
-1:3 - 1:4                 key: key
-1:3 - 1:4                   simple_key
-1:3 - 1:4                     unquoted_key `x`
-1:4 - 1:5                 "="
-1:5 - 1:6                 value: val
-1:5 - 1:6                   integer
-1:5 - 1:6                     dec_int
-1:5 - 1:6                       unsigned_dec_int
-1:5 - 1:6                         digit `1`
-1:6 - 1:7               issue: syntax_issue
-1:6 - 1:7                 invalid_syntax
-1:6 - 1:7                   invalid_character `]`
-1:7 - 1:8             "}"
-
 ==================
-a completed table does not supply an opening to a later array
-:cst
+Reject "a={x=[]}\nb=[1}]"
+:error
 ==================
 a={x=[]}
 b=[1}]
 ---
 
-0:0 - 1:6   toml
-0:0 - 0:8     expression
-0:0 - 0:8       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:8         value: val
-0:2 - 0:8           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:7             inline_table_keyvals
-0:3 - 0:7               keyval
-0:3 - 0:4                 key: key
-0:3 - 0:4                   simple_key
-0:3 - 0:4                     unquoted_key `x`
-0:4 - 0:5                 "="
-0:5 - 0:7                 value: val
-0:5 - 0:7                   array
-0:5 - 0:6                     "["
-0:6 - 0:7                     "]"
-0:7 - 0:8             "}"
-0:8 - 1:0     newline
-0:8 - 0:9       `\n`
-1:0 - 1:6     expression
-1:0 - 1:6       keyval
-1:0 - 1:1         key: key
-1:0 - 1:1           simple_key
-1:0 - 1:1             unquoted_key `b`
-1:1 - 1:2         "="
-1:2 - 1:6         value: val
-1:2 - 1:6           array
-1:2 - 1:3             "["
-1:3 - 1:5             array_values
-1:3 - 1:4               val
-1:3 - 1:4                 integer
-1:3 - 1:4                   dec_int
-1:3 - 1:4                     unsigned_dec_int
-1:3 - 1:4                       digit `1`
-1:4 - 1:5               issue: syntax_issue
-1:4 - 1:5                 invalid_syntax
-1:4 - 1:5                   invalid_character `}`
-1:5 - 1:6             "]"
-
 ==================
-Semantic conflicts and Unicode scalar restrictions remain distinct
+Reject "a = true\na = false\n[a]\n[a]\n[[a]]\nb = {}\nb.c = 999999999999999999999999999999\nd = 2026-02-30T12:00:60Z\ne = \"\\uD800\\U00110000\""
+:error
 ==================
 a = true
 a = false
@@ -398,408 +274,50 @@ d = 2026-02-30T12:00:60Z
 e = "\uD800\U00110000"
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (boolean))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (boolean))))
-  (newline)
-  (expression
-    (table
-      (std_table
-        key: (key
-          (simple_key
-            (unquoted_key))))))
-  (newline)
-  (expression
-    (table
-      (std_table
-        key: (key
-          (simple_key
-            (unquoted_key))))))
-  (newline)
-  (expression
-    (table
-      (array_table
-        key: (key
-          (simple_key
-            (unquoted_key))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (dotted_key
-          (simple_key
-            (unquoted_key))
-          (simple_key
-            (unquoted_key))))
-      value: (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit1_9)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)
-              (digit)))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (date_time
-          (offset_date_time
-            (full_date
-              (date_fullyear
-                (digit)
-                (digit)
-                (digit)
-                (digit))
-              (date_month
-                (digit)
-                (digit))
-              (date_mday
-                (digit)
-                (digit)))
-            (time_delim)
-            (full_time
-              (partial_time
-                (time_hour
-                  (digit)
-                  (digit))
-                (time_minute
-                  (digit)
-                  (digit))
-                (time_second
-                  (digit)
-                  (digit)))
-              (time_offset)))))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (string
-          (basic_string
-            issue: (syntax_issue
-              (invalid_syntax
-                (invalid_escape
-                  (escaped
-                    (escape_seq_char
-                      (hexdig)
-                      (hexdig)
-                      (hexdig)
-                      (hexdig))))))
-            issue: (syntax_issue
-              (invalid_syntax
-                (invalid_escape
-                  (escaped
-                    (escape_seq_char
-                      (hexdig)
-                      (hexdig)
-                      (hexdig)
-                      (hexdig)
-                      (hexdig)
-                      (hexdig)
-                      (hexdig)
-                      (hexdig))))))))))))
-
 ==================
-Two key value pairs on one line
+Reject "a = true b = false"
+:error
 ==================
 a = true b = false
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (boolean))))
-  issue: (syntax_issue
-    (invalid_syntax
-      (missing_newline)))
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (boolean)))))
-
 ==================
-Newline before equals
+Reject "a\n= true"
+:error
 ==================
 a
 = true
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_assignment_operator)))
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_value)))))
-  (newline)
-  (expression
-    (keyval
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_key)))
-      value: (val
-        (boolean)))))
-
 ==================
-Adjacent junk stays after a complete value
+Reject "a=[1]x\nb=1979-05-27x\nc=truex"
+:error
 ==================
 a=[1]x
 b=1979-05-27x
 c=truex
 ---
 
-(toml
-  (expression
-    (keyval
-      (key
-        (simple_key
-          (unquoted_key)))
-      (val
-        (array
-          (array_values
-            (val
-              (integer
-                (dec_int
-                  (unsigned_dec_int
-                    (digit)))))))))
-    (syntax_issue
-      (invalid_syntax
-        (invalid_character))))
-  (newline)
-  (expression
-    (keyval
-      (key
-        (simple_key
-          (unquoted_key)))
-      (val
-        (date_time
-          (local_date
-            (full_date
-              (date_fullyear
-                (digit)
-                (digit)
-                (digit)
-                (digit))
-              (date_month
-                (digit)
-                (digit))
-              (date_mday
-                (digit)
-                (digit)))))))
-    (syntax_issue
-      (invalid_syntax
-        (invalid_character))))
-  (newline)
-  (expression
-    (keyval
-      (key
-        (simple_key
-          (unquoted_key)))
-      (val
-        (boolean)))
-    (syntax_issue
-      (invalid_syntax
-        (invalid_character)))))
-
 ==================
-Adjacent assignments retain both real keys
+Reject "a=[1]x=2\nb=1979-05-27y=3\nc=1z=4"
+:error
 ==================
 a=[1]x=2
 b=1979-05-27y=3
 c=1z=4
 ---
 
-(toml
-  (expression
-    (keyval
-      (key
-        (simple_key
-          (unquoted_key)))
-      (val
-        (array
-          (array_values
-            (val
-              (integer
-                (dec_int
-                  (unsigned_dec_int
-                    (digit))))))))))
-  (syntax_issue
-    (invalid_syntax
-      (missing_newline)))
-  (expression
-    (keyval
-      (key
-        (simple_key
-          (unquoted_key)))
-      (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit)))))))
-  (newline)
-  (expression
-    (keyval
-      (key
-        (simple_key
-          (unquoted_key)))
-      (val
-        (date_time
-          (local_date
-            (full_date
-              (date_fullyear
-                (digit)
-                (digit)
-                (digit)
-                (digit))
-              (date_month
-                (digit)
-                (digit))
-              (date_mday
-                (digit)
-                (digit))))))))
-  (syntax_issue
-    (invalid_syntax
-      (missing_newline)))
-  (expression
-    (keyval
-      (key
-        (simple_key
-          (unquoted_key)))
-      (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit)))))))
-  (newline)
-  (expression
-    (keyval
-      (key
-        (simple_key
-          (unquoted_key)))
-      (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit)))))))
-  (syntax_issue
-    (invalid_syntax
-      (missing_newline)))
-  (expression
-    (keyval
-      (key
-        (simple_key
-          (unquoted_key)))
-      (val
-        (integer
-          (dec_int
-            (unsigned_dec_int
-              (digit))))))))
 ==================
-Missing value
+Reject "a ="
+:error
 ==================
 a =
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      issue: (syntax_issue
-        (incomplete_syntax
-          (missing_value))))))
-
 ==================
-Newline before value
+Reject "a =\ntrue"
+:error
 ==================
 a =
 true
 ---
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      issue: (syntax_issue
-        (invalid_syntax
-          (missing_value)))))
-  (newline)
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      issue: (syntax_issue
-        (incomplete_syntax
-          (missing_assignment_operator)))
-      issue: (syntax_issue
-        (incomplete_syntax
-          (missing_value))))))

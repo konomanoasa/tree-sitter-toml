@@ -198,1310 +198,257 @@ a = {b.c = [{d = 1}, {d = 2}], e = {}}
                 (inline_table)))))))))
 
 ==================
-Unexpected separator leaves trailing newline with inline_table: "a={,\n}"
-:cst
+Reject "a={,\n}"
+:error
 ==================
 a={,
 }
 ---
 
-0:0 - 1:1   toml
-0:0 - 1:1     expression
-0:0 - 1:1       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 1:1         value: val
-0:2 - 1:1           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:4             inline_table_keyvals
-0:3 - 0:4               issue: syntax_issue
-0:3 - 0:4                 invalid_syntax
-0:3 - 0:4                   unexpected_separator `,`
-0:4 - 1:0             newline
-0:4 - 0:5               `\n`
-1:0 - 1:1             "}"
-
 ==================
-List range includes leading layout: a={ [1]}
-:cst
+Reject "a={ [1]}"
+:error
 ==================
 a={ [1]}
 ---
 
-0:0 - 0:8   toml
-0:0 - 0:8     expression
-0:0 - 0:8       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:8         value: val
-0:2 - 0:8           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:7             inline_table_keyvals
-0:4 - 0:7               issue: syntax_issue
-0:4 - 0:7                 invalid_syntax
-0:4 - 0:7                   unexpected_value
-0:4 - 0:7                     val
-0:4 - 0:7                       array
-0:4 - 0:5                         "["
-0:5 - 0:6                         array_values
-0:5 - 0:6                           val
-0:5 - 0:6                             integer
-0:5 - 0:6                               dec_int
-0:5 - 0:6                                 unsigned_dec_int
-0:5 - 0:6                                   digit `1`
-0:6 - 0:7                         "]"
-0:7 - 0:8             "}"
-
 ==================
-List range includes leading layout: a={ =1}
-:cst
+Reject "a={ =1}"
+:error
 ==================
 a={ =1}
 ---
 
-0:0 - 0:7   toml
-0:0 - 0:7     expression
-0:0 - 0:7       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:7         value: val
-0:2 - 0:7           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:6             inline_table_keyvals
-0:4 - 0:6               keyval
-0:4 - 0:4                 issue: syntax_issue
-0:4 - 0:4                   invalid_syntax
-0:4 - 0:4                     missing_key
-0:4 - 0:5                 "="
-0:5 - 0:6                 value: val
-0:5 - 0:6                   integer
-0:5 - 0:6                     dec_int
-0:5 - 0:6                       unsigned_dec_int
-0:5 - 0:6                         digit `1`
-0:6 - 0:7             "}"
-
 ==================
-List range includes leading layout: a={ .b=1}
-:cst
+Reject "a={ .b=1}"
+:error
 ==================
 a={ .b=1}
 ---
 
-0:0 - 0:9   toml
-0:0 - 0:9     expression
-0:0 - 0:9       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:9         value: val
-0:2 - 0:9           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:8             inline_table_keyvals
-0:4 - 0:8               keyval
-0:4 - 0:6                 key: key
-0:4 - 0:6                   dotted_key
-0:4 - 0:4                     issue: syntax_issue
-0:4 - 0:4                       invalid_syntax
-0:4 - 0:4                         missing_key
-0:4 - 0:5                     "."
-0:5 - 0:6                     simple_key
-0:5 - 0:6                       unquoted_key `b`
-0:6 - 0:7                 "="
-0:7 - 0:8                 value: val
-0:7 - 0:8                   integer
-0:7 - 0:8                     dec_int
-0:7 - 0:8                       unsigned_dec_int
-0:7 - 0:8                         digit `1`
-0:8 - 0:9             "}"
-
 ==================
-Value recovery retains key structure: a={b=1 ;c=2}
-:cst
+Reject "a={b=1 ;c=2}"
+:error
 ==================
 a={b=1 ;c=2}
 ---
 
-0:0  - 0:12   toml
-0:0  - 0:12     expression
-0:0  - 0:12       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:12         value: val
-0:2  - 0:12           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:11             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:7  - 0:8                issue: syntax_issue
-0:7  - 0:8                  invalid_syntax
-0:7  - 0:8                    invalid_character `;`
-0:8  - 0:8                issue: syntax_issue
-0:8  - 0:8                  invalid_syntax
-0:8  - 0:8                    missing_inline_table_separator
-0:8  - 0:11               keyval
-0:8  - 0:9                  key: key
-0:8  - 0:9                    simple_key
-0:8  - 0:9                      unquoted_key `c`
-0:9  - 0:10                 "="
-0:10 - 0:11                 value: val
-0:10 - 0:11                   integer
-0:10 - 0:11                     dec_int
-0:10 - 0:11                       unsigned_dec_int
-0:10 - 0:11                         digit `2`
-0:11 - 0:12             "}"
-
 ==================
-Value recovery retains key structure: a={b=1 .x=2}
-:cst
+Reject "a={b=1 .x=2}"
+:error
 ==================
 a={b=1 .x=2}
 ---
 
-0:0  - 0:12   toml
-0:0  - 0:12     expression
-0:0  - 0:12       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:12         value: val
-0:2  - 0:12           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:11             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:7  - 0:7                issue: syntax_issue
-0:7  - 0:7                  invalid_syntax
-0:7  - 0:7                    missing_inline_table_separator
-0:7  - 0:11               keyval
-0:7  - 0:9                  key: key
-0:7  - 0:9                    dotted_key
-0:7  - 0:7                      issue: syntax_issue
-0:7  - 0:7                        invalid_syntax
-0:7  - 0:7                          missing_key
-0:7  - 0:8                      "."
-0:8  - 0:9                      simple_key
-0:8  - 0:9                        unquoted_key `x`
-0:9  - 0:10                 "="
-0:10 - 0:11                 value: val
-0:10 - 0:11                   integer
-0:10 - 0:11                     dec_int
-0:10 - 0:11                       unsigned_dec_int
-0:10 - 0:11                         digit `2`
-0:11 - 0:12             "}"
-
 ==================
-Value recovery retains key structure: a={b=1 x..y=2}
-:cst
+Reject "a={b=1 x..y=2}"
+:error
 ==================
 a={b=1 x..y=2}
 ---
 
-0:0  - 0:14   toml
-0:0  - 0:14     expression
-0:0  - 0:14       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:14         value: val
-0:2  - 0:14           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:13             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:7  - 0:7                issue: syntax_issue
-0:7  - 0:7                  invalid_syntax
-0:7  - 0:7                    missing_inline_table_separator
-0:7  - 0:13               keyval
-0:7  - 0:11                 key: key
-0:7  - 0:11                   dotted_key
-0:7  - 0:8                      simple_key
-0:7  - 0:8                        unquoted_key `x`
-0:8  - 0:9                      "."
-0:9  - 0:9                      issue: syntax_issue
-0:9  - 0:9                        invalid_syntax
-0:9  - 0:9                          missing_key
-0:9  - 0:10                     "."
-0:10 - 0:11                     simple_key
-0:10 - 0:11                       unquoted_key `y`
-0:11 - 0:12                 "="
-0:12 - 0:13                 value: val
-0:12 - 0:13                   integer
-0:12 - 0:13                     dec_int
-0:12 - 0:13                       unsigned_dec_int
-0:12 - 0:13                         digit `2`
-0:13 - 0:14             "}"
-
 ==================
-Value recovery retains key structure: a={b=truex.=2}
-:cst
+Reject "a={b=truex.=2}"
+:error
 ==================
 a={b=truex.=2}
 ---
 
-0:0  - 0:14   toml
-0:0  - 0:14     expression
-0:0  - 0:14       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:14         value: val
-0:2  - 0:14           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:13             inline_table_keyvals
-0:3  - 0:9                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:9                  value: val
-0:5  - 0:9                    boolean
-0:5  - 0:9                      "true"
-0:9  - 0:9                issue: syntax_issue
-0:9  - 0:9                  invalid_syntax
-0:9  - 0:9                    missing_inline_table_separator
-0:9  - 0:13               keyval
-0:9  - 0:11                 key: key
-0:9  - 0:11                   dotted_key
-0:9  - 0:10                     simple_key
-0:9  - 0:10                       unquoted_key `x`
-0:10 - 0:11                     "."
-0:11 - 0:11                     issue: syntax_issue
-0:11 - 0:11                       invalid_syntax
-0:11 - 0:11                         missing_key
-0:11 - 0:12                 "="
-0:12 - 0:13                 value: val
-0:12 - 0:13                   integer
-0:12 - 0:13                     dec_int
-0:12 - 0:13                       unsigned_dec_int
-0:12 - 0:13                         digit `2`
-0:13 - 0:14             "}"
-
 ==================
-Value recovery retains key structure: a={b=1 .=2}
-:cst
+Reject "a={b=1 .=2}"
+:error
 ==================
 a={b=1 .=2}
 ---
 
-0:0  - 0:11   toml
-0:0  - 0:11     expression
-0:0  - 0:11       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:11         value: val
-0:2  - 0:11           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:10             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:7  - 0:10               issue: syntax_issue
-0:7  - 0:10                 invalid_syntax
-0:7  - 0:10                   invalid_character `.=2`
-0:10 - 0:11             "}"
-
 ==================
-a bracket inside an inline table retains an unexpected array value
-:cst
+Reject "a={b=1 [2]}"
+:error
 ==================
 a={b=1 [2]}
 ---
 
-0:0  - 0:11   toml
-0:0  - 0:11     expression
-0:0  - 0:11       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:11         value: val
-0:2  - 0:11           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:10             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:7  - 0:7                issue: syntax_issue
-0:7  - 0:7                  invalid_syntax
-0:7  - 0:7                    missing_inline_table_separator
-0:7  - 0:10               issue: syntax_issue
-0:7  - 0:10                 invalid_syntax
-0:7  - 0:10                   unexpected_value
-0:7  - 0:10                     val
-0:7  - 0:10                       array
-0:7  - 0:8                          "["
-0:8  - 0:9                          array_values
-0:8  - 0:9                            val
-0:8  - 0:9                              integer
-0:8  - 0:9                                dec_int
-0:8  - 0:9                                  unsigned_dec_int
-0:8  - 0:9                                    digit `2`
-0:9  - 0:10                         "]"
-0:10 - 0:11             "}"
-
 ==================
-inline junk and an unmatched closing form one issue
-:cst
+Reject "a={b=1 x]}"
+:error
 ==================
 a={b=1 x]}
 ---
 
-0:0  - 0:10   toml
-0:0  - 0:10     expression
-0:0  - 0:10       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:10         value: val
-0:2  - 0:10           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:9              inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:7  - 0:9                issue: syntax_issue
-0:7  - 0:9                  invalid_syntax
-0:7  - 0:9                    invalid_character `x]`
-0:9  - 0:10             "}"
-
 ==================
-junk after an unexpected value joins the unmatched closing
-:cst
+Reject "a={[]a]}"
+:error
 ==================
 a={[]a]}
 ---
 
-0:0 - 0:8   toml
-0:0 - 0:8     expression
-0:0 - 0:8       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:8         value: val
-0:2 - 0:8           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:7             inline_table_keyvals
-0:3 - 0:5               issue: syntax_issue
-0:3 - 0:5                 invalid_syntax
-0:3 - 0:5                   unexpected_value
-0:3 - 0:5                     val
-0:3 - 0:5                       array
-0:3 - 0:4                         "["
-0:4 - 0:5                         "]"
-0:5 - 0:7               issue: syntax_issue
-0:5 - 0:7                 invalid_syntax
-0:5 - 0:7                   invalid_character `a]`
-0:7 - 0:8             "}"
-
 ==================
-junk between unmatched closings stays in one issue
-:cst
+Reject "a={b=1]x]}"
+:error
 ==================
 a={b=1]x]}
 ---
 
-0:0  - 0:10   toml
-0:0  - 0:10     expression
-0:0  - 0:10       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:10         value: val
-0:2  - 0:10           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:9              inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:6  - 0:9                issue: syntax_issue
-0:6  - 0:9                  invalid_syntax
-0:6  - 0:9                    invalid_character `]x]`
-0:9  - 0:10             "}"
-
 ==================
-whitespace separates junk from an unmatched closing
-:cst
+Reject "a={b=1 x ]}"
+:error
 ==================
 a={b=1 x ]}
 ---
 
-0:0  - 0:11   toml
-0:0  - 0:11     expression
-0:0  - 0:11       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:11         value: val
-0:2  - 0:11           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:10             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:7  - 0:8                issue: syntax_issue
-0:7  - 0:8                  invalid_syntax
-0:7  - 0:8                    invalid_character `x`
-0:9  - 0:10               issue: syntax_issue
-0:9  - 0:10                 invalid_syntax
-0:9  - 0:10                   invalid_character `]`
-0:10 - 0:11             "}"
-
 ==================
-a comma after joined junk still separates the next keyval
-:cst
+Reject "a={b=1 x],c=2}"
+:error
 ==================
 a={b=1 x],c=2}
 ---
 
-0:0  - 0:14   toml
-0:0  - 0:14     expression
-0:0  - 0:14       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:14         value: val
-0:2  - 0:14           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:13             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:7  - 0:9                issue: syntax_issue
-0:7  - 0:9                  invalid_syntax
-0:7  - 0:9                    invalid_character `x]`
-0:9  - 0:10               ","
-0:10 - 0:13               keyval
-0:10 - 0:11                 key: key
-0:10 - 0:11                   simple_key
-0:10 - 0:11                     unquoted_key `c`
-0:11 - 0:12                 "="
-0:12 - 0:13                 value: val
-0:12 - 0:13                   integer
-0:12 - 0:13                     dec_int
-0:12 - 0:13                       unsigned_dec_int
-0:12 - 0:13                         digit `2`
-0:13 - 0:14             "}"
-
 ==================
-a confirmed key after an unmatched closing starts a new keyval
-:cst
+Reject "a={b=1]c=2}"
+:error
 ==================
 a={b=1]c=2}
 ---
 
-0:0  - 0:11   toml
-0:0  - 0:11     expression
-0:0  - 0:11       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:11         value: val
-0:2  - 0:11           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:10             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:6  - 0:7                issue: syntax_issue
-0:6  - 0:7                  invalid_syntax
-0:6  - 0:7                    invalid_character `]`
-0:7  - 0:7                issue: syntax_issue
-0:7  - 0:7                  invalid_syntax
-0:7  - 0:7                    missing_inline_table_separator
-0:7  - 0:10               keyval
-0:7  - 0:8                  key: key
-0:7  - 0:8                    simple_key
-0:7  - 0:8                      unquoted_key `c`
-0:8  - 0:9                  "="
-0:9  - 0:10                 value: val
-0:9  - 0:10                   integer
-0:9  - 0:10                     dec_int
-0:9  - 0:10                       unsigned_dec_int
-0:9  - 0:10                         digit `2`
-0:10 - 0:11             "}"
-
 ==================
-spaced text after an unmatched closing stays junk
-:cst
+Reject "a={b=1] x}"
+:error
 ==================
 a={b=1] x}
 ---
 
-0:0  - 0:10   toml
-0:0  - 0:10     expression
-0:0  - 0:10       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:10         value: val
-0:2  - 0:10           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:9              inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:6  - 0:7                issue: syntax_issue
-0:6  - 0:7                  invalid_syntax
-0:6  - 0:7                    invalid_character `]`
-0:8  - 0:9                issue: syntax_issue
-0:8  - 0:9                  invalid_syntax
-0:8  - 0:9                    invalid_character `x`
-0:9  - 0:10             "}"
-
 ==================
-a spaced confirmed key after an unmatched closing starts a new keyval
-:cst
+Reject "a={b=1] c=2}"
+:error
 ==================
 a={b=1] c=2}
 ---
 
-0:0  - 0:12   toml
-0:0  - 0:12     expression
-0:0  - 0:12       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:12         value: val
-0:2  - 0:12           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:11             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:6  - 0:7                issue: syntax_issue
-0:6  - 0:7                  invalid_syntax
-0:6  - 0:7                    invalid_character `]`
-0:8  - 0:8                issue: syntax_issue
-0:8  - 0:8                  invalid_syntax
-0:8  - 0:8                    missing_inline_table_separator
-0:8  - 0:11               keyval
-0:8  - 0:9                  key: key
-0:8  - 0:9                    simple_key
-0:8  - 0:9                      unquoted_key `c`
-0:9  - 0:10                 "="
-0:10 - 0:11                 value: val
-0:10 - 0:11                   integer
-0:10 - 0:11                     dec_int
-0:10 - 0:11                       unsigned_dec_int
-0:10 - 0:11                         digit `2`
-0:11 - 0:12             "}"
-
 ==================
-a closing bracket unwinds the innermost table only
-:cst
+Reject "a={x=[{y=1]}"
+:error
 ==================
 a={x=[{y=1]}
 ---
 
-0:0  - 0:12   toml
-0:0  - 0:12     expression
-0:0  - 0:12       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:12         value: val
-0:2  - 0:12           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:11             inline_table_keyvals
-0:3  - 0:11               keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `x`
-0:4  - 0:5                  "="
-0:5  - 0:11                 value: val
-0:5  - 0:11                   array
-0:5  - 0:6                      "["
-0:6  - 0:10                     array_values
-0:6  - 0:10                       val
-0:6  - 0:10                         inline_table
-0:6  - 0:7                            "{"
-0:7  - 0:10                           inline_table_keyvals
-0:7  - 0:10                             keyval
-0:7  - 0:8                                key: key
-0:7  - 0:8                                  simple_key
-0:7  - 0:8                                    unquoted_key `y`
-0:8  - 0:9                                "="
-0:9  - 0:10                               value: val
-0:9  - 0:10                                 integer
-0:9  - 0:10                                   dec_int
-0:9  - 0:10                                     unsigned_dec_int
-0:9  - 0:10                                       digit `1`
-0:10 - 0:10                           issue: syntax_issue
-0:10 - 0:10                             invalid_syntax
-0:10 - 0:10                               missing_inline_table_close
-0:10 - 0:11                     "]"
-0:11 - 0:12             "}"
-
 ==================
-A leading unmatched bracket and comma preserve the following inline entry
-:cst
+Reject "a={],b=1}"
+:error
 ==================
 a={],b=1}
 ---
 
-0:0 - 0:9   toml
-0:0 - 0:9     expression
-0:0 - 0:9       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:9         value: val
-0:2 - 0:9           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:8             inline_table_keyvals
-0:3 - 0:4               issue: syntax_issue
-0:3 - 0:4                 invalid_syntax
-0:3 - 0:4                   invalid_character `]`
-0:4 - 0:5               issue: syntax_issue
-0:4 - 0:5                 invalid_syntax
-0:4 - 0:5                   unexpected_separator `,`
-0:5 - 0:8               keyval
-0:5 - 0:6                 key: key
-0:5 - 0:6                   simple_key
-0:5 - 0:6                     unquoted_key `b`
-0:6 - 0:7                 "="
-0:7 - 0:8                 value: val
-0:7 - 0:8                   integer
-0:7 - 0:8                     dec_int
-0:7 - 0:8                       unsigned_dec_int
-0:7 - 0:8                         digit `1`
-0:8 - 0:9             "}"
-
 ==================
-An unmatched bracket stays inside an inline table before its real closing
-:cst
+Reject "a={b=1]}"
+:error
 ==================
 a={b=1]}
 ---
 
-0:0 - 0:8   toml
-0:0 - 0:8     expression
-0:0 - 0:8       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:8         value: val
-0:2 - 0:8           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:7             inline_table_keyvals
-0:3 - 0:6               keyval
-0:3 - 0:4                 key: key
-0:3 - 0:4                   simple_key
-0:3 - 0:4                     unquoted_key `b`
-0:4 - 0:5                 "="
-0:5 - 0:6                 value: val
-0:5 - 0:6                   integer
-0:5 - 0:6                     dec_int
-0:5 - 0:6                       unsigned_dec_int
-0:5 - 0:6                         digit `1`
-0:6 - 0:7               issue: syntax_issue
-0:6 - 0:7                 invalid_syntax
-0:6 - 0:7                   invalid_character `]`
-0:7 - 0:8             "}"
-
 ==================
-an enclosing table closes after the array's missing bracket
-:cst
+Reject "a={b=[1}"
+:error
 ==================
 a={b=[1}
 ---
 
-0:0 - 0:8   toml
-0:0 - 0:8     expression
-0:0 - 0:8       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:8         value: val
-0:2 - 0:8           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:7             inline_table_keyvals
-0:3 - 0:7               keyval
-0:3 - 0:4                 key: key
-0:3 - 0:4                   simple_key
-0:3 - 0:4                     unquoted_key `b`
-0:4 - 0:5                 "="
-0:5 - 0:7                 value: val
-0:5 - 0:7                   array
-0:5 - 0:6                     "["
-0:6 - 0:7                     array_values
-0:6 - 0:7                       val
-0:6 - 0:7                         integer
-0:6 - 0:7                           dec_int
-0:6 - 0:7                             unsigned_dec_int
-0:6 - 0:7                               digit `1`
-0:7 - 0:7                     issue: syntax_issue
-0:7 - 0:7                       invalid_syntax
-0:7 - 0:7                         missing_array_close
-0:7 - 0:8             "}"
-
 ==================
-an unmatched bracket does not synthesize a keyval
-:cst
+Reject "a={]}"
+:error
 ==================
 a={]}
 ---
 
-0:0 - 0:5   toml
-0:0 - 0:5     expression
-0:0 - 0:5       keyval
-0:0 - 0:1         key: key
-0:0 - 0:1           simple_key
-0:0 - 0:1             unquoted_key `a`
-0:1 - 0:2         "="
-0:2 - 0:5         value: val
-0:2 - 0:5           inline_table
-0:2 - 0:3             "{"
-0:3 - 0:4             inline_table_keyvals
-0:3 - 0:4               issue: syntax_issue
-0:3 - 0:4                 invalid_syntax
-0:3 - 0:4                   invalid_character `]`
-0:4 - 0:5             "}"
-
 ==================
-an unmatched bracket after a comma preserves the following keyval
-:cst
+Reject "a={b=1,]c=2}"
+:error
 ==================
 a={b=1,]c=2}
 ---
 
-0:0  - 0:12   toml
-0:0  - 0:12     expression
-0:0  - 0:12       keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 0:12         value: val
-0:2  - 0:12           inline_table
-0:2  - 0:3              "{"
-0:3  - 0:11             inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:6  - 0:7                ","
-0:7  - 0:8                issue: syntax_issue
-0:7  - 0:8                  invalid_syntax
-0:7  - 0:8                    invalid_character `]`
-0:8  - 0:11               keyval
-0:8  - 0:9                  key: key
-0:8  - 0:9                    simple_key
-0:8  - 0:9                      unquoted_key `c`
-0:9  - 0:10                 "="
-0:10 - 0:11                 value: val
-0:10 - 0:11                   integer
-0:10 - 0:11                     dec_int
-0:10 - 0:11                       unsigned_dec_int
-0:10 - 0:11                         digit `2`
-0:11 - 0:12             "}"
-
 ==================
-a comment after a trailing comma and an unmatched bracket stays with the table
-:cst
+Reject "a={b=1,]#c\n}"
+:error
 ==================
 a={b=1,]#c
 }
 ---
 
-0:0  - 1:1    toml
-0:0  - 1:1      expression
-0:0  - 1:1        keyval
-0:0  - 0:1          key: key
-0:0  - 0:1            simple_key
-0:0  - 0:1              unquoted_key `a`
-0:1  - 0:2          "="
-0:2  - 1:1          value: val
-0:2  - 1:1            inline_table
-0:2  - 0:3              "{"
-0:3  - 0:8              inline_table_keyvals
-0:3  - 0:6                keyval
-0:3  - 0:4                  key: key
-0:3  - 0:4                    simple_key
-0:3  - 0:4                      unquoted_key `b`
-0:4  - 0:5                  "="
-0:5  - 0:6                  value: val
-0:5  - 0:6                    integer
-0:5  - 0:6                      dec_int
-0:5  - 0:6                        unsigned_dec_int
-0:5  - 0:6                          digit `1`
-0:6  - 0:7                ","
-0:7  - 0:8                issue: syntax_issue
-0:7  - 0:8                  invalid_syntax
-0:7  - 0:8                    invalid_character `]`
-0:8  - 0:10             comment `#c`
-0:10 - 1:0              newline
-0:10 - 0:11               `\n`
-1:0  - 1:1              "}"
-
 ==================
-Inline junk and unmatched brackets form one issue before the real closing
+Reject "a={b=1 x]]}"
+:error
 ==================
 a={b=1 x]]}
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (integer
-                  (dec_int
-                    (unsigned_dec_int
-                      (digit))))))
-            issue: (syntax_issue
-              (invalid_syntax
-                (invalid_character)))))))))
-
 ==================
-Inline table missing separator
+Reject "a = {x=true y=false}"
+:error
 ==================
 a = {x=true y=false}
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (boolean)))
-            issue: (syntax_issue
-              (invalid_syntax
-                (missing_inline_table_separator)))
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (boolean)))))))))
-
 ==================
-Inline table missing separator across newline
+Reject "a = {x=true\ny=false}"
+:error
 ==================
 a = {x=true
 y=false}
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (boolean)))
-            (newline)
-            issue: (syntax_issue
-              (invalid_syntax
-                (missing_inline_table_separator)))
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (boolean)))))))))
-
 ==================
-Inline table double comma
+Reject "a = {x=true,,}"
+:error
 ==================
 a = {x=true,,}
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (boolean)))
-            issue: (syntax_issue
-              (invalid_syntax
-                (unexpected_separator)))))))))
-
 ==================
-Inline table leading comma
+Reject "a = {,x=true}"
+:error
 ==================
 a = {,x=true}
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            issue: (syntax_issue
-              (invalid_syntax
-                (unexpected_separator)))
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (boolean)))))))))
-
 ==================
-Inline table only comma
+Reject "a = {,}"
+:error
 ==================
 a = {,}
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            issue: (syntax_issue
-              (invalid_syntax
-                (unexpected_separator)))))))))
-
 ==================
-Newline between key and value in inline table
+Reject "a = {x=\ntrue}"
+:error
 ==================
 a = {x=
 true}
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              issue: (syntax_issue
-                (invalid_syntax
-                  (missing_value))))
-            (newline)
-            issue: (syntax_issue
-              (invalid_syntax
-                (missing_inline_table_separator)))
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              issue: (syntax_issue
-                (invalid_syntax
-                  (missing_assignment_operator)))
-              issue: (syntax_issue
-                (invalid_syntax
-                  (missing_value))))))))))
-
 ==================
-Inline junk preserves real simple and incomplete dotted keys
+Reject "a={b=1 ;c=2 .x=3}"
+:error
 ==================
 a={b=1 ;c=2 .x=3}
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (integer
-                  (dec_int
-                    (unsigned_dec_int
-                      (digit))))))
-            issue: (syntax_issue
-              (invalid_syntax
-                (invalid_character)))
-            issue: (syntax_issue
-              (invalid_syntax
-                (missing_inline_table_separator)))
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (integer
-                  (dec_int
-                    (unsigned_dec_int
-                      (digit))))))
-            issue: (syntax_issue
-              (invalid_syntax
-                (missing_inline_table_separator)))
-            (keyval
-              key: (key
-                (dotted_key
-                  issue: (syntax_issue
-                    (invalid_syntax
-                      (missing_key)))
-                  (simple_key
-                    (unquoted_key))))
-              value: (val
-                (integer
-                  (dec_int
-                    (unsigned_dec_int
-                      (digit))))))))))))
-
 ==================
-Following inline dotted keys retain an empty quoted segment and missing segments
+Reject "a={b=1 .\"\"..=2}"
+:error
 ==================
 a={b=1 .""..=2}
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (integer
-                  (dec_int
-                    (unsigned_dec_int
-                      (digit))))))
-            issue: (syntax_issue
-              (invalid_syntax
-                (missing_inline_table_separator)))
-            (keyval
-              key: (key
-                (dotted_key
-                  issue: (syntax_issue
-                    (invalid_syntax
-                      (missing_key)))
-                  (simple_key
-                    (quoted_key
-                      (basic_string)))
-                  issue: (syntax_issue
-                    (invalid_syntax
-                      (missing_key)))
-                  issue: (syntax_issue
-                    (invalid_syntax
-                      (missing_key)))))
-              value: (val
-                (integer
-                  (dec_int
-                    (unsigned_dec_int
-                      (digit))))))))))))
 ==================
-Unclosed inline table
+Reject "a = {x=true"
+:error
 ==================
 a = {x=true
 ---
 
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (boolean))))
-          issue: (syntax_issue
-            (incomplete_syntax
-              (missing_inline_table_close))))))))
-
 ==================
-Inline table comment consumes closing brace
+Reject "a = {x=true # }"
+:error
 ==================
 a = {x=true # }
 ---
-
-(toml
-  (expression
-    (keyval
-      key: (key
-        (simple_key
-          (unquoted_key)))
-      value: (val
-        (inline_table
-          (inline_table_keyvals
-            (keyval
-              key: (key
-                (simple_key
-                  (unquoted_key)))
-              value: (val
-                (boolean))))
-          (comment)
-          issue: (syntax_issue
-            (incomplete_syntax
-              (missing_inline_table_close))))))))

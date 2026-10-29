@@ -26,10 +26,10 @@ npm test
 - [TOML 1.1.0](https://toml.io/en/v1.1.0)
 - [TOML 1.1.0 ABNF](https://github.com/toml-lang/toml/blob/1.1.0/toml.abnf)
 
-## Used By
-
-[toml-ts-mode](https://github.com/konomanoasa/toml-ts-mode)
-
 ## License
 
 [MIT](LICENSE)
+
+## Used By
+
+[toml-ts-mode](https://github.com/konomanoasa/toml-ts-mode)

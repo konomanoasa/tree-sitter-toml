@@ -23,10 +23,6 @@ function publicNodes(cst, bytes) {
     const depth = location.length + (body.startsWith("•") ? 1 : 0);
     while (ancestors.length && ancestors.at(-1).depth >= depth) ancestors.pop();
     const parent = ancestors.at(-1)?.index ?? null;
-    if (kind === "ERROR" || kind === "MISSING") {
-      ancestors.push({ depth, index: parent });
-      continue;
-    }
     const named = !kind.startsWith('"');
     const start = starts[Number(startRow)] + Number(startColumn);
     const end = starts[Number(endRow)] + Number(endColumn);
@@ -41,31 +37,6 @@ function publicNodes(cst, bytes) {
     ancestors.push({ depth, index: nodes.length - 1 });
   }
   return nodes;
-}
-
-function issues(nodes, cst) {
-  return nodes.flatMap((node, index) => {
-    if (node.kind !== "syntax_issue") return [];
-    const outcome = nodes[index + 1];
-    const reason = nodes[index + 2];
-    assert.equal(node.field, "issue", cst);
-    assert.equal(outcome.parent, index);
-    assert.equal(reason.parent, index + 1);
-    assert.ok(["invalid_syntax", "incomplete_syntax"].includes(outcome.kind));
-    assert.deepEqual(
-      [outcome.start, outcome.end, reason.start, reason.end],
-      [node.start, node.end, node.start, node.end],
-    );
-    return [
-      [
-        nodes[node.parent].kind,
-        outcome.kind,
-        reason.kind,
-        node.start,
-        node.end,
-      ],
-    ];
-  });
 }
 
 function parseCst(cst, source) {
@@ -84,7 +55,6 @@ function parseCst(cst, source) {
   return {
     cst,
     nodes,
-    issues: issues(nodes, cst),
     // CLI status misses hidden missing tokens.
     hasError: /^[^ \t\r\n]+[ \t]+-[ \t]+[^ \t\r\n]+[ \t]+•/.test(cst),
   };
