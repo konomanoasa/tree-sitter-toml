@@ -3,6 +3,7 @@
 [![CI](https://github.com/konomanoasa/tree-sitter-toml/actions/workflows/ci.yaml/badge.svg)](https://github.com/konomanoasa/tree-sitter-toml/actions/workflows/ci.yaml)
 [![crates.io](https://img.shields.io/crates/v/konomanoasa-tree-sitter-toml)](https://crates.io/crates/konomanoasa-tree-sitter-toml)
 [![npm](https://img.shields.io/npm/v/@konomanoasa/tree-sitter-toml)](https://www.npmjs.com/package/@konomanoasa/tree-sitter-toml)
+[![PyPI](https://img.shields.io/pypi/v/konomanoasa-tree-sitter-toml)](https://pypi.org/project/konomanoasa-tree-sitter-toml/)
 
 [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) grammar for
 Tom's Obvious Minimal Language 1.1.0.
