@@ -135,11 +135,13 @@ function parseInput(
   }
 }
 
-function parse(source, edits = [], options = {}) {
+// The CLI exposes only the final CST, so each short prefix must be replayed.
+function* parseHistory(source, edits, options = {}) {
   let initial = Buffer.from(source);
   let current = initial;
   let history = [];
   let tree = parseInput(initial, [], { encoding: options.encoding });
+  yield { tree, source: current };
   for (const edit of edits) {
     const hadBom = current.subarray(0, bom.length).equals(bom);
     current = applyEdits(current, [edit]);
@@ -152,17 +154,27 @@ function parse(source, edits = [], options = {}) {
       history.push(edit);
       tree = parseInput(initial, history, options);
     }
+    yield { tree, source: current };
   }
-  return tree;
+}
+
+function parse(source, edits = [], options = {}) {
+  let result;
+  for (const { tree } of parseHistory(source, edits, options)) result = tree;
+  return result;
+}
+
+function assertFresh(tree, source) {
+  const fresh = parse(source);
+  assert.equal(tree.hasError, false, tree.cst);
+  assert.equal(fresh.hasError, false, fresh.cst);
+  assert.deepEqual(tree.nodes, fresh.nodes);
 }
 
 function assertIncrementalEqualsFresh(initial, edits, source) {
   try {
     const incremental = parse(initial, edits);
-    const fresh = parse(source);
-    assert.equal(incremental.hasError, false, incremental.cst);
-    assert.equal(fresh.hasError, false, fresh.cst);
-    assert.deepEqual(incremental.nodes, fresh.nodes);
+    assertFresh(incremental, source);
     return incremental;
   } catch (error) {
     if (error instanceof Error)
@@ -172,36 +184,43 @@ function assertIncrementalEqualsFresh(initial, edits, source) {
 }
 
 function assertEditHistory({ source, edits }) {
+  const history = parseHistory(source, edits);
+  history.next();
   let result;
-  for (let count = 1; count <= edits.length; count++) {
-    const history = edits.slice(0, count);
+  let count = 0;
+  for (const { tree, source: current } of history) {
+    count++;
     try {
-      result = assertIncrementalEqualsFresh(
-        source,
-        history,
-        applyEdits(source, history),
-      );
+      assertFresh(tree, current);
+      result = tree;
     } catch (error) {
-      throw new Error(`edit ${count}/${edits.length}`, { cause: error });
+      throw new Error(
+        `edit ${count}/${edits.length}: ${JSON.stringify({ source, edits })}`,
+        { cause: error },
+      );
     }
   }
   return result;
 }
 
 function assertValidHistory(initial, steps) {
-  let source = Buffer.from(initial);
-  const edits = [];
-  for (const { byte, deleteBytes, insert, source: expected, valid } of steps) {
-    const edit = { byte, deleteBytes, insert };
-    source = applyEdits(source, [edit]);
-    assert.equal(
-      source.toString(),
-      expected,
-      "edit fixture must produce the explicit expected input",
-    );
-    edits.push(edit);
-    const incremental = assertIncrementalEqualsFresh(initial, edits, expected);
-    assert.equal(incremental.issues.length === 0, valid, incremental.cst);
+  const history = parseHistory(initial, steps);
+  history.next();
+  for (const [index, { source: expected, valid }] of steps.entries()) {
+    try {
+      const next = history.next();
+      assert.equal(next.done, false);
+      const { tree, source } = next.value;
+      assert.equal(
+        source.toString(),
+        expected,
+        "edit fixture must produce the explicit expected input",
+      );
+      assertFresh(tree, source);
+      assert.equal(tree.issues.length === 0, valid, tree.cst);
+    } catch (error) {
+      throw new Error(`edit ${index + 1}/${steps.length}`, { cause: error });
+    }
   }
 }
 

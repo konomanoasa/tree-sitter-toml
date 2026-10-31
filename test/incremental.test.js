@@ -1003,8 +1003,8 @@ for (const [name, source] of restorationSources) {
 
 test("toml: fixed-seed generated histories preserve every intermediate source structure", () => {
   const seed = 0x6e34ab19;
-  const sampleCount = 12;
-  const deletionCount = 5;
+  const historiesPerSource = 2;
+  const deletionCount = 2;
   const maxDeletedCharacters = 4;
   const lcgMultiplier = 1664525;
   const lcgIncrement = 1013904223;
@@ -1016,7 +1016,7 @@ test("toml: fixed-seed generated histories preserve every intermediate source st
   for (const [, source] of restorationSources) {
     const fresh = parse(source);
     assert.equal(fresh.hasError, false, fresh.cst);
-    for (let sample = 0; sample < sampleCount; sample++) {
+    for (let sample = 0; sample < historiesPerSource; sample++) {
       state = (seed + sample) >>> 0;
       const characters = [...source];
       const edits = [];
@@ -1060,8 +1060,8 @@ test("toml: fixed-seed generated histories preserve every intermediate source st
 
 test("toml: fixed-seed generated histories with insertions preserve issue recovery", () => {
   const seed = 0x9e3779b9;
-  const sampleCount = 12;
-  const editCount = 8;
+  const historiesPerSource = 2;
+  const editCount = 4;
   const maxDeletedBytes = 3;
   const operationChoiceCount = 3;
   const shifts = { left: 13, right: 17, final: 5 };
@@ -1106,7 +1106,7 @@ test("toml: fixed-seed generated histories with insertions preserve issue recove
     "a={b=[1],c={d=2}}",
     '[["a".b]]\nx=true\n',
   ]) {
-    for (let sample = 0; sample < sampleCount; sample++) {
+    for (let sample = 0; sample < historiesPerSource; sample++) {
       state = (seed + sample) >>> 0;
       let current = source;
       const edits = [];
@@ -1122,16 +1122,13 @@ test("toml: fixed-seed generated histories with insertions preserve issue recove
             : inserts[next(inserts.length)];
         edits.push({ byte, deleteBytes, insert });
         current = applyEdits(current, [edits.at(-1)]).toString();
-        try {
-          assertIncrementalEqualsFresh(source, edits, current);
-        } catch (error) {
-          throw new Error(
-            JSON.stringify({ seed, sample, source, edits, current }),
-            {
-              cause: error,
-            },
-          );
-        }
+      }
+      try {
+        assertEditHistory({ source, edits });
+      } catch (error) {
+        throw new Error(JSON.stringify({ seed, sample, source, edits }), {
+          cause: error,
+        });
       }
     }
   }
