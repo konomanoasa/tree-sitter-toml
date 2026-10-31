@@ -1,6 +1,6 @@
 [package]
 name = "konomanoasa-tree-sitter-toml"
-version = "0.10.0"
+version = "0.10.1"
 description = "Tree-sitter grammar for TOML."
 readme = "README.md"
 license = "MIT"
