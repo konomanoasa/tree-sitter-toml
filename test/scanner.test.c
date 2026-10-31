@@ -12,11 +12,12 @@ struct MockLexer {
   size_t offset;
   size_t mark;
   size_t advances;
+  size_t skipped;
 };
 
 static void mock_advance(TSLexer *lexer, bool skip) {
-  (void)skip;
   struct MockLexer *mock = (struct MockLexer *)lexer;
+  if (skip) mock->skipped++;
   mock->advances++;
   if (mock->offset < mock->length) {
     mock->offset += 1;
@@ -250,6 +251,81 @@ static void test_text_tokens_reject_controls_and_surrogates(void) {
   }
 }
 
+static void test_year_time_and_comment_tokens_share_a_lookahead_state(void) {
+  const bool valid[TOKEN_COUNT] =
+    {[DATE_FULLYEAR_START] = true, [TIME_HOUR_START] = true, [COMMENT] = true};
+  const struct {
+    const char *input;
+    enum TokenType token;
+    size_t mark;
+  } cases[] = {
+    {"0000-01-01", DATE_FULLYEAR_START, 0},
+    {"9999-12-31", DATE_FULLYEAR_START, 0},
+    {"2026-", DATE_FULLYEAR_START, 0},
+    {"00:00", TIME_HOUR_START, 0},
+    {"23:59", TIME_HOUR_START, 0},
+    {"# 2026-01-01", COMMENT, 12},
+    {"24:00", TOKEN_COUNT, 0},
+    {"2026", TOKEN_COUNT, 0},
+    {"20260-01-01", TOKEN_COUNT, 0},
+    {"202-01-01", TOKEN_COUNT, 0},
+    {"20x6-01-01", TOKEN_COUNT, 0},
+    {"2026.5", TOKEN_COUNT, 0},
+    {"", TOKEN_COUNT, 0},
+  };
+  for (size_t index = 0; index < COUNT(cases); index++) {
+    int32_t input[16];
+    const size_t length = strlen(cases[index].input);
+    for (size_t offset = 0; offset < length; offset++)
+      input[offset] = cases[index].input[offset];
+    struct MockLexer mock;
+    init_mock_lexer(&mock, input, length);
+    assert(
+      tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid) ==
+      (cases[index].token != TOKEN_COUNT)
+    );
+    if (cases[index].token == TOKEN_COUNT) continue;
+    assert(mock.lexer.result_symbol == cases[index].token);
+    assert(mock.mark == cases[index].mark);
+    if (cases[index].token == DATE_FULLYEAR_START) assert(mock.offset == 5);
+  }
+}
+
+static void test_key_dot_skips_only_horizontal_layout(void) {
+  const bool valid[TOKEN_COUNT] = {[KEY_DOT] = true};
+  const struct {
+    const char *input;
+    bool accepted;
+    size_t skipped;
+  } cases[] = {
+    {".b", true, 0},
+    {" \t .b", true, 3},
+    {" \t =1", false, 3},
+    {" \t\n.b", false, 2},
+    {"\r.b", false, 0},
+    {"# .b", false, 0},
+    {" \t", false, 2},
+    {"", false, 0},
+  };
+  for (size_t index = 0; index < COUNT(cases); index++) {
+    int32_t input[8];
+    const size_t length = strlen(cases[index].input);
+    for (size_t offset = 0; offset < length; offset++)
+      input[offset] = cases[index].input[offset];
+    struct MockLexer mock;
+    init_mock_lexer(&mock, input, length);
+    assert(
+      tree_sitter_toml_external_scanner_scan(NULL, &mock.lexer, valid) ==
+      cases[index].accepted
+    );
+    assert(mock.skipped == cases[index].skipped);
+    if (cases[index].accepted) {
+      assert(mock.lexer.result_symbol == KEY_DOT);
+      assert(mock.mark == cases[index].skipped + 1);
+    }
+  }
+}
+
 static void
 test_comment_stops_before_invalid_source_and_continuation_space_wins(void) {
   const int32_t comment[] = {'#', 'x', 0xd800, 'y'};
@@ -299,6 +375,8 @@ int main(void) {
   test_unrelated_characters_and_eof_are_not_quote_content();
   test_recovery_sentinel_does_not_select_a_context();
   test_time_lookahead_preserves_digits_and_date_layout();
+  test_year_time_and_comment_tokens_share_a_lookahead_state();
+  test_key_dot_skips_only_horizontal_layout();
   test_text_tokens_reject_controls_and_surrogates();
   test_comment_stops_before_invalid_source_and_continuation_space_wins();
   return 0;

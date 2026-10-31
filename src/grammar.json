@@ -18,28 +18,49 @@
           ]
         },
         {
-          "type": "REPEAT",
-          "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "newline"
-              },
-              {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "expression"
-                  },
-                  {
-                    "type": "BLANK"
-                  }
-                ]
-              }
-            ]
-          }
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_lines"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
+    "_lines": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "newline"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "expression"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_lines"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         }
       ]
     },
@@ -240,19 +261,12 @@
             "type": "SEQ",
             "members": [
               {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "SYMBOL",
-                    "name": "_ws"
-                  },
-                  {
-                    "type": "BLANK"
-                  }
-                ]
-              },
-              {
-                "type": "STRING",
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_key_dot"
+                },
+                "named": false,
                 "value": "."
               },
               {
@@ -1713,6 +1727,10 @@
       "type": "SEQ",
       "members": [
         {
+          "type": "SYMBOL",
+          "name": "_date_fullyear_start"
+        },
+        {
           "type": "ALIAS",
           "content": {
             "type": "SYMBOL",
@@ -2586,17 +2604,6 @@
   "extras": [],
   "conflicts": [
     [
-      "unsigned_dec_int",
-      "_digit"
-    ],
-    [
-      "key",
-      "dotted_key"
-    ],
-    [
-      "dotted_key"
-    ],
-    [
       "array_values"
     ],
     [
@@ -2640,6 +2647,14 @@
     {
       "type": "SYMBOL",
       "name": "_error_sentinel"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_date_fullyear_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_key_dot"
     }
   ],
   "inline": [],

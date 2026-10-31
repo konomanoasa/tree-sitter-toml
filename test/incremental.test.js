@@ -9,6 +9,67 @@ import {
 
 const histories = [
   {
+    name: "change the year delimiter between date and decimal number",
+    initial: "a = 2026\nb=1",
+    steps: [
+      {
+        byte: 8,
+        deleteBytes: 0,
+        insert: "-01-01",
+        source: "a = 2026-01-01\nb=1",
+        valid: true,
+      },
+      {
+        byte: 8,
+        deleteBytes: 6,
+        insert: ".5",
+        source: "a = 2026.5\nb=1",
+        valid: true,
+      },
+      {
+        byte: 8,
+        deleteBytes: 2,
+        insert: "-01-01",
+        source: "a = 2026-01-01\nb=1",
+        valid: true,
+      },
+      {
+        byte: 8,
+        deleteBytes: 1,
+        insert: ":",
+        source: "a = 2026:01-01\nb=1",
+        valid: false,
+      },
+      {
+        byte: 8,
+        deleteBytes: 1,
+        insert: "-",
+        source: "a = 2026-01-01\nb=1",
+        valid: true,
+      },
+    ],
+  },
+  {
+    name: "replace a dotted key with a simple key after shared whitespace",
+    initial: "a . b = 1\nz=2",
+    steps: [
+      {
+        byte: 2,
+        deleteBytes: 4,
+        insert: "",
+        source: "a = 1\nz=2",
+        valid: true,
+      },
+      {
+        byte: 2,
+        deleteBytes: 0,
+        insert: ". b ",
+        source: "a . b = 1\nz=2",
+        valid: true,
+      },
+    ],
+  },
+  {
     name: "replace scalar categories",
     initial: "a = true",
     steps: [
@@ -678,6 +739,7 @@ const restorationSources = [
   "a = '''x''y'''''\nb = true",
   '["日本"]\r\na = "🌿\\xFF"\r\n',
   "a = -12.3_4e+0_2\nb = 1E-02\nc = 0.5",
+  'a . "b" = 2026-01-01\r\nc = 07:32\r\nd = [1234, # date\r\n2026-01-01]\r\n',
 ];
 
 for (const source of restorationSources) {
@@ -741,22 +803,40 @@ test("toml: fixed-seed generated histories restore the valid source and CST", ()
 });
 
 test("toml: a local edit reuses surrounding valid lines", () => {
-  const lineCount = 40;
+  const lineCounts = [40, 1000];
   const lexedTokenLimit = 100;
-  for (const line of ["a=1979-05-27T07:32:00Z", "a=[1,2]", "a={b=true}"]) {
-    const source = `${line}\n`.repeat(lineCount);
-    const edits = [
-      {
-        byte: (line.length + 1) * (lineCount / 2),
-        deleteBytes: 1,
-        insert: "b",
-      },
-    ];
-    const tree = parse(source, edits, { lexes: true });
-    const fresh = parse(applyEdits(source, edits));
-    assert.equal(tree.hasError, false, tree.cst);
-    assert.deepEqual(tree.nodes, fresh.nodes);
-    assert.ok(tree.lexes < lexedTokenLimit, `${line}: ${tree.lexes} lexes`);
+  for (const lineCount of lineCounts) {
+    for (const { line, column } of [
+      { line: "a=1979-05-27T07:32:00Z", column: 0 },
+      { line: "a=[1,2]", column: 0 },
+      { line: "a={b=true}", column: 0 },
+      { line: "a=1234", column: 3 },
+      { line: "a = 1234", column: 5 },
+      { line: "a . b = 1234", column: 9 },
+      { line: "a = 12.34e+5", column: 5 },
+      { line: "a = 1979-05-27T07:32:00Z", column: 7 },
+      { line: "a=07:32", column: 6 },
+      { line: "a=[12,34]", column: 4 },
+      { line: "a={b=123}", column: 7 },
+      { line: 'a="abc"', column: 4 },
+    ]) {
+      const source = `${line}\n`.repeat(lineCount);
+      const edits = [
+        {
+          byte: (line.length + 1) * (lineCount / 2) + column,
+          deleteBytes: 1,
+          insert: column === 0 ? "b" : "9",
+        },
+      ];
+      const tree = parse(source, edits, { lexes: true });
+      const fresh = parse(applyEdits(source, edits));
+      assert.equal(tree.hasError, false, tree.cst);
+      assert.deepEqual(tree.nodes, fresh.nodes);
+      assert.ok(
+        tree.lexes < lexedTokenLimit,
+        `${lineCount} lines of ${line}: ${tree.lexes} lexes`,
+      );
+    }
   }
 });
 

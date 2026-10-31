@@ -43,20 +43,13 @@ export default grammar({
     $.comment,
     $._continuation_space,
     $._error_sentinel,
+    $._date_fullyear_start,
+    $._key_dot,
   ],
-  conflicts: ($) => [
-    [$.unsigned_dec_int, $._digit],
-    [$.key, $.dotted_key],
-    [$.dotted_key],
-    [$.array_values],
-    [$.inline_table_keyvals],
-  ],
+  conflicts: ($) => [[$.array_values], [$.inline_table_keyvals]],
   rules: {
-    toml: ($) =>
-      seq(
-        optional($.expression),
-        repeat(seq($.newline, optional($.expression))),
-      ),
+    toml: ($) => seq(optional($.expression), optional($._lines)),
+    _lines: ($) => seq($.newline, optional($.expression), optional($._lines)),
     expression: ($) =>
       choice(
         $._ws,
@@ -85,7 +78,7 @@ export default grammar({
     dotted_key: ($) =>
       seq(
         $.simple_key,
-        repeat1(seq(optional($._ws), ".", optional($._ws), $.simple_key)),
+        repeat1(seq(alias($._key_dot, "."), optional($._ws), $.simple_key)),
       ),
     val: ($) =>
       choice(
@@ -193,7 +186,7 @@ export default grammar({
     boolean: () => choice("true", "false"),
     date_time: ($) =>
       choice($.offset_date_time, $.local_date_time, $.local_date, $.local_time),
-    date_fullyear: ($) => seq(...times(4, digit($))),
+    date_fullyear: ($) => seq($._date_fullyear_start, ...times(4, digit($))),
     date_month: ($) =>
       choice(
         seq(digit($, /0/), digit($, /[1-9]/)),

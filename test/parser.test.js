@@ -146,3 +146,33 @@ test("toml: nested containers complete and return to the original valid CST afte
     );
   }
 });
+
+test("toml: repeated broken containers reach EOF and a repaired final line restores flat expressions", () => {
+  const lineCount = 128;
+  for (const [brokenLine, validLine] of [
+    ["a = [{]", "a = [{}]"],
+    ["a=[1,{]", "a=[1,{}]"],
+  ]) {
+    for (const newline of ["\n", "\r\n"]) {
+      const broken = parse(`${brokenLine}${newline}`.repeat(lineCount));
+      assert.equal(broken.hasError, true, broken.cst);
+      const prefix = `${validLine}${newline}`.repeat(lineCount);
+      const tree = assertIncrementalEqualsFresh(
+        `${prefix}${brokenLine}${newline}`,
+        [
+          {
+            byte: prefix.length + brokenLine.length - 1,
+            deleteBytes: 0,
+            insert: "}",
+          },
+        ],
+        `${prefix}${validLine}${newline}`,
+      );
+      for (const kind of ["expression", "newline"]) {
+        const nodes = tree.nodes.filter((node) => node.kind === kind);
+        assert.equal(nodes.length, lineCount + 1);
+        assert.ok(nodes.every(({ parent }) => parent === 0));
+      }
+    }
+  }
+});
