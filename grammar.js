@@ -48,8 +48,11 @@ export default grammar({
   ],
   conflicts: ($) => [[$.array_values], [$.inline_table_keyvals]],
   rules: {
-    toml: ($) => seq(optional($.expression), optional($._lines)),
-    _lines: ($) => seq($.newline, optional($.expression), optional($._lines)),
+    toml: ($) =>
+      seq(
+        optional($.expression),
+        repeat(seq($.newline, optional($.expression))),
+      ),
     expression: ($) =>
       choice(
         $._ws,
