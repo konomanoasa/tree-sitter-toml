@@ -1,6 +1,6 @@
 {
   "name": "@konomanoasa/tree-sitter-toml",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "description": "Tree-sitter grammar for TOML.",
   "license": "MIT",
   "repository": "git+https://github.com/konomanoasa/tree-sitter-toml.git",
