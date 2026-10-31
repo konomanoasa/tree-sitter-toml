@@ -13,3 +13,11 @@ If:
 CompileFlags:
   Add:
     - -xc-header
+
+---
+If:
+  PathMatch: bindings/python/.*\.c
+CompileFlags:
+  CompilationDatabase: None
+  Add:
+    - -I../../src

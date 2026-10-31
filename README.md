@@ -29,7 +29,3 @@ npm test
 ## License
 
 [MIT](LICENSE)
-
-## Used By
-
-[toml-ts-mode](https://github.com/konomanoasa/toml-ts-mode)
