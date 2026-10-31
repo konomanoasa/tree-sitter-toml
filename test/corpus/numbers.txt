@@ -416,234 +416,915 @@ c = nan
           (special_float))))))
 
 ==================
-Reject "a=1.?\"q2\"=2"
-:error
+Quotes end numeric junk before its first required digit: a=1.?"q2"=2
+:cst
 ==================
 a=1.?"q2"=2
 ---
 
+0:0  - 0:11   toml
+0:0  - 0:5      expression
+0:0  - 0:5        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:5          value: val
+0:2  - 0:5            float
+0:2  - 0:3              float_int_part
+0:2  - 0:3                dec_int
+0:2  - 0:3                  unsigned_dec_int
+0:2  - 0:3                    digit `1`
+0:3  - 0:5              frac
+0:3  - 0:4                "."
+0:4  - 0:5                zero_prefixable_int
+0:4  - 0:5                  issue: syntax_issue
+0:4  - 0:5                    invalid_syntax
+0:4  - 0:5                      invalid_number `?`
+0:5  - 0:5      issue: syntax_issue
+0:5  - 0:5        invalid_syntax
+0:5  - 0:5          missing_newline
+0:5  - 0:11     expression
+0:5  - 0:11       keyval
+0:5  - 0:9          key: key
+0:5  - 0:9            simple_key
+0:5  - 0:9              quoted_key
+0:5  - 0:9                basic_string
+0:5  - 0:6                  "\""
+0:6  - 0:7                  basic_char
+0:6  - 0:7                    basic_unescaped `q`
+0:7  - 0:8                  basic_char
+0:7  - 0:8                    basic_unescaped `2`
+0:8  - 0:9                  "\""
+0:9  - 0:10         "="
+0:10 - 0:11         value: val
+0:10 - 0:11           integer
+0:10 - 0:11             dec_int
+0:10 - 0:11               unsigned_dec_int
+0:10 - 0:11                 digit `2`
+
 ==================
-Reject "a=1.?'q2'=2"
-:error
+Quotes end numeric junk before its first required digit: a=1.?'q2'=2
+:cst
 ==================
 a=1.?'q2'=2
 ---
 
+0:0  - 0:11   toml
+0:0  - 0:5      expression
+0:0  - 0:5        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:5          value: val
+0:2  - 0:5            float
+0:2  - 0:3              float_int_part
+0:2  - 0:3                dec_int
+0:2  - 0:3                  unsigned_dec_int
+0:2  - 0:3                    digit `1`
+0:3  - 0:5              frac
+0:3  - 0:4                "."
+0:4  - 0:5                zero_prefixable_int
+0:4  - 0:5                  issue: syntax_issue
+0:4  - 0:5                    invalid_syntax
+0:4  - 0:5                      invalid_number `?`
+0:5  - 0:5      issue: syntax_issue
+0:5  - 0:5        invalid_syntax
+0:5  - 0:5          missing_newline
+0:5  - 0:11     expression
+0:5  - 0:11       keyval
+0:5  - 0:9          key: key
+0:5  - 0:9            simple_key
+0:5  - 0:9              quoted_key
+0:5  - 0:9                literal_string
+0:5  - 0:6                  "'"
+0:6  - 0:7                  literal_char `q`
+0:7  - 0:8                  literal_char `2`
+0:8  - 0:9                  "'"
+0:9  - 0:10         "="
+0:10 - 0:11         value: val
+0:10 - 0:11           integer
+0:10 - 0:11             dec_int
+0:10 - 0:11               unsigned_dec_int
+0:10 - 0:11                 digit `2`
+
 ==================
-Reject "a=1e?\"q2\"=2"
-:error
+Quotes end numeric junk before its first required digit: a=1e?"q2"=2
+:cst
 ==================
 a=1e?"q2"=2
 ---
 
+0:0  - 0:11   toml
+0:0  - 0:5      expression
+0:0  - 0:5        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:5          value: val
+0:2  - 0:5            float
+0:2  - 0:3              float_int_part
+0:2  - 0:3                dec_int
+0:2  - 0:3                  unsigned_dec_int
+0:2  - 0:3                    digit `1`
+0:3  - 0:5              exp
+0:3  - 0:4                "e"
+0:4  - 0:5                float_exp_part
+0:4  - 0:5                  zero_prefixable_int
+0:4  - 0:5                    issue: syntax_issue
+0:4  - 0:5                      invalid_syntax
+0:4  - 0:5                        invalid_number `?`
+0:5  - 0:5      issue: syntax_issue
+0:5  - 0:5        invalid_syntax
+0:5  - 0:5          missing_newline
+0:5  - 0:11     expression
+0:5  - 0:11       keyval
+0:5  - 0:9          key: key
+0:5  - 0:9            simple_key
+0:5  - 0:9              quoted_key
+0:5  - 0:9                basic_string
+0:5  - 0:6                  "\""
+0:6  - 0:7                  basic_char
+0:6  - 0:7                    basic_unescaped `q`
+0:7  - 0:8                  basic_char
+0:7  - 0:8                    basic_unescaped `2`
+0:8  - 0:9                  "\""
+0:9  - 0:10         "="
+0:10 - 0:11         value: val
+0:10 - 0:11           integer
+0:10 - 0:11             dec_int
+0:10 - 0:11               unsigned_dec_int
+0:10 - 0:11                 digit `2`
+
 ==================
-Reject "a=1e?'q2'=2"
-:error
+Quotes end numeric junk before its first required digit: a=1e?'q2'=2
+:cst
 ==================
 a=1e?'q2'=2
 ---
 
+0:0  - 0:11   toml
+0:0  - 0:5      expression
+0:0  - 0:5        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:5          value: val
+0:2  - 0:5            float
+0:2  - 0:3              float_int_part
+0:2  - 0:3                dec_int
+0:2  - 0:3                  unsigned_dec_int
+0:2  - 0:3                    digit `1`
+0:3  - 0:5              exp
+0:3  - 0:4                "e"
+0:4  - 0:5                float_exp_part
+0:4  - 0:5                  zero_prefixable_int
+0:4  - 0:5                    issue: syntax_issue
+0:4  - 0:5                      invalid_syntax
+0:4  - 0:5                        invalid_number `?`
+0:5  - 0:5      issue: syntax_issue
+0:5  - 0:5        invalid_syntax
+0:5  - 0:5          missing_newline
+0:5  - 0:11     expression
+0:5  - 0:11       keyval
+0:5  - 0:9          key: key
+0:5  - 0:9            simple_key
+0:5  - 0:9              quoted_key
+0:5  - 0:9                literal_string
+0:5  - 0:6                  "'"
+0:6  - 0:7                  literal_char `q`
+0:7  - 0:8                  literal_char `2`
+0:8  - 0:9                  "'"
+0:9  - 0:10         "="
+0:10 - 0:11         value: val
+0:10 - 0:11           integer
+0:10 - 0:11             dec_int
+0:10 - 0:11               unsigned_dec_int
+0:10 - 0:11                 digit `2`
+
 ==================
-Reject "a=1_2=3"
-:error
+Value recovery retains key structure: a=1_2=3
+:cst
 ==================
 a=1_2=3
 ---
 
+0:0 - 0:7   toml
+0:0 - 0:7     expression
+0:0 - 0:5       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:5         value: val
+0:2 - 0:5           integer
+0:2 - 0:5             dec_int
+0:2 - 0:5               unsigned_dec_int
+0:2 - 0:3                 digit1_9 `1`
+0:3 - 0:4                 "_"
+0:4 - 0:5                 digit `2`
+0:5 - 0:7       issue: syntax_issue
+0:5 - 0:7         invalid_syntax
+0:5 - 0:7           invalid_character `=3`
+
 ==================
-Reject "a=1 ;c=2"
-:error
+Value recovery retains key structure: a=1 ;c=2
+:cst
 ==================
 a=1 ;c=2
 ---
 
+0:0 - 0:8   toml
+0:0 - 0:5     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:4 - 0:5       issue: syntax_issue
+0:4 - 0:5         invalid_syntax
+0:4 - 0:5           invalid_character `;`
+0:5 - 0:5     issue: syntax_issue
+0:5 - 0:5       invalid_syntax
+0:5 - 0:5         missing_newline
+0:5 - 0:8     expression
+0:5 - 0:8       keyval
+0:5 - 0:6         key: key
+0:5 - 0:6           simple_key
+0:5 - 0:6             unquoted_key `c`
+0:6 - 0:7         "="
+0:7 - 0:8         value: val
+0:7 - 0:8           integer
+0:7 - 0:8             dec_int
+0:7 - 0:8               unsigned_dec_int
+0:7 - 0:8                 digit `2`
+
 ==================
-Reject "a=1?=2"
-:error
+Equals inside numeric junk preserves the following digit in the same integer
+:cst
 ==================
 a=1?=2
 ---
 
+0:0 - 0:6   toml
+0:0 - 0:6     expression
+0:0 - 0:6       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:6         value: val
+0:2 - 0:6           integer
+0:2 - 0:6             dec_int
+0:2 - 0:6               unsigned_dec_int
+0:2 - 0:3                 digit1_9 `1`
+0:3 - 0:5                 issue: syntax_issue
+0:3 - 0:5                   invalid_syntax
+0:3 - 0:5                     invalid_number `?=`
+0:5 - 0:6                 digit `2`
+
 ==================
-Reject "a=0_"
-:error
+Zero stays a normal digit before an invalid separator at EOF
+:cst
 ==================
 a=0_
 ---
 
+0:0 - 0:4   toml
+0:0 - 0:4     expression
+0:0 - 0:4       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:4         value: val
+0:2 - 0:4           integer
+0:2 - 0:4             dec_int
+0:2 - 0:4               unsigned_dec_int
+0:2 - 0:3                 digit `0`
+0:3 - 0:4                 issue: syntax_issue
+0:3 - 0:4                   invalid_syntax
+0:3 - 0:4                     invalid_number `_`
+
 ==================
-Reject "a=2.+0_2"
-:error
+Invalid sign in fraction preserves following digits
 ==================
 a=2.+0_2
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit)
+              (digit))))))))
+
 ==================
-Reject "a=1.2.3"
-:error
+Repeated decimal point stays inside fraction
 ==================
 a=1.2.3
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              (digit)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))
+
 ==================
-Reject "a=0ee\nb=[0ee]\nc={d=0e+e}"
-:error
+Malformed exponents remain in their numeric owners
 ==================
 a=0ee
 b=[0ee]
 c={d=0e+e}
 ---
 
+(toml
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (exp
+            (float_exp_part
+              (zero_prefixable_int
+                (syntax_issue
+                  (invalid_syntax
+                    (invalid_number))))))))))
+  (newline)
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (array
+          (array_values
+            (val
+              (float
+                (float_int_part
+                  (dec_int
+                    (unsigned_dec_int
+                      (digit))))
+                (exp
+                  (float_exp_part
+                    (zero_prefixable_int
+                      (syntax_issue
+                        (invalid_syntax
+                          (invalid_number)))))))))))))
+  (newline)
+  (expression
+    (keyval
+      (key
+        (simple_key
+          (unquoted_key)))
+      (val
+        (inline_table
+          (inline_table_keyvals
+            (keyval
+              (key
+                (simple_key
+                  (unquoted_key)))
+              (val
+                (float
+                  (float_int_part
+                    (dec_int
+                      (unsigned_dec_int
+                        (digit))))
+                  (exp
+                    (float_exp_part
+                      (zero_prefixable_int
+                        (syntax_issue
+                          (invalid_syntax
+                            (invalid_number)))))))))))))))
+
 ==================
-Reject "a=1?key=2"
-:error
+Numeric junk preserves an adjacent key-value pair
 ==================
 a=1?key=2
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
 ==================
-Reject "a=1..5"
-:error
+Repeated decimal point before the first fractional digit stays in the fraction
 ==================
 a=1..5
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))
+
 ==================
-Reject "a=1.?key=2"
-:error
+Fraction junk retains assignment text until a normal digit appears
 ==================
 a=1.?key=2
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))
+
 ==================
-Reject "a = -01"
-:error
+Signed decimal leading zero
 ==================
 a = -01
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number
+                    (digit))))
+              (digit))))))))
+
 ==================
-Reject "a = 1__2"
-:error
+Consecutive digit separators
 ==================
 a = 1__2
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))
+
 ==================
-Reject "a = +0x12"
-:error
+Signed hexadecimal integer
 ==================
 a = +0x12
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit)
+              (digit))))))))
+
 ==================
-Reject "a = 0X12"
-:error
+Uppercase base prefix
 ==================
 a = 0X12
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit)
+              (digit))))))))
+
 ==================
-Reject "a = 0x_12"
-:error
+Separator after base prefix
 ==================
 a = 0x_12
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (hex_int
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_number)))
+            (hexdig)
+            (hexdig)))))))
+
 ==================
-Reject "a = 0o8"
-:error
+Invalid octal digit
 ==================
 a = 0o8
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (oct_int
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_number)))))))))
+
 ==================
-Reject "a = 0b2"
-:error
+Invalid binary digit
 ==================
 a = 0b2
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (bin_int
+            issue: (syntax_issue
+              (invalid_syntax
+                (invalid_number)))))))))
+
 ==================
-Reject "a = 1 2"
-:error
+Space within number
 ==================
 a = 1 2
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
 ==================
-Reject "a = .1"
-:error
+Fraction missing integer part
 ==================
 a = .1
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_digits)))
+          (frac
+            (zero_prefixable_int
+              (digit))))))))
+
 ==================
-Reject "a = 01.2"
-:error
+Float leading zero
 ==================
 a = 01.2
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                issue: (syntax_issue
+                  (invalid_syntax
+                    (invalid_number
+                      (digit))))
+                (digit))))
+          (frac
+            (zero_prefixable_int
+              (digit))))))))
+
 ==================
-Reject "a = INF"
-:error
+Uppercase infinity
 ==================
 a = INF
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        issue: (syntax_issue
+          (invalid_syntax
+            (invalid_value)))))))
+
 ==================
-Reject "a = 4-e2"
-:error
+Dash before exponent letter stays in the integer
 ==================
 a = 4-e2
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_number)))
+              (digit))))))))
+
 ==================
-Reject "a = 1_2=3"
-:error
+Completed integer retains its digit separator before an equals suffix
 ==================
 a = 1_2=3
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              (digit))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
 ==================
-Reject "a=0100"
-:error
+Unfinished leading-zero digits retain each digit
+:cst
 ==================
 a=0100
 ---
 
+0:0 - 0:6   toml
+0:0 - 0:6     expression
+0:0 - 0:6       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:6         value: val
+0:2 - 0:6           issue: syntax_issue
+0:2 - 0:6             incomplete_syntax
+0:2 - 0:6               invalid_value
+0:2 - 0:3                 digit `0`
+0:3 - 0:4                 digit `1`
+0:4 - 0:5                 digit `0`
+0:5 - 0:6                 digit `0`
+
 ==================
-Reject "a = +in"
-:error
+Signed special float prefix at EOF
 ==================
 a = +in
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (special_float
+            issue: (syntax_issue
+              (incomplete_syntax
+                (invalid_value)))))))))
+
 ==================
-Reject "a = 01"
-:error
+Leading-zero digits at EOF retain an unfinished value
 ==================
 a = 01
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        issue: (syntax_issue
+          (incomplete_syntax
+            (invalid_value
+              (digit)
+              (digit))))))))
+
 ==================
-Reject "a = 1_"
-:error
+Trailing digit separator
 ==================
 a = 1_
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit1_9)
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (invalid_number))))))))))
+
 ==================
-Reject "a = 1."
-:error
+Fraction missing digits
 ==================
 a = 1.
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (frac
+            issue: (syntax_issue
+              (incomplete_syntax
+                (missing_digits)))))))))
+
 ==================
-Reject "a = 1e+"
-:error
+Exponent missing digits
 ==================
 a = 1e+
 ---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (float
+          (float_int_part
+            (dec_int
+              (unsigned_dec_int
+                (digit))))
+          (exp
+            (float_exp_part
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_digits))))))))))

@@ -8,8 +8,16 @@ Comment with Unicode and tab at end of file
   (expression
     (comment)))
 ==================
-Reject "# \u0001"
-:error
+control character in comment
+:cst
 ==================
 # 
 ---
+
+0:0 - 0:3   toml
+0:0 - 0:3     expression
+0:0 - 0:3       comment
+0:0 - 0:2         comment_text `# `
+0:2 - 0:3         issue: syntax_issue
+0:2 - 0:3           invalid_syntax
+0:2 - 0:3             invalid_character ``

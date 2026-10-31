@@ -470,219 +470,1218 @@ a = 9999-12-31T23:59:60-23:59
                     (digit)))))))))))
 
 ==================
-Reject "a = 2026-00-01"
-:error
+zero month
+:cst
 ==================
 a = 2026-00-01
 ---
 
+0:0  - 0:14   toml
+0:0  - 0:14     expression
+0:0  - 0:14       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:14         value: val
+0:4  - 0:14           date_time
+0:4  - 0:14             local_date
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:11                   issue: syntax_issue
+0:9  - 0:11                     invalid_syntax
+0:9  - 0:11                       invalid_date_time
+0:9  - 0:10                         digit `0`
+0:10 - 0:11                         digit `0`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:13                   digit `0`
+0:13 - 0:14                   digit `1`
+
 ==================
-Reject "a = 2026-13-01"
-:error
+month above twelve
+:cst
 ==================
 a = 2026-13-01
 ---
 
+0:0  - 0:14   toml
+0:0  - 0:14     expression
+0:0  - 0:14       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:14         value: val
+0:4  - 0:14           date_time
+0:4  - 0:14             local_date
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:11                   issue: syntax_issue
+0:9  - 0:11                     invalid_syntax
+0:9  - 0:11                       invalid_date_time
+0:9  - 0:10                         digit `1`
+0:10 - 0:11                         digit `3`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:13                   digit `0`
+0:13 - 0:14                   digit `1`
+
 ==================
-Reject "a = 2026-99-01"
-:error
+month with two nines
+:cst
 ==================
 a = 2026-99-01
 ---
 
+0:0  - 0:14   toml
+0:0  - 0:14     expression
+0:0  - 0:14       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:14         value: val
+0:4  - 0:14           date_time
+0:4  - 0:14             local_date
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:11                   issue: syntax_issue
+0:9  - 0:11                     invalid_syntax
+0:9  - 0:11                       invalid_date_time
+0:9  - 0:10                         digit `9`
+0:10 - 0:11                         digit `9`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:13                   digit `0`
+0:13 - 0:14                   digit `1`
+
 ==================
-Reject "a = 2026-01-00"
-:error
+zero day
+:cst
 ==================
 a = 2026-01-00
 ---
 
+0:0  - 0:14   toml
+0:0  - 0:14     expression
+0:0  - 0:14       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:14         value: val
+0:4  - 0:14           date_time
+0:4  - 0:14             local_date
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:10                   digit `0`
+0:10 - 0:11                   digit `1`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:14                   issue: syntax_issue
+0:12 - 0:14                     invalid_syntax
+0:12 - 0:14                       invalid_date_time
+0:12 - 0:13                         digit `0`
+0:13 - 0:14                         digit `0`
+
 ==================
-Reject "a = 2026-01-32"
-:error
+day above thirty-one
+:cst
 ==================
 a = 2026-01-32
 ---
 
+0:0  - 0:14   toml
+0:0  - 0:14     expression
+0:0  - 0:14       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:14         value: val
+0:4  - 0:14           date_time
+0:4  - 0:14             local_date
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:10                   digit `0`
+0:10 - 0:11                   digit `1`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:14                   issue: syntax_issue
+0:12 - 0:14                     invalid_syntax
+0:12 - 0:14                       invalid_date_time
+0:12 - 0:13                         digit `3`
+0:13 - 0:14                         digit `2`
+
 ==================
-Reject "a = 2026-01-99"
-:error
+day with two nines
+:cst
 ==================
 a = 2026-01-99
 ---
 
+0:0  - 0:14   toml
+0:0  - 0:14     expression
+0:0  - 0:14       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:14         value: val
+0:4  - 0:14           date_time
+0:4  - 0:14             local_date
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:10                   digit `0`
+0:10 - 0:11                   digit `1`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:14                   issue: syntax_issue
+0:12 - 0:14                     invalid_syntax
+0:12 - 0:14                       invalid_date_time
+0:12 - 0:13                         digit `9`
+0:13 - 0:14                         digit `9`
+
 ==================
-Reject "a = 24:00"
-:error
+hour above twenty-three
+:cst
 ==================
 a = 24:00
 ---
 
+0:0 - 0:9   toml
+0:0 - 0:9     expression
+0:0 - 0:9       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:2 - 0:3         "="
+0:4 - 0:9         value: val
+0:4 - 0:9           date_time
+0:4 - 0:9             local_time
+0:4 - 0:9               partial_time
+0:4 - 0:6                 time_hour
+0:4 - 0:6                   issue: syntax_issue
+0:4 - 0:6                     invalid_syntax
+0:4 - 0:6                       invalid_date_time
+0:4 - 0:5                         digit `2`
+0:5 - 0:6                         digit `4`
+0:6 - 0:7                 ":"
+0:7 - 0:9                 time_minute
+0:7 - 0:8                   digit `0`
+0:8 - 0:9                   digit `0`
+
 ==================
-Reject "a = 99:00"
-:error
+hour with two nines
+:cst
 ==================
 a = 99:00
 ---
 
+0:0 - 0:9   toml
+0:0 - 0:9     expression
+0:0 - 0:9       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:2 - 0:3         "="
+0:4 - 0:9         value: val
+0:4 - 0:9           date_time
+0:4 - 0:9             local_time
+0:4 - 0:9               partial_time
+0:4 - 0:6                 time_hour
+0:4 - 0:6                   issue: syntax_issue
+0:4 - 0:6                     invalid_syntax
+0:4 - 0:6                       invalid_date_time
+0:4 - 0:5                         digit `9`
+0:5 - 0:6                         digit `9`
+0:6 - 0:7                 ":"
+0:7 - 0:9                 time_minute
+0:7 - 0:8                   digit `0`
+0:8 - 0:9                   digit `0`
+
 ==================
-Reject "a = 00:60"
-:error
+minute above fifty-nine
+:cst
 ==================
 a = 00:60
 ---
 
+0:0 - 0:9   toml
+0:0 - 0:9     expression
+0:0 - 0:9       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:2 - 0:3         "="
+0:4 - 0:9         value: val
+0:4 - 0:9           date_time
+0:4 - 0:9             local_time
+0:4 - 0:9               partial_time
+0:4 - 0:6                 time_hour
+0:4 - 0:5                   digit `0`
+0:5 - 0:6                   digit `0`
+0:6 - 0:7                 ":"
+0:7 - 0:9                 time_minute
+0:7 - 0:9                   issue: syntax_issue
+0:7 - 0:9                     invalid_syntax
+0:7 - 0:9                       invalid_date_time
+0:7 - 0:8                         digit `6`
+0:8 - 0:9                         digit `0`
+
 ==================
-Reject "a = 00:99"
-:error
+minute with two nines
+:cst
 ==================
 a = 00:99
 ---
 
+0:0 - 0:9   toml
+0:0 - 0:9     expression
+0:0 - 0:9       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:2 - 0:3         "="
+0:4 - 0:9         value: val
+0:4 - 0:9           date_time
+0:4 - 0:9             local_time
+0:4 - 0:9               partial_time
+0:4 - 0:6                 time_hour
+0:4 - 0:5                   digit `0`
+0:5 - 0:6                   digit `0`
+0:6 - 0:7                 ":"
+0:7 - 0:9                 time_minute
+0:7 - 0:9                   issue: syntax_issue
+0:7 - 0:9                     invalid_syntax
+0:7 - 0:9                       invalid_date_time
+0:7 - 0:8                         digit `9`
+0:8 - 0:9                         digit `9`
+
 ==================
-Reject "a = 00:00:61"
-:error
+second above sixty
+:cst
 ==================
 a = 00:00:61
 ---
 
+0:0  - 0:12   toml
+0:0  - 0:12     expression
+0:0  - 0:12       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:12         value: val
+0:4  - 0:12           date_time
+0:4  - 0:12             local_time
+0:4  - 0:12               partial_time
+0:4  - 0:6                  time_hour
+0:4  - 0:5                    digit `0`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                  ":"
+0:7  - 0:9                  time_minute
+0:7  - 0:8                    digit `0`
+0:8  - 0:9                    digit `0`
+0:9  - 0:10                 ":"
+0:10 - 0:12                 time_second
+0:10 - 0:12                   issue: syntax_issue
+0:10 - 0:12                     invalid_syntax
+0:10 - 0:12                       invalid_date_time
+0:10 - 0:11                         digit `6`
+0:11 - 0:12                         digit `1`
+
 ==================
-Reject "a = 00:00:61.5"
-:error
+fraction after an out-of-range second
+:cst
 ==================
 a = 00:00:61.5
 ---
 
+0:0  - 0:14   toml
+0:0  - 0:14     expression
+0:0  - 0:14       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:14         value: val
+0:4  - 0:14           date_time
+0:4  - 0:14             local_time
+0:4  - 0:14               partial_time
+0:4  - 0:6                  time_hour
+0:4  - 0:5                    digit `0`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                  ":"
+0:7  - 0:9                  time_minute
+0:7  - 0:8                    digit `0`
+0:8  - 0:9                    digit `0`
+0:9  - 0:10                 ":"
+0:10 - 0:12                 time_second
+0:10 - 0:12                   issue: syntax_issue
+0:10 - 0:12                     invalid_syntax
+0:10 - 0:12                       invalid_date_time
+0:10 - 0:11                         digit `6`
+0:11 - 0:12                         digit `1`
+0:12 - 0:14                 time_secfrac
+0:12 - 0:13                   "."
+0:13 - 0:14                   digit `5`
+
 ==================
-Reject "a = 00:00:99"
-:error
+second with two nines
+:cst
 ==================
 a = 00:00:99
 ---
 
+0:0  - 0:12   toml
+0:0  - 0:12     expression
+0:0  - 0:12       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:12         value: val
+0:4  - 0:12           date_time
+0:4  - 0:12             local_time
+0:4  - 0:12               partial_time
+0:4  - 0:6                  time_hour
+0:4  - 0:5                    digit `0`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                  ":"
+0:7  - 0:9                  time_minute
+0:7  - 0:8                    digit `0`
+0:8  - 0:9                    digit `0`
+0:9  - 0:10                 ":"
+0:10 - 0:12                 time_second
+0:10 - 0:12                   issue: syntax_issue
+0:10 - 0:12                     invalid_syntax
+0:10 - 0:12                       invalid_date_time
+0:10 - 0:11                         digit `9`
+0:11 - 0:12                         digit `9`
+
 ==================
-Reject "a = 2026-01-01T24:00:00"
-:error
+out-of-range local date-time hour
+:cst
 ==================
 a = 2026-01-01T24:00:00
 ---
 
+0:0  - 0:23   toml
+0:0  - 0:23     expression
+0:0  - 0:23       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:23         value: val
+0:4  - 0:23           date_time
+0:4  - 0:23             local_date_time
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:10                   digit `0`
+0:10 - 0:11                   digit `1`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:13                   digit `0`
+0:13 - 0:14                   digit `1`
+0:14 - 0:15               time_delim
+0:14 - 0:15                 "T"
+0:15 - 0:23               partial_time
+0:15 - 0:17                 time_hour
+0:15 - 0:17                   issue: syntax_issue
+0:15 - 0:17                     invalid_syntax
+0:15 - 0:17                       invalid_date_time
+0:15 - 0:16                         digit `2`
+0:16 - 0:17                         digit `4`
+0:17 - 0:18                 ":"
+0:18 - 0:20                 time_minute
+0:18 - 0:19                   digit `0`
+0:19 - 0:20                   digit `0`
+0:20 - 0:21                 ":"
+0:21 - 0:23                 time_second
+0:21 - 0:22                   digit `0`
+0:22 - 0:23                   digit `0`
+
 ==================
-Reject "a = 2026-01-01T00:60:00Z"
-:error
+out-of-range UTC minute
+:cst
 ==================
 a = 2026-01-01T00:60:00Z
 ---
 
+0:0  - 0:24   toml
+0:0  - 0:24     expression
+0:0  - 0:24       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:24         value: val
+0:4  - 0:24           date_time
+0:4  - 0:24             offset_date_time
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:10                   digit `0`
+0:10 - 0:11                   digit `1`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:13                   digit `0`
+0:13 - 0:14                   digit `1`
+0:14 - 0:15               time_delim
+0:14 - 0:15                 "T"
+0:15 - 0:24               full_time
+0:15 - 0:23                 partial_time
+0:15 - 0:17                   time_hour
+0:15 - 0:16                     digit `0`
+0:16 - 0:17                     digit `0`
+0:17 - 0:18                   ":"
+0:18 - 0:20                   time_minute
+0:18 - 0:20                     issue: syntax_issue
+0:18 - 0:20                       invalid_syntax
+0:18 - 0:20                         invalid_date_time
+0:18 - 0:19                           digit `6`
+0:19 - 0:20                           digit `0`
+0:20 - 0:21                   ":"
+0:21 - 0:23                   time_second
+0:21 - 0:22                     digit `0`
+0:22 - 0:23                     digit `0`
+0:23 - 0:24                 time_offset
+0:23 - 0:24                   "Z"
+
 ==================
-Reject "a = 2026-01-01T00:00+24:00"
-:error
+positive offset hour above twenty-three
+:cst
 ==================
 a = 2026-01-01T00:00+24:00
 ---
 
+0:0  - 0:26   toml
+0:0  - 0:26     expression
+0:0  - 0:26       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:26         value: val
+0:4  - 0:26           date_time
+0:4  - 0:26             offset_date_time
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:10                   digit `0`
+0:10 - 0:11                   digit `1`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:13                   digit `0`
+0:13 - 0:14                   digit `1`
+0:14 - 0:15               time_delim
+0:14 - 0:15                 "T"
+0:15 - 0:26               full_time
+0:15 - 0:20                 partial_time
+0:15 - 0:17                   time_hour
+0:15 - 0:16                     digit `0`
+0:16 - 0:17                     digit `0`
+0:17 - 0:18                   ":"
+0:18 - 0:20                   time_minute
+0:18 - 0:19                     digit `0`
+0:19 - 0:20                     digit `0`
+0:20 - 0:26                 time_offset
+0:20 - 0:26                   time_numoffset
+0:20 - 0:21                     "+"
+0:21 - 0:23                     time_hour
+0:21 - 0:23                       issue: syntax_issue
+0:21 - 0:23                         invalid_syntax
+0:21 - 0:23                           invalid_date_time
+0:21 - 0:22                             digit `2`
+0:22 - 0:23                             digit `4`
+0:23 - 0:24                     ":"
+0:24 - 0:26                     time_minute
+0:24 - 0:25                       digit `0`
+0:25 - 0:26                       digit `0`
+
 ==================
-Reject "a = 2026-01-01T00:00-24:00"
-:error
+negative offset hour above twenty-three
+:cst
 ==================
 a = 2026-01-01T00:00-24:00
 ---
 
+0:0  - 0:26   toml
+0:0  - 0:26     expression
+0:0  - 0:26       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:26         value: val
+0:4  - 0:26           date_time
+0:4  - 0:26             offset_date_time
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:10                   digit `0`
+0:10 - 0:11                   digit `1`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:13                   digit `0`
+0:13 - 0:14                   digit `1`
+0:14 - 0:15               time_delim
+0:14 - 0:15                 "T"
+0:15 - 0:26               full_time
+0:15 - 0:20                 partial_time
+0:15 - 0:17                   time_hour
+0:15 - 0:16                     digit `0`
+0:16 - 0:17                     digit `0`
+0:17 - 0:18                   ":"
+0:18 - 0:20                   time_minute
+0:18 - 0:19                     digit `0`
+0:19 - 0:20                     digit `0`
+0:20 - 0:26                 time_offset
+0:20 - 0:26                   time_numoffset
+0:20 - 0:21                     "-"
+0:21 - 0:23                     time_hour
+0:21 - 0:23                       issue: syntax_issue
+0:21 - 0:23                         invalid_syntax
+0:21 - 0:23                           invalid_date_time
+0:21 - 0:22                             digit `2`
+0:22 - 0:23                             digit `4`
+0:23 - 0:24                     ":"
+0:24 - 0:26                     time_minute
+0:24 - 0:25                       digit `0`
+0:25 - 0:26                       digit `0`
+
 ==================
-Reject "a = 2026-01-01T00:00+00:60"
-:error
+positive offset minute above fifty-nine
+:cst
 ==================
 a = 2026-01-01T00:00+00:60
 ---
 
+0:0  - 0:26   toml
+0:0  - 0:26     expression
+0:0  - 0:26       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:26         value: val
+0:4  - 0:26           date_time
+0:4  - 0:26             offset_date_time
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:10                   digit `0`
+0:10 - 0:11                   digit `1`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:13                   digit `0`
+0:13 - 0:14                   digit `1`
+0:14 - 0:15               time_delim
+0:14 - 0:15                 "T"
+0:15 - 0:26               full_time
+0:15 - 0:20                 partial_time
+0:15 - 0:17                   time_hour
+0:15 - 0:16                     digit `0`
+0:16 - 0:17                     digit `0`
+0:17 - 0:18                   ":"
+0:18 - 0:20                   time_minute
+0:18 - 0:19                     digit `0`
+0:19 - 0:20                     digit `0`
+0:20 - 0:26                 time_offset
+0:20 - 0:26                   time_numoffset
+0:20 - 0:21                     "+"
+0:21 - 0:23                     time_hour
+0:21 - 0:22                       digit `0`
+0:22 - 0:23                       digit `0`
+0:23 - 0:24                     ":"
+0:24 - 0:26                     time_minute
+0:24 - 0:26                       issue: syntax_issue
+0:24 - 0:26                         invalid_syntax
+0:24 - 0:26                           invalid_date_time
+0:24 - 0:25                             digit `6`
+0:25 - 0:26                             digit `0`
+
 ==================
-Reject "a = 2026-01-01T00:00-00:60"
-:error
+negative offset minute above fifty-nine
+:cst
 ==================
 a = 2026-01-01T00:00-00:60
 ---
 
+0:0  - 0:26   toml
+0:0  - 0:26     expression
+0:0  - 0:26       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:2  - 0:3          "="
+0:4  - 0:26         value: val
+0:4  - 0:26           date_time
+0:4  - 0:26             offset_date_time
+0:4  - 0:14               full_date
+0:4  - 0:8                  date_fullyear
+0:4  - 0:5                    digit `2`
+0:5  - 0:6                    digit `0`
+0:6  - 0:7                    digit `2`
+0:7  - 0:8                    digit `6`
+0:8  - 0:9                  "-"
+0:9  - 0:11                 date_month
+0:9  - 0:10                   digit `0`
+0:10 - 0:11                   digit `1`
+0:11 - 0:12                 "-"
+0:12 - 0:14                 date_mday
+0:12 - 0:13                   digit `0`
+0:13 - 0:14                   digit `1`
+0:14 - 0:15               time_delim
+0:14 - 0:15                 "T"
+0:15 - 0:26               full_time
+0:15 - 0:20                 partial_time
+0:15 - 0:17                   time_hour
+0:15 - 0:16                     digit `0`
+0:16 - 0:17                     digit `0`
+0:17 - 0:18                   ":"
+0:18 - 0:20                   time_minute
+0:18 - 0:19                     digit `0`
+0:19 - 0:20                     digit `0`
+0:20 - 0:26                 time_offset
+0:20 - 0:26                   time_numoffset
+0:20 - 0:21                     "-"
+0:21 - 0:23                     time_hour
+0:21 - 0:22                       digit `0`
+0:22 - 0:23                       digit `0`
+0:23 - 0:24                     ":"
+0:24 - 0:26                     time_minute
+0:24 - 0:26                       issue: syntax_issue
+0:24 - 0:26                         invalid_syntax
+0:24 - 0:26                           invalid_date_time
+0:24 - 0:25                             digit `6`
+0:25 - 0:26                             digit `0`
+
 ==================
-Reject "a=[01,2026-13-01,12:34Z]"
-:error
+Issue reasons retain date digits, numeric digits and the unexpected offset
+:cst
 ==================
 a=[01,2026-13-01,12:34Z]
 ---
 
+0:0  - 0:24   toml
+0:0  - 0:24     expression
+0:0  - 0:24       keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:24         value: val
+0:2  - 0:24           array
+0:2  - 0:3              "["
+0:3  - 0:23             array_values
+0:3  - 0:5                val
+0:3  - 0:5                  integer
+0:3  - 0:5                    dec_int
+0:3  - 0:5                      unsigned_dec_int
+0:3  - 0:4                        issue: syntax_issue
+0:3  - 0:4                          invalid_syntax
+0:3  - 0:4                            invalid_number
+0:3  - 0:4                              digit `0`
+0:4  - 0:5                        digit `1`
+0:5  - 0:6                ","
+0:6  - 0:16               val
+0:6  - 0:16                 date_time
+0:6  - 0:16                   local_date
+0:6  - 0:16                     full_date
+0:6  - 0:10                       date_fullyear
+0:6  - 0:7                          digit `2`
+0:7  - 0:8                          digit `0`
+0:8  - 0:9                          digit `2`
+0:9  - 0:10                         digit `6`
+0:10 - 0:11                       "-"
+0:11 - 0:13                       date_month
+0:11 - 0:13                         issue: syntax_issue
+0:11 - 0:13                           invalid_syntax
+0:11 - 0:13                             invalid_date_time
+0:11 - 0:12                               digit `1`
+0:12 - 0:13                               digit `3`
+0:13 - 0:14                       "-"
+0:14 - 0:16                       date_mday
+0:14 - 0:15                         digit `0`
+0:15 - 0:16                         digit `1`
+0:16 - 0:17               ","
+0:17 - 0:23               val
+0:17 - 0:23                 date_time
+0:17 - 0:23                   local_time
+0:17 - 0:22                     partial_time
+0:17 - 0:19                       time_hour
+0:17 - 0:18                         digit `1`
+0:18 - 0:19                         digit `2`
+0:19 - 0:20                       ":"
+0:20 - 0:22                       time_minute
+0:20 - 0:21                         digit `3`
+0:21 - 0:22                         digit `4`
+0:22 - 0:23                     issue: syntax_issue
+0:22 - 0:23                       invalid_syntax
+0:22 - 0:23                         unexpected_time_offset
+0:22 - 0:23                           time_offset
+0:22 - 0:23                             "Z"
+0:23 - 0:24             "]"
+
 ==================
-Reject "a = 2026-9-20"
-:error
+Date missing month digit
 ==================
 a = 2026-9-20
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                issue: (syntax_issue
+                  (invalid_syntax
+                    (invalid_date_time
+                      (digit)))))
+              (date_mday
+                (digit)
+                (digit)))))))))
+
 ==================
-Reject "a = 2026-09-20\t07:32"
-:error
+Tab as date time delimiter
 ==================
 a = 2026-09-20	07:32
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
 ==================
-Reject "a = 2026-09-20  07:32"
-:error
+Double space as date time delimiter
 ==================
 a = 2026-09-20  07:32
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
 ==================
-Reject "a = 07:32.5"
-:error
+Fraction without seconds
 ==================
 a = 07:32.5
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_time
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit))
+              issue: (syntax_issue
+                (invalid_syntax
+                  (unexpected_time_fraction
+                    (time_secfrac
+                      (digit))))))))))))
+
 ==================
-Reject "a = 07:32Z"
-:error
+Local time with offset
 ==================
 a = 07:32Z
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_time
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit)))
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_time_offset
+                  (time_offset))))))))))
+
 ==================
-Reject "a = 2026-09-20 x\nb = 2026-09-20 12 # c"
-:error
+Space after local date before a token that is not a time
 ==================
 a = 2026-09-20 x
 b = 2026-09-20 12 # c
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))
+    (comment)))
+
 ==================
-Reject "a=12:34+01:00"
-:error
+Local time offset retains its structure
 ==================
 a=12:34+01:00
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_time
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit)))
+            issue: (syntax_issue
+              (invalid_syntax
+                (unexpected_time_offset
+                  (time_offset
+                    (time_numoffset
+                      (time_hour
+                        (digit)
+                        (digit))
+                      (time_minute
+                        (digit)
+                        (digit)))))))))))))
 ==================
-Reject "a = 07:32:00."
-:error
+Fraction without digits
 ==================
 a = 07:32:00.
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_time
+            (partial_time
+              (time_hour
+                (digit)
+                (digit))
+              (time_minute
+                (digit)
+                (digit))
+              (time_second
+                (digit)
+                (digit))
+              (time_secfrac
+                issue: (syntax_issue
+                  (incomplete_syntax
+                    (missing_digits)))))))))))
+
 ==================
-Reject "a = 2026-09-20T07:32+07"
-:error
+Incomplete offset
 ==================
 a = 2026-09-20T07:32+07
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (offset_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (full_time
+              (partial_time
+                (time_hour
+                  (digit)
+                  (digit))
+                (time_minute
+                  (digit)
+                  (digit)))
+              (time_offset
+                (time_numoffset
+                  (time_hour
+                    (digit)
+                    (digit))
+                  issue: (syntax_issue
+                    (incomplete_syntax
+                      (missing_time_separator)))
+                  issue: (syntax_issue
+                    (incomplete_syntax
+                      (missing_digits))))))))))))
+
 ==================
-Reject "a = 2026-01-01T0"
-:error
+Short appendable hour after date
 ==================
 a = 2026-01-01T0
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (partial_time
+              (time_hour
+                issue: (syntax_issue
+                  (incomplete_syntax
+                    (invalid_date_time
+                      (digit)))))
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_time_separator)))
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_digits))))))))))
+
 ==================
-Reject "a = 2026-01-01T9"
-:error
+Short unappendable hour after date
 ==================
 a = 2026-01-01T9
 ---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (date_time
+          (local_date_time
+            (full_date
+              (date_fullyear
+                (digit)
+                (digit)
+                (digit)
+                (digit))
+              (date_month
+                (digit)
+                (digit))
+              (date_mday
+                (digit)
+                (digit)))
+            (time_delim)
+            (partial_time
+              (time_hour
+                issue: (syntax_issue
+                  (invalid_syntax
+                    (invalid_date_time
+                      (digit)))))
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_time_separator)))
+              issue: (syntax_issue
+                (incomplete_syntax
+                  (missing_digits))))))))))

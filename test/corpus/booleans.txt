@@ -23,22 +23,55 @@ b = false
         (boolean)))))
 
 ==================
-Reject "a=true=2"
-:error
+Completed boolean retains an equals suffix in its expression
+:cst
 ==================
 a=true=2
 ---
 
+0:0 - 0:8   toml
+0:0 - 0:8     expression
+0:0 - 0:6       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:6         value: val
+0:2 - 0:6           boolean
+0:2 - 0:6             "true"
+0:6 - 0:8       issue: syntax_issue
+0:6 - 0:8         invalid_syntax
+0:6 - 0:8           invalid_character `=2`
+
 ==================
-Reject "a = True"
-:error
+Uppercase boolean
 ==================
 a = True
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        issue: (syntax_issue
+          (invalid_syntax
+            (invalid_value)))))))
 ==================
-Reject "a=tru"
-:error
+Unfinished boolean keeps the value reason at EOF
 ==================
 a=tru
 ---
+
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        issue: (syntax_issue
+          (incomplete_syntax
+            (invalid_value)))))))

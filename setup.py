@@ -19,7 +19,7 @@ setup(
                 "src/scanner.c",
             ],
             include_dirs=["src"],
-            depends=["src/tree_sitter/parser.h"],
+            depends=["src/tree_sitter/alloc.h", "src/tree_sitter/parser.h"],
             extra_compile_args=["/std:c17", "/utf-8"]
             if sys.platform == "win32"
             else ["-std=c17"],

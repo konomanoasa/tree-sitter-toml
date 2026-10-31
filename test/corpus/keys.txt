@@ -93,149 +93,656 @@ a 	. "b.c" . 'd' = true
         (boolean)))))
 
 ==================
-Reject "a\u000b= true"
-:error
+vertical tab as whitespace
+:cst
 ==================
 a= true
 ---
 
+0:0 - 0:8   toml
+0:0 - 0:8     expression
+0:0 - 0:8       keyval
+0:0 - 0:2         key: key
+0:0 - 0:2           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2             issue: syntax_issue
+0:1 - 0:2               invalid_syntax
+0:1 - 0:2                 invalid_key_character `\v`
+0:2 - 0:3         "="
+0:4 - 0:8         value: val
+0:4 - 0:8           boolean
+0:4 - 0:8             "true"
+
 ==================
-Reject "a=1 .x=2"
-:error
+Value recovery retains key structure: a=1 .x=2
+:cst
 ==================
 a=1 .x=2
 ---
 
+0:0 - 0:8   toml
+0:0 - 0:4     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:4 - 0:4     issue: syntax_issue
+0:4 - 0:4       invalid_syntax
+0:4 - 0:4         missing_newline
+0:4 - 0:8     expression
+0:4 - 0:8       keyval
+0:4 - 0:6         key: key
+0:4 - 0:6           dotted_key
+0:4 - 0:4             issue: syntax_issue
+0:4 - 0:4               invalid_syntax
+0:4 - 0:4                 missing_key
+0:4 - 0:5             "."
+0:5 - 0:6             simple_key
+0:5 - 0:6               unquoted_key `x`
+0:6 - 0:7         "="
+0:7 - 0:8         value: val
+0:7 - 0:8           integer
+0:7 - 0:8             dec_int
+0:7 - 0:8               unsigned_dec_int
+0:7 - 0:8                 digit `2`
+
 ==================
-Reject "a=1 x..y=2"
-:error
+Value recovery retains key structure: a=1 x..y=2
+:cst
 ==================
 a=1 x..y=2
 ---
 
+0:0  - 0:10   toml
+0:0  - 0:4      expression
+0:0  - 0:3        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:3          value: val
+0:2  - 0:3            integer
+0:2  - 0:3              dec_int
+0:2  - 0:3                unsigned_dec_int
+0:2  - 0:3                  digit `1`
+0:4  - 0:4      issue: syntax_issue
+0:4  - 0:4        invalid_syntax
+0:4  - 0:4          missing_newline
+0:4  - 0:10     expression
+0:4  - 0:10       keyval
+0:4  - 0:8          key: key
+0:4  - 0:8            dotted_key
+0:4  - 0:5              simple_key
+0:4  - 0:5                unquoted_key `x`
+0:5  - 0:6              "."
+0:6  - 0:6              issue: syntax_issue
+0:6  - 0:6                invalid_syntax
+0:6  - 0:6                  missing_key
+0:6  - 0:7              "."
+0:7  - 0:8              simple_key
+0:7  - 0:8                unquoted_key `y`
+0:8  - 0:9          "="
+0:9  - 0:10         value: val
+0:9  - 0:10           integer
+0:9  - 0:10             dec_int
+0:9  - 0:10               unsigned_dec_int
+0:9  - 0:10                 digit `2`
+
 ==================
-Reject "a=1 x.=2"
-:error
+Value recovery retains key structure: a=1 x.=2
+:cst
 ==================
 a=1 x.=2
 ---
 
+0:0 - 0:8   toml
+0:0 - 0:4     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:4 - 0:4     issue: syntax_issue
+0:4 - 0:4       invalid_syntax
+0:4 - 0:4         missing_newline
+0:4 - 0:8     expression
+0:4 - 0:8       keyval
+0:4 - 0:6         key: key
+0:4 - 0:6           dotted_key
+0:4 - 0:5             simple_key
+0:4 - 0:5               unquoted_key `x`
+0:5 - 0:6             "."
+0:6 - 0:6             issue: syntax_issue
+0:6 - 0:6               invalid_syntax
+0:6 - 0:6                 missing_key
+0:6 - 0:7         "="
+0:7 - 0:8         value: val
+0:7 - 0:8           integer
+0:7 - 0:8             dec_int
+0:7 - 0:8               unsigned_dec_int
+0:7 - 0:8                 digit `2`
+
 ==================
-Reject "a=truex..key=2"
-:error
+Value recovery retains key structure: a=truex..key=2
+:cst
 ==================
 a=truex..key=2
 ---
 
+0:0  - 0:14   toml
+0:0  - 0:6      expression
+0:0  - 0:6        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:6          value: val
+0:2  - 0:6            boolean
+0:2  - 0:6              "true"
+0:6  - 0:6      issue: syntax_issue
+0:6  - 0:6        invalid_syntax
+0:6  - 0:6          missing_newline
+0:6  - 0:14     expression
+0:6  - 0:14       keyval
+0:6  - 0:12         key: key
+0:6  - 0:12           dotted_key
+0:6  - 0:7              simple_key
+0:6  - 0:7                unquoted_key `x`
+0:7  - 0:8              "."
+0:8  - 0:8              issue: syntax_issue
+0:8  - 0:8                invalid_syntax
+0:8  - 0:8                  missing_key
+0:8  - 0:9              "."
+0:9  - 0:12             simple_key
+0:9  - 0:12               unquoted_key `key`
+0:12 - 0:13         "="
+0:13 - 0:14         value: val
+0:13 - 0:14           integer
+0:13 - 0:14             dec_int
+0:13 - 0:14               unsigned_dec_int
+0:13 - 0:14                 digit `2`
+
 ==================
-Reject "a=1?x..y=2"
-:error
+Value recovery retains key structure: a=1?x..y=2
+:cst
 ==================
 a=1?x..y=2
 ---
 
+0:0  - 0:10   toml
+0:0  - 0:4      expression
+0:0  - 0:4        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:4          value: val
+0:2  - 0:4            integer
+0:2  - 0:4              dec_int
+0:2  - 0:4                unsigned_dec_int
+0:2  - 0:3                  digit1_9 `1`
+0:3  - 0:4                  issue: syntax_issue
+0:3  - 0:4                    invalid_syntax
+0:3  - 0:4                      invalid_number `?`
+0:4  - 0:4      issue: syntax_issue
+0:4  - 0:4        invalid_syntax
+0:4  - 0:4          missing_newline
+0:4  - 0:10     expression
+0:4  - 0:10       keyval
+0:4  - 0:8          key: key
+0:4  - 0:8            dotted_key
+0:4  - 0:5              simple_key
+0:4  - 0:5                unquoted_key `x`
+0:5  - 0:6              "."
+0:6  - 0:6              issue: syntax_issue
+0:6  - 0:6                invalid_syntax
+0:6  - 0:6                  missing_key
+0:6  - 0:7              "."
+0:7  - 0:8              simple_key
+0:7  - 0:8                unquoted_key `y`
+0:8  - 0:9          "="
+0:9  - 0:10         value: val
+0:9  - 0:10           integer
+0:9  - 0:10             dec_int
+0:9  - 0:10               unsigned_dec_int
+0:9  - 0:10                 digit `2`
+
 ==================
-Reject "a=1 .\"\"..=2"
-:error
+Value recovery retains key structure: a=1 .""..=2
+:cst
 ==================
 a=1 .""..=2
 ---
 
+0:0  - 0:11   toml
+0:0  - 0:4      expression
+0:0  - 0:3        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:3          value: val
+0:2  - 0:3            integer
+0:2  - 0:3              dec_int
+0:2  - 0:3                unsigned_dec_int
+0:2  - 0:3                  digit `1`
+0:4  - 0:4      issue: syntax_issue
+0:4  - 0:4        invalid_syntax
+0:4  - 0:4          missing_newline
+0:4  - 0:11     expression
+0:4  - 0:11       keyval
+0:4  - 0:9          key: key
+0:4  - 0:9            dotted_key
+0:4  - 0:4              issue: syntax_issue
+0:4  - 0:4                invalid_syntax
+0:4  - 0:4                  missing_key
+0:4  - 0:5              "."
+0:5  - 0:7              simple_key
+0:5  - 0:7                quoted_key
+0:5  - 0:7                  basic_string
+0:5  - 0:6                    "\""
+0:6  - 0:7                    "\""
+0:7  - 0:8              "."
+0:8  - 0:8              issue: syntax_issue
+0:8  - 0:8                invalid_syntax
+0:8  - 0:8                  missing_key
+0:8  - 0:9              "."
+0:9  - 0:9              issue: syntax_issue
+0:9  - 0:9                invalid_syntax
+0:9  - 0:9                  missing_key
+0:9  - 0:10         "="
+0:10 - 0:11         value: val
+0:10 - 0:11           integer
+0:10 - 0:11             dec_int
+0:10 - 0:11               unsigned_dec_int
+0:10 - 0:11                 digit `2`
+
 ==================
-Reject "a=1 x . . y . =2"
-:error
+Value recovery retains key structure: a=1 x . . y . =2
+:cst
 ==================
 a=1 x . . y . =2
 ---
 
+0:0  - 0:16   toml
+0:0  - 0:4      expression
+0:0  - 0:3        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:3          value: val
+0:2  - 0:3            integer
+0:2  - 0:3              dec_int
+0:2  - 0:3                unsigned_dec_int
+0:2  - 0:3                  digit `1`
+0:4  - 0:4      issue: syntax_issue
+0:4  - 0:4        invalid_syntax
+0:4  - 0:4          missing_newline
+0:4  - 0:16     expression
+0:4  - 0:16       keyval
+0:4  - 0:14         key: key
+0:4  - 0:14           dotted_key
+0:4  - 0:5              simple_key
+0:4  - 0:5                unquoted_key `x`
+0:6  - 0:7              "."
+0:8  - 0:8              issue: syntax_issue
+0:8  - 0:8                invalid_syntax
+0:8  - 0:8                  missing_key
+0:8  - 0:9              "."
+0:10 - 0:11             simple_key
+0:10 - 0:11               unquoted_key `y`
+0:12 - 0:13             "."
+0:14 - 0:14             issue: syntax_issue
+0:14 - 0:14               invalid_syntax
+0:14 - 0:14                 missing_key
+0:14 - 0:15         "="
+0:15 - 0:16         value: val
+0:15 - 0:16           integer
+0:15 - 0:16             dec_int
+0:15 - 0:16               unsigned_dec_int
+0:15 - 0:16                 digit `2`
+
 ==================
-Reject "a=1 ..=2"
-:error
+Value recovery retains key structure: a=1 ..=2
+:cst
 ==================
 a=1 ..=2
 ---
 
+0:0 - 0:8   toml
+0:0 - 0:8     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:4 - 0:8       issue: syntax_issue
+0:4 - 0:8         invalid_syntax
+0:4 - 0:8           invalid_character `..=2`
+
 ==================
-Reject "a@@b=1"
-:error
+Contiguous forbidden bare key characters preserve normal key fragments
 ==================
 a@@b=1
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)
+          issue: (syntax_issue
+            (invalid_syntax
+              (invalid_key_character)))
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
 ==================
-Reject "= true"
-:error
+Empty bare key
 ==================
 = true
 ---
 
+(toml
+  (expression
+    (keyval
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_key)))
+      value: (val
+        (boolean)))))
+
 ==================
-Reject "a🌿b = 1"
-:error
+Invalid bare key preserves normal fragments
 ==================
 a🌿b = 1
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)
+          issue: (syntax_issue
+            (invalid_syntax
+              (invalid_key_character)))
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
 ==================
-Reject ".a = 1"
-:error
+Dotted key missing first segment
 ==================
 .a = 1
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))
+          (simple_key
+            (unquoted_key))))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
 ==================
-Reject "a=1 x..y=2 z.=3"
-:error
+Following dotted keys retain missing middle and last segments
 ==================
 a=1 x..y=2 z.=3
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))
+          (simple_key
+            (unquoted_key))))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit)))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))))
+      value: (val
+        (integer
+          (dec_int
+            (unsigned_dec_int
+              (digit))))))))
+
 ==================
-Reject "日本 = true"
-:error
+Non ASCII bare key
 ==================
 日本 = true
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+              issue: (syntax_issue
+                (invalid_syntax
+                  (invalid_key_character)))))
+      value: (val
+        (boolean)))))
+
 ==================
-Reject "\"\"\"a\"\"\" = true"
-:error
+Multiline string as key
 ==================
 """a""" = true
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (basic_string))))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      value: (val
+        (string
+          (basic_string
+            (basic_char
+              (basic_unescaped)))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (quoted_key
+            (basic_string))))
+      value: (val
+        (boolean)))))
+
 ==================
-Reject "a..b = true"
-:error
+Dotted key missing segment
 ==================
 a..b = true
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))
+          (simple_key
+            (unquoted_key))))
+      value: (val
+        (boolean)))))
+
 ==================
-Reject "a. = true"
-:error
+Dotted key trailing dot
 ==================
 a. = true
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))))
+      value: (val
+        (boolean)))))
+
 ==================
-Reject "a.\nb = true"
-:error
+Newline in dotted key
 ==================
 a.
 b = true
 ---
 
+(toml
+  (expression
+    (keyval
+      key: (key
+        (dotted_key
+          (simple_key
+            (unquoted_key))
+          issue: (syntax_issue
+            (invalid_syntax
+              (missing_key)))))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_value)))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
 ==================
-Reject "x \"\"\" y"
-:error
+quote run without a keyval
+:cst
 ==================
 x """ y
 ---
 
+0:0 - 0:7   toml
+0:0 - 0:7     expression
+0:0 - 0:7       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `x`
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           invalid_syntax
+0:2 - 0:2             missing_assignment_operator
+0:2 - 0:7         value: val
+0:2 - 0:7           string
+0:2 - 0:7             ml_basic_string
+0:2 - 0:5               "\"\"\""
+0:5 - 0:7               ml_basic_body
+0:5 - 0:6                 mlb_content
+0:5 - 0:6                   basic_char
+0:5 - 0:6                     basic_unescaped ` `
+0:6 - 0:7                 mlb_content
+0:6 - 0:7                   basic_char
+0:6 - 0:7                     basic_unescaped `y`
+0:7 - 0:7               issue: syntax_issue
+0:7 - 0:7                 incomplete_syntax
+0:7 - 0:7                   missing_ml_basic_string_close
+
 ==================
-Reject "\"\""
-:error
+quote pair as the whole document
+:cst
 ==================
 ""
 ---
+
+0:0 - 0:2   toml
+0:0 - 0:2     expression
+0:0 - 0:2       keyval
+0:0 - 0:2         key: key
+0:0 - 0:2           simple_key
+0:0 - 0:2             quoted_key
+0:0 - 0:2               basic_string
+0:0 - 0:1                 "\""
+0:1 - 0:2                 "\""
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           incomplete_syntax
+0:2 - 0:2             missing_assignment_operator
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           incomplete_syntax
+0:2 - 0:2             missing_value

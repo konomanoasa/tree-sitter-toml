@@ -82,145 +82,517 @@ Empty quoted table name
               (basic_string))))))))
 
 ==================
-Reject "a=1 [b]"
-:error
+A standard table header follows a completed value without a newline
+:cst
 ==================
 a=1 [b]
 ---
 
+0:0 - 0:7   toml
+0:0 - 0:4     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:4 - 0:4     issue: syntax_issue
+0:4 - 0:4       invalid_syntax
+0:4 - 0:4         missing_newline
+0:4 - 0:7     expression
+0:4 - 0:7       table
+0:4 - 0:7         std_table
+0:4 - 0:5           "["
+0:5 - 0:6           key: key
+0:5 - 0:6             simple_key
+0:5 - 0:6               unquoted_key `b`
+0:6 - 0:7           "]"
+
 ==================
-Reject "a=1[b]"
-:error
+an adjacent standard header follows a completed value
+:cst
 ==================
 a=1[b]
 ---
 
+0:0 - 0:6   toml
+0:0 - 0:3     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:3 - 0:3     issue: syntax_issue
+0:3 - 0:3       invalid_syntax
+0:3 - 0:3         missing_newline
+0:3 - 0:6     expression
+0:3 - 0:6       table
+0:3 - 0:6         std_table
+0:3 - 0:4           "["
+0:4 - 0:5           key: key
+0:4 - 0:5             simple_key
+0:4 - 0:5               unquoted_key `b`
+0:5 - 0:6           "]"
+
 ==================
-Reject "a=true [[b]]"
-:error
+a spaced array table header follows a completed value
+:cst
 ==================
 a=true [[b]]
 ---
 
+0:0  - 0:12   toml
+0:0  - 0:7      expression
+0:0  - 0:6        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:6          value: val
+0:2  - 0:6            boolean
+0:2  - 0:6              "true"
+0:7  - 0:7      issue: syntax_issue
+0:7  - 0:7        invalid_syntax
+0:7  - 0:7          missing_newline
+0:7  - 0:12     expression
+0:7  - 0:12       table
+0:7  - 0:12         array_table
+0:7  - 0:9            "[["
+0:9  - 0:10           key: key
+0:9  - 0:10             simple_key
+0:9  - 0:10               unquoted_key `b`
+0:10 - 0:12           "]]"
+
 ==================
-Reject "a=true[[b]]"
-:error
+an adjacent array table header follows a completed value
+:cst
 ==================
 a=true[[b]]
 ---
 
+0:0  - 0:11   toml
+0:0  - 0:6      expression
+0:0  - 0:6        keyval
+0:0  - 0:1          key: key
+0:0  - 0:1            simple_key
+0:0  - 0:1              unquoted_key `a`
+0:1  - 0:2          "="
+0:2  - 0:6          value: val
+0:2  - 0:6            boolean
+0:2  - 0:6              "true"
+0:6  - 0:6      issue: syntax_issue
+0:6  - 0:6        invalid_syntax
+0:6  - 0:6          missing_newline
+0:6  - 0:11     expression
+0:6  - 0:11       table
+0:6  - 0:11         array_table
+0:6  - 0:8            "[["
+0:8  - 0:9            key: key
+0:8  - 0:9              simple_key
+0:8  - 0:9                unquoted_key `b`
+0:9  - 0:11           "]]"
+
 ==================
-Reject "a=[][]"
-:error
+An empty header immediately follows a completed array
+:cst
 ==================
 a=[][]
 ---
 
+0:0 - 0:6   toml
+0:0 - 0:4     expression
+0:0 - 0:4       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:4         value: val
+0:2 - 0:4           array
+0:2 - 0:3             "["
+0:3 - 0:4             "]"
+0:4 - 0:4     issue: syntax_issue
+0:4 - 0:4       invalid_syntax
+0:4 - 0:4         missing_newline
+0:4 - 0:6     expression
+0:4 - 0:6       table
+0:4 - 0:6         std_table
+0:4 - 0:5           "["
+0:5 - 0:5           issue: syntax_issue
+0:5 - 0:5             invalid_syntax
+0:5 - 0:5               missing_key
+0:5 - 0:6           "]"
+
 ==================
-Reject "[x]\na={b=1]}"
-:error
+a table header does not supply an array opening
+:cst
 ==================
 [x]
 a={b=1]}
 ---
 
+0:0 - 1:8   toml
+0:0 - 0:3     expression
+0:0 - 0:3       table
+0:0 - 0:3         std_table
+0:0 - 0:1           "["
+0:1 - 0:2           key: key
+0:1 - 0:2             simple_key
+0:1 - 0:2               unquoted_key `x`
+0:2 - 0:3           "]"
+0:3 - 1:0     newline
+0:3 - 0:4       `\n`
+1:0 - 1:8     expression
+1:0 - 1:8       keyval
+1:0 - 1:1         key: key
+1:0 - 1:1           simple_key
+1:0 - 1:1             unquoted_key `a`
+1:1 - 1:2         "="
+1:2 - 1:8         value: val
+1:2 - 1:8           inline_table
+1:2 - 1:3             "{"
+1:3 - 1:7             inline_table_keyvals
+1:3 - 1:6               keyval
+1:3 - 1:4                 key: key
+1:3 - 1:4                   simple_key
+1:3 - 1:4                     unquoted_key `b`
+1:4 - 1:5                 "="
+1:5 - 1:6                 value: val
+1:5 - 1:6                   integer
+1:5 - 1:6                     dec_int
+1:5 - 1:6                       unsigned_dec_int
+1:5 - 1:6                         digit `1`
+1:6 - 1:7               issue: syntax_issue
+1:6 - 1:7                 invalid_syntax
+1:6 - 1:7                   invalid_character `]`
+1:7 - 1:8             "}"
+
 ==================
-Reject "[a b]"
-:error
+Extra header key preserves key structure
 ==================
 [a b]
 ---
 
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (unexpected_key
+              (key
+                (simple_key
+                  (unquoted_key))))))))))
+
 ==================
-Reject "[]"
-:error
+Table header missing key
 ==================
 []
 ---
 
+(toml
+  (expression
+    (table
+      (std_table
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_key)))))))
+
 ==================
-Reject "[[]]"
-:error
+Array table header missing key
 ==================
 [[]]
 ---
 
+(toml
+  (expression
+    (table
+      (array_table
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_key)))))))
+
 ==================
-Reject "[ .a]"
-:error
+Spaced table header key with a missing first segment
 ==================
 [ .a]
 ---
 
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (dotted_key
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_key)))
+            (simple_key
+              (unquoted_key))))))))
+
 ==================
-Reject "[a.\nb]"
-:error
+Newline in table header key
 ==================
 [a.
 b]
 ---
 
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (dotted_key
+            (simple_key
+              (unquoted_key))
+            issue: (syntax_issue
+              (invalid_syntax
+                (missing_key)))))
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_std_table_close))))))
+  (newline)
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_assignment_operator)))
+      issue: (syntax_issue
+        (invalid_syntax
+          (missing_value))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
 ==================
-Reject "[ [a]]"
-:error
+Array table opening delimiter split by space
 ==================
 [ [a]]
 ---
 
+(toml
+  (expression
+    (table
+      (std_table
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_std_table_close))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
 ==================
-Reject "[[a] ]"
-:error
+Array table closing delimiter split by space
 ==================
 [[a] ]
 ---
 
+(toml
+  (expression
+    (table
+      (array_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (invalid_delimiter)))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
 ==================
-Reject "[a # comment\n]"
-:error
+Comment inside table header
 ==================
 [a # comment
 ]
 ---
 
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_std_table_close)))))
+    (comment))
+  (newline)
+  (expression
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
 ==================
-Reject "[a\n]"
-:error
+Newline before table closing delimiter
 ==================
 [a
 ]
 ---
 
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (invalid_syntax
+            (missing_std_table_close))))))
+  (newline)
+  (expression
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
 ==================
-Reject "[a]]"
-:error
+Extra closing bracket
 ==================
 [a]]
 ---
 
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key)))))
+    issue: (syntax_issue
+      (invalid_syntax
+        (invalid_character)))))
+
 ==================
-Reject "[a] x=true"
-:error
+Table header followed by key value pair
 ==================
 [a] x=true
 ---
 
+(toml
+  (expression
+    (table
+      (std_table
+        key: (key
+          (simple_key
+            (unquoted_key))))))
+  issue: (syntax_issue
+    (invalid_syntax
+      (missing_newline)))
+  (expression
+    (keyval
+      key: (key
+        (simple_key
+          (unquoted_key)))
+      value: (val
+        (boolean)))))
 ==================
-Reject "a=1 [b"
-:error
+an unfinished header follows a completed value
+:cst
 ==================
 a=1 [b
 ---
 
+0:0 - 0:6   toml
+0:0 - 0:4     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:4 - 0:4     issue: syntax_issue
+0:4 - 0:4       invalid_syntax
+0:4 - 0:4         missing_newline
+0:4 - 0:6     expression
+0:4 - 0:6       table
+0:4 - 0:6         std_table
+0:4 - 0:5           "["
+0:5 - 0:6           key: key
+0:5 - 0:6             simple_key
+0:5 - 0:6               unquoted_key `b`
+0:6 - 0:6           issue: syntax_issue
+0:6 - 0:6             incomplete_syntax
+0:6 - 0:6               missing_std_table_close
+
 ==================
-Reject "a=1 ["
-:error
+a header opening alone follows a completed value
+:cst
 ==================
 a=1 [
 ---
 
+0:0 - 0:5   toml
+0:0 - 0:4     expression
+0:0 - 0:3       keyval
+0:0 - 0:1         key: key
+0:0 - 0:1           simple_key
+0:0 - 0:1             unquoted_key `a`
+0:1 - 0:2         "="
+0:2 - 0:3         value: val
+0:2 - 0:3           integer
+0:2 - 0:3             dec_int
+0:2 - 0:3               unsigned_dec_int
+0:2 - 0:3                 digit `1`
+0:4 - 0:4     issue: syntax_issue
+0:4 - 0:4       invalid_syntax
+0:4 - 0:4         missing_newline
+0:4 - 0:5     expression
+0:4 - 0:5       table
+0:4 - 0:5         std_table
+0:4 - 0:5           "["
+0:5 - 0:5           issue: syntax_issue
+0:5 - 0:5             incomplete_syntax
+0:5 - 0:5               missing_key
+0:5 - 0:5           issue: syntax_issue
+0:5 - 0:5             incomplete_syntax
+0:5 - 0:5               missing_std_table_close
+
 ==================
-Reject "[[a]"
-:error
+Partial array table closing delimiter at EOF
 ==================
 [[a]
 ---
+
+(toml
+  (expression
+    (table
+      (array_table
+        key: (key
+          (simple_key
+            (unquoted_key)))
+        issue: (syntax_issue
+          (incomplete_syntax
+            (invalid_delimiter)))))))

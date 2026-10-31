@@ -12,7 +12,7 @@ fn parses_valid_source() {
   assert_eq!(root.kind(), "toml");
   assert_eq!(root.byte_range(), 0..source.len());
   assert!(!root.has_error());
-  assert!(grammar::NODE_TYPES.contains("\"toml\""));
+  assert!(grammar::NODE_TYPES.contains("\"syntax_issue\""));
   let query = Query::new(&language, grammar::HIGHLIGHTS_QUERY).unwrap();
   let mut cursor = QueryCursor::new();
   let mut captures = cursor.captures(&query, root, source.as_bytes());

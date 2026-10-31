@@ -1,3 +1,5 @@
+(comment_text) @comment
+
 (unquoted_key) @property
 
 "=" @operator
@@ -40,7 +42,8 @@
   "z"
 ] @string.special
 
-(comment) @comment
+(comment
+  !issue) @comment
 
 (quoted_key
   (basic_string
@@ -120,6 +123,14 @@
         "_"
       ] @number)))
 
+(integer
+  (dec_int
+    (unsigned_dec_int
+      (syntax_issue
+        (invalid_syntax
+          (invalid_number
+            (digit) @number))))))
+
 (hex_int
   [
     (hexdig)
@@ -138,6 +149,9 @@
     "_"
   ] @number)
 
+(invalid_value
+  (digit) @number)
+
 (float_int_part
   (dec_int
     [
@@ -153,6 +167,14 @@
         (digit1_9)
         "_"
       ] @number.float)))
+
+(float_int_part
+  (dec_int
+    (unsigned_dec_int
+      (syntax_issue
+        (invalid_syntax
+          (invalid_number
+            (digit) @number.float))))))
 
 (frac
   "." @number.float)
@@ -219,4 +241,7 @@
   (digit) @string.special)
 
 (time_second
+  (digit) @string.special)
+
+(invalid_date_time
   (digit) @string.special)

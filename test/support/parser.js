@@ -85,7 +85,11 @@ function editedLexes(log) {
   return edited.match(/^lex_(external|internal) /gm)?.length ?? 0;
 }
 
-function parseInput(source, edits = [], { lexes = false } = {}) {
+function parseInput(
+  source,
+  edits = [],
+  { lexes = false, encoding = "utf8" } = {},
+) {
   const directory = mkdtempSync(join(runtime, "input-"));
   try {
     const path = join(directory, "input.toml");
@@ -93,7 +97,7 @@ function parseInput(source, edits = [], { lexes = false } = {}) {
     const args = [
       "parse",
       "--encoding",
-      "utf8",
+      encoding,
       "--cst",
       "--time",
       "--lib-path",
@@ -123,7 +127,7 @@ function parseInput(source, edits = [], { lexes = false } = {}) {
       assert.equal(parsed[1], parsed[0], "a repeated fresh parse must match");
     }
     return {
-      ...parseCst(parsed[0], bytes),
+      ...parseCst(parsed[0], bytes, encoding),
       ...(lexes && { lexes: editedLexes(result.stderr) }),
     };
   } finally {
@@ -135,7 +139,7 @@ function parse(source, edits = [], options = {}) {
   let initial = Buffer.from(source);
   let current = initial;
   let history = [];
-  let tree = parseInput(initial);
+  let tree = parseInput(initial, [], { encoding: options.encoding });
   for (const edit of edits) {
     const hadBom = current.subarray(0, bom.length).equals(bom);
     current = applyEdits(current, [edit]);
@@ -143,7 +147,7 @@ function parse(source, edits = [], options = {}) {
     if (tree.hasError || movedBom) {
       initial = current;
       history = [];
-      tree = parseInput(current);
+      tree = parseInput(current, [], { encoding: options.encoding });
     } else {
       history.push(edit);
       tree = parseInput(initial, history, options);
@@ -167,6 +171,23 @@ function assertIncrementalEqualsFresh(initial, edits, source) {
   }
 }
 
+function assertEditHistory({ source, edits }) {
+  let result;
+  for (let count = 1; count <= edits.length; count++) {
+    const history = edits.slice(0, count);
+    try {
+      result = assertIncrementalEqualsFresh(
+        source,
+        history,
+        applyEdits(source, history),
+      );
+    } catch (error) {
+      throw new Error(`edit ${count}/${edits.length}`, { cause: error });
+    }
+  }
+  return result;
+}
+
 function assertValidHistory(initial, steps) {
   let source = Buffer.from(initial);
   const edits = [];
@@ -176,17 +197,18 @@ function assertValidHistory(initial, steps) {
     assert.equal(
       source.toString(),
       expected,
-      "edit must produce its expected input",
+      "edit fixture must produce the explicit expected input",
     );
     edits.push(edit);
-    const fresh = parse(expected);
-    assert.equal(fresh.hasError, !valid, fresh.cst);
-    const incremental = parse(initial, edits);
-    if (valid) {
-      assert.equal(incremental.hasError, false, incremental.cst);
-      assert.deepEqual(incremental.nodes, fresh.nodes);
-    }
+    const incremental = assertIncrementalEqualsFresh(initial, edits, expected);
+    assert.equal(incremental.issues.length === 0, valid, incremental.cst);
   }
 }
 
-export { applyEdits, assertIncrementalEqualsFresh, assertValidHistory, parse };
+export {
+  applyEdits,
+  assertEditHistory,
+  assertIncrementalEqualsFresh,
+  assertValidHistory,
+  parse,
+};

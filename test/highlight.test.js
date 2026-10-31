@@ -16,8 +16,6 @@ import {
   root,
 } from "../scripts/tree-sitter.js";
 
-import { parseCst } from "./support/cst.js";
-
 const commandTimeoutMs = 60_000;
 const firstCaptureColor = 17;
 const newlineByte = 0x0a;
@@ -78,15 +76,11 @@ function createHighlighter({ directory, root, run, captureNames }) {
   );
   writeFileSync(capturePath, `${captureNames.join("\n")}\n`);
 
-  return (scope, source, valid = true) => {
+  return (scope, source) => {
     const path = join(directory, "highlight.txt");
     writeFileSync(path, source);
-    const parsed = run(
-      ["parse", "--cst", "--scope", scope, path],
-      valid ? 0 : 1,
-    );
-    const tree = parseCst(parsed, source);
-    assert.equal(tree.hasError, !valid, parsed);
+    const parsed = run(["parse", "--cst", "--scope", scope, path]);
+    assert.doesNotMatch(parsed, /^[0-9: \t-]+•/m, parsed);
     const captures = renderedCaptures(
       run([
         "highlight",
@@ -111,20 +105,6 @@ function createHighlighter({ directory, root, run, captureNames }) {
         capture === "" || captureNames.includes(capture),
         `unexpected final capture: ${capture}`,
       );
-    }
-    if (!valid) {
-      const parents = new Set(tree.nodes.map(({ parent }) => parent));
-      const leaves = tree.nodes.filter(
-        (node, index) =>
-          !parents.has(index) && !["ERROR", "MISSING"].includes(node.kind),
-      );
-      for (const [byte, capture] of captures.entries()) {
-        if (capture)
-          assert.ok(
-            leaves.some(({ start, end }) => start <= byte && byte < end),
-            `capture outside a recognized leaf at byte ${byte}: ${capture}`,
-          );
-      }
     }
     return captures;
   };
@@ -192,17 +172,130 @@ after(() => {
   }
 });
 
-function assertCommand(arguments_, status = 0) {
+function assertCommand(arguments_) {
   const result = runner.run(arguments_, {
     timeout: commandTimeoutMs,
   });
   assert.ifError(result.error);
-  assert.equal(result.status, status, result.stdout + result.stderr);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.doesNotMatch(result.stderr, /Non-standard highlight captures/);
   return result.stdout;
 }
 
 const finalCaptureCases = [
+  {
+    name: "invalid escape leaves surrounding string characters intact",
+    source: 'a = "x\\qy"',
+    captures: [
+      [0, 1, "property"],
+      [2, 3, "operator"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 6, "string"],
+      [8, 9, "string"],
+      [9, 10, "punctuation.delimiter"],
+    ],
+  },
+  {
+    name: "UTF8 invalid key character separates normal key fragments",
+    source: "a🌿b=1",
+    captures: [
+      [0, 1, "property"],
+      [5, 6, "property"],
+      [6, 7, "operator"],
+      [7, 8, "number"],
+    ],
+  },
+  {
+    name: "comment fragments exclude a control character",
+    source: "# x\0y\n",
+    captures: [
+      [0, 3, "comment"],
+      [4, 5, "comment"],
+    ],
+  },
+  {
+    name: "digits inside numeric and date reasons retain their classification",
+    source: "a=[01,2026-13-01]",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 3, "punctuation.bracket"],
+      [3, 5, "number"],
+      [5, 6, "punctuation.delimiter"],
+      [6, 16, "string.special"],
+      [16, 17, "punctuation.bracket"],
+    ],
+  },
+  {
+    name: "unfinished numeric value preserves each digit capture",
+    source: "a=07",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 4, "number"],
+    ],
+  },
+  {
+    name: "missing separator has no captured source",
+    source: "a=[1 2]",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 3, "punctuation.bracket"],
+      [3, 4, "number"],
+      [5, 6, "number"],
+      [6, 7, "punctuation.bracket"],
+    ],
+  },
+  {
+    name: "incomplete header preserves real key and delimiter captures",
+    source: "[a b",
+    captures: [
+      [0, 1, "punctuation.bracket"],
+      [1, 2, "property"],
+      [3, 4, "property"],
+    ],
+  },
+  {
+    name: "incomplete string preserves its opening and content",
+    source: 'a = "x',
+    captures: [
+      [0, 1, "property"],
+      [2, 3, "operator"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 6, "string"],
+    ],
+  },
+  {
+    name: "missing inline value preserves real closing delimiter",
+    source: "a={b=}",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 3, "punctuation.bracket"],
+      [3, 4, "property"],
+      [4, 5, "operator"],
+      [5, 6, "punctuation.bracket"],
+    ],
+  },
+  {
+    name: "time fraction inside an issue retains its normal leaves",
+    source: "a=12:34.5",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 9, "string.special"],
+    ],
+  },
+  {
+    name: "incomplete special float preserves only its real sign capture",
+    source: "a=+in",
+    captures: [
+      [0, 1, "property"],
+      [1, 2, "operator"],
+      [2, 3, "number.float"],
+    ],
+  },
   {
     name: "basic strings, escapes and comments",
     source: 'key = "v\\x20\\""  # note\n',
@@ -391,14 +484,6 @@ for (const grammar of grammars) {
       const line = source.split("\n")[startRow];
       const contentEnd = Buffer.byteLength(line.replace(/\r$/, ""));
       assert.ok(startColumn < endColumn && endColumn <= contentEnd, output);
-    }
-  });
-}
-
-for (const { scope } of grammars) {
-  test("toml: damaged source captures only recognized leaves", () => {
-    for (const source of ['a="x\\qy"', "a=[1 2]", "[a b", 'a="x', "# x\0y\n"]) {
-      highlight(scope, source, false);
     }
   });
 }
