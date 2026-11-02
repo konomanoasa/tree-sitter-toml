@@ -145,7 +145,6 @@ enum RejectedKey {
 
 struct Scanner {
   enum RejectedKey rejected_key;
-  // Prevent exponent recognition inside invalid words.
   bool word_continuation;
   uint32_t arrays;
   uint32_t inline_tables;
@@ -291,8 +290,13 @@ static bool take(TSLexer *lexer, const bool *valid, enum TokenType token) {
   return emit(lexer, valid, token);
 }
 
-static void skip_spaces(TSLexer *lexer) {
-  while (is_space(lexer->lookahead)) lexer->advance(lexer, false);
+static bool advance_spaces(TSLexer *lexer, bool skip) {
+  bool spaced = false;
+  while (is_space(lexer->lookahead)) {
+    lexer->advance(lexer, skip);
+    spaced = true;
+  }
+  return spaced;
 }
 
 enum Step { STEP_REJECT, STEP_ACCEPT, STEP_NEXT };
@@ -307,7 +311,7 @@ static bool keyval_may_follow(const bool *valid) {
 
 static bool keyval_ahead(TSLexer *lexer, bool has_key, bool bare) {
   for (;; bare = false) {
-    if (!bare) skip_spaces(lexer);
+    if (!bare) advance_spaces(lexer, false);
     const int32_t quote = lexer->lookahead;
     if (!bare && (quote == '"' || quote == '\'')) {
       lexer->advance(lexer, false);
@@ -331,7 +335,7 @@ static bool keyval_ahead(TSLexer *lexer, bool has_key, bool bare) {
         lexer->advance(lexer, false);
       }
     }
-    skip_spaces(lexer);
+    advance_spaces(lexer, false);
     if (lexer->lookahead == '=') return has_key;
     if (lexer->lookahead != '.') return false;
     lexer->advance(lexer, false);
@@ -389,6 +393,11 @@ static bool end_before_keyval(TSLexer *lexer, const bool *valid) {
 }
 
 static void
+update_rejected_key(struct Scanner *scanner, enum RejectedKey next) {
+  if (scanner->rejected_key != NO_REJECTED_KEY) scanner->rejected_key = next;
+}
+
+static void
 continue_rejected_key(struct Scanner *scanner, int32_t c, bool spaced) {
   switch (scanner->rejected_key) {
     case NO_REJECTED_KEY:
@@ -433,14 +442,9 @@ static void resume_rejected_key(
 static void end_rejected_chain(struct Scanner *scanner, TSLexer *lexer) {
   const enum RejectedKey rejected = scanner->rejected_key;
   if (rejected == NO_REJECTED_KEY) return;
-  bool spaced = false;
-  while (is_space(lexer->lookahead)) {
-    lexer->advance(lexer, false);
-    spaced = true;
-  }
+  const bool spaced = advance_spaces(lexer, false);
   continue_rejected_key(scanner, lexer->lookahead, spaced);
-  if (scanner->rejected_key != NO_REJECTED_KEY)
-    scanner->rejected_key = rejected;
+  update_rejected_key(scanner, rejected);
 }
 
 static void end_rejected_digit_chain(
@@ -548,7 +552,7 @@ static bool scan_comment_body(TSLexer *lexer, const bool *valid, int32_t c) {
 }
 
 static bool scan_blank_line(TSLexer *lexer, const bool *valid) {
-  skip_spaces(lexer);
+  advance_spaces(lexer, false);
   if (!is_newline(lexer->lookahead) && !lexer->eof(lexer)) return false;
   lexer->mark_end(lexer);
   return emit(lexer, valid, BLANK_LINE);
@@ -616,7 +620,7 @@ static bool scan_escape(TSLexer *lexer, const bool *valid) {
   if (is_space(c) || is_newline(c)) {
     lexer->mark_end(lexer);
     if (valid[MISSING_ML_BASIC_STRING_CLOSE]) {
-      skip_spaces(lexer);
+      advance_spaces(lexer, false);
       if (lexer->lookahead == '\n') return false;
       if (lexer->lookahead == '\r') {
         lexer->advance(lexer, false);
@@ -841,14 +845,14 @@ static void take_number_junk(
     }
     previous_key = is_key_char(c);
     if (c == '_') {
-      if (scanner->rejected_key != NO_REJECTED_KEY)
-        scanner->rejected_key = REJECTED_KEY_CONTINUATION;
+      update_rejected_key(scanner, REJECTED_KEY_CONTINUATION);
       lexer->advance(lexer, false);
       if (is_base_digit(lexer->lookahead, base)) break;
     } else if (is_invalid_number_char(c, base)) {
-      if (scanner->rejected_key != NO_REJECTED_KEY)
-        scanner->rejected_key =
-          is_key_char(c) ? REJECTED_KEY_CONTINUATION : NO_REJECTED_KEY;
+      update_rejected_key(
+        scanner,
+        is_key_char(c) ? REJECTED_KEY_CONTINUATION : NO_REJECTED_KEY
+      );
       lexer->advance(lexer, false);
     } else {
       break;
@@ -865,9 +869,10 @@ static bool take_invalid_digits(
   enum Base base
 ) {
   const int32_t first = lexer->lookahead;
-  if (scanner->rejected_key != NO_REJECTED_KEY)
-    scanner->rejected_key =
-      is_key_char(first) ? REJECTED_KEY_CONTINUATION : REJECTED_KEY;
+  update_rejected_key(
+    scanner,
+    is_key_char(first) ? REJECTED_KEY_CONTINUATION : REJECTED_KEY
+  );
   lexer->advance(lexer, false);
   lexer->mark_end(lexer);
   take_number_junk(scanner, lexer, base, is_key_char(first) && first != '_');
@@ -1399,11 +1404,9 @@ static bool take_unexpected_character(
   int32_t c
 ) {
   if (is_key_char(c) || c == '"' || c == '\'') {
-    const enum RejectedKey next = take_rejected_keys(lexer);
-    if (scanner->rejected_key != NO_REJECTED_KEY) scanner->rejected_key = next;
+    update_rejected_key(scanner, take_rejected_keys(lexer));
   } else {
-    if (scanner->rejected_key != NO_REJECTED_KEY)
-      scanner->rejected_key = REJECTED_KEY;
+    update_rejected_key(scanner, REJECTED_KEY);
     lexer->advance(lexer, false);
     lexer->mark_end(lexer);
   }
@@ -1417,11 +1420,7 @@ static bool scan_after_layout(
   const bool *valid,
   enum Base base
 ) {
-  bool spaced = false;
-  while (is_space(lexer->lookahead)) {
-    lexer->advance(lexer, true);
-    spaced = true;
-  }
+  const bool spaced = advance_spaces(lexer, true);
   lexer->mark_end(lexer);
   const int32_t c = lexer->lookahead;
   continue_rejected_key(scanner, c, spaced);

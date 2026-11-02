@@ -7,65 +7,6 @@ const dateElements = [
   "time_minute",
   "time_second",
 ];
-const missingParts = [
-  "date_separator",
-  "time_separator",
-  "digits",
-  "key",
-  "assignment_operator",
-  "value",
-  "basic_string_close",
-  "literal_string_close",
-  "array_close",
-  "inline_table_close",
-  "std_table_close",
-  "array_table_close",
-];
-
-const digit = ($, rule = $._digit) => alias(rule, $.digit);
-
-const hexdig = ($) => alias($._hexdig, $.hexdig);
-
-const times = (count, rule) => Array(count).fill(rule);
-
-const followedBy = (name) => ($, marker) => seq(marker, $[name]);
-
-const digitRun = ($, marker) =>
-  seq(marker, repeat1(digit($)), $._date_element_end);
-
-const junkRun = ($, start) =>
-  prec.right(
-    seq(
-      start,
-      repeat(
-        seq($._unexpected_character_continuation, $._unexpected_character),
-      ),
-    ),
-  );
-
-const invalidDigitRun = (base) => ($, marker) =>
-  seq(
-    marker,
-    repeat(
-      seq(
-        $[`_invalid_${base}_continuation`],
-        base === "dec"
-          ? choice($._invalid_dec_digit, $._leading_separator)
-          : marker,
-      ),
-    ),
-  );
-
-const bothOutcomes = (name, reason, source) => [
-  [`invalid_${name}`, "invalid_syntax", reason, source],
-  [`incomplete_${name}`, "incomplete_syntax", reason, source],
-];
-
-const lexicalIssues = new Set([
-  "unexpected_header_key",
-  "invalid_header_character",
-  "unexpected_separator",
-]);
 
 const issues = [
   ["unexpected_value", "invalid_syntax", "unexpected_value", followedBy("val")],
@@ -123,9 +64,20 @@ const issues = [
   ...bothOutcomes("special_float", "invalid_value"),
   ["invalid_key_character", "invalid_syntax", "invalid_key_character"],
   ["missing_pair_key", "invalid_syntax", "missing_key"],
-  ...missingParts.flatMap((part) =>
-    bothOutcomes(`missing_${part}`, `missing_${part}`),
-  ),
+  ...[
+    "date_separator",
+    "time_separator",
+    "digits",
+    "key",
+    "assignment_operator",
+    "value",
+    "basic_string_close",
+    "literal_string_close",
+    "array_close",
+    "inline_table_close",
+    "std_table_close",
+    "array_table_close",
+  ].flatMap((part) => bothOutcomes(`missing_${part}`, `missing_${part}`)),
   [
     "missing_ml_basic_string_close",
     "incomplete_syntax",
@@ -173,6 +125,12 @@ const issues = [
   ["stray_close", "invalid_syntax", "invalid_character", junkRun],
 ];
 
+const lexicalIssues = new Set([
+  "unexpected_header_key",
+  "invalid_header_character",
+  "unexpected_separator",
+]);
+
 const issueRules = Object.fromEntries(
   issues.flatMap(([name, outcome, reason, source = (_, marker) => marker]) => [
     [`_${name}_source`, ($) => source($, $[`_${name}`])],
@@ -180,149 +138,6 @@ const issueRules = Object.fromEntries(
     [`_${name}_issue`, ($) => alias($[`_${name}_outcome`], $[outcome])],
   ]),
 );
-
-const issue = ($, name) =>
-  field("issue", alias($[`_${name}_issue`], $.syntax_issue));
-
-const anyOutcome = ($, name) =>
-  choice(issue($, `invalid_${name}`), issue($, `incomplete_${name}`));
-
-const absent = ($, part) => anyOutcome($, `missing_${part}`);
-
-const invalidText = ($) =>
-  choice(issue($, "invalid_character"), issue($, "invalid_encoding"));
-
-const junk = ($) =>
-  choice(issue($, "unexpected_character"), issue($, "unexpected_encoding"));
-
-const lineIssue = ($) => anyOutcome($, "line_ending");
-
-const stringIssue = ($) =>
-  choice(
-    anyOutcome($, "escape"),
-    invalidText($),
-    issue($, "invalid_unicode_escape"),
-  );
-
-const invalidDigit = ($, base) =>
-  choice(
-    issue($, `invalid_${base}_digit`),
-    issue($, `invalid_${base}_encoding`),
-  );
-
-const dateElement = ($, name) =>
-  choice(seq($[`_${name}_start`], digit($), digit($)), anyOutcome($, name));
-
-const numberPart = ($, leaf, base) =>
-  choice(
-    leaf,
-    invalidDigit($, base),
-    seq("_", leaf),
-    issue($, "incomplete_number"),
-  );
-
-const numberContinuation = ($, leaf, base) =>
-  choice(
-    seq($[`_${base}_continuation`], numberPart($, leaf, base)),
-    prec.right(
-      seq(
-        $[`_${base}_junk_start`],
-        repeat1(
-          seq($[`_${base}_junk_continuation`], numberPart($, leaf, base)),
-        ),
-        optional($._number_junk_end),
-      ),
-    ),
-  );
-
-const numberDigits = ($, leaf, base) => {
-  const digits = seq(
-    leaf,
-    repeat(numberContinuation($, leaf, base)),
-    optional($._number_end),
-  );
-  return choice(
-    digits,
-    seq(
-      repeat1(invalidDigit($, base)),
-      optional(seq($._numeric_prefix_digits_start, digits)),
-    ),
-  );
-};
-
-const layout = ($) => optional($._ws_comment_newline);
-
-const list = ($, item, separator, itemEnd = []) => {
-  const stray = issue($, "stray_close");
-  const extra = seq(layout($), choice(stray, issue($, "unexpected_separator")));
-  return choice(
-    seq(
-      repeat(extra),
-      layout($),
-      item,
-      repeat(
-        choice(
-          seq(layout($), stray, ...itemEnd),
-          seq(
-            layout($),
-            choice(",", issue($, `missing_${separator}`)),
-            repeat(extra),
-            layout($),
-            item,
-          ),
-        ),
-      ),
-      optional(seq(layout($), ",", repeat(extra))),
-    ),
-    repeat1(extra),
-  );
-};
-
-const header = ($, open, close, name, ...partialClose) =>
-  seq(
-    open,
-    optional($._ws),
-    choice(field("key", $.key), absent($, "key")),
-    repeat(
-      seq(
-        optional($._ws),
-        choice(
-          issue($, "unexpected_header_key"),
-          issue($, "invalid_header_character"),
-        ),
-      ),
-    ),
-    optional($._ws),
-    choice(close, absent($, `${name}_close`), ...partialClose),
-  );
-
-const multiline = ($, delimiter, body, name) =>
-  prec(
-    1,
-    seq(
-      delimiter,
-      optional($.newline),
-      optional(body),
-      choice(delimiter, issue($, `missing_${name}_close`)),
-    ),
-  );
-
-const quotes = (quote, mark) =>
-  seq(alias(quote, mark), optional(alias(quote, mark)));
-
-const multilineBody = (content, quoteRun) =>
-  choice(
-    seq(
-      repeat1(content),
-      repeat(seq(quoteRun, repeat1(content))),
-      optional(quoteRun),
-    ),
-    seq(
-      quoteRun,
-      repeat(seq(repeat1(content), quoteRun)),
-      optional(repeat1(content)),
-    ),
-  );
 
 export default grammar({
   name: "toml",
@@ -774,3 +589,224 @@ export default grammar({
     ...issueRules,
   },
 });
+
+function digit($, rule = $._digit) {
+  return alias(rule, $.digit);
+}
+
+function hexdig($) {
+  return alias($._hexdig, $.hexdig);
+}
+
+function times(count, rule) {
+  return Array(count).fill(rule);
+}
+
+function followedBy(name) {
+  return ($, marker) => seq(marker, $[name]);
+}
+
+function digitRun($, marker) {
+  return seq(marker, repeat1(digit($)), $._date_element_end);
+}
+
+function junkRun($, start) {
+  return prec.right(
+    seq(
+      start,
+      repeat(
+        seq($._unexpected_character_continuation, $._unexpected_character),
+      ),
+    ),
+  );
+}
+
+function invalidDigitRun(base) {
+  return ($, marker) =>
+    seq(
+      marker,
+      repeat(
+        seq(
+          $[`_invalid_${base}_continuation`],
+          base === "dec"
+            ? choice($._invalid_dec_digit, $._leading_separator)
+            : marker,
+        ),
+      ),
+    );
+}
+
+function bothOutcomes(name, reason, source) {
+  return [
+    [`invalid_${name}`, "invalid_syntax", reason, source],
+    [`incomplete_${name}`, "incomplete_syntax", reason, source],
+  ];
+}
+
+function issue($, name) {
+  return field("issue", alias($[`_${name}_issue`], $.syntax_issue));
+}
+
+function anyOutcome($, name) {
+  return choice(issue($, `invalid_${name}`), issue($, `incomplete_${name}`));
+}
+
+function absent($, part) {
+  return anyOutcome($, `missing_${part}`);
+}
+
+function invalidText($) {
+  return choice(issue($, "invalid_character"), issue($, "invalid_encoding"));
+}
+
+function junk($) {
+  return choice(
+    issue($, "unexpected_character"),
+    issue($, "unexpected_encoding"),
+  );
+}
+
+function lineIssue($) {
+  return anyOutcome($, "line_ending");
+}
+
+function stringIssue($) {
+  return choice(
+    anyOutcome($, "escape"),
+    invalidText($),
+    issue($, "invalid_unicode_escape"),
+  );
+}
+
+function invalidDigit($, base) {
+  return choice(
+    issue($, `invalid_${base}_digit`),
+    issue($, `invalid_${base}_encoding`),
+  );
+}
+
+function dateElement($, name) {
+  return choice(
+    seq($[`_${name}_start`], digit($), digit($)),
+    anyOutcome($, name),
+  );
+}
+
+function numberPart($, leaf, base) {
+  return choice(
+    leaf,
+    invalidDigit($, base),
+    seq("_", leaf),
+    issue($, "incomplete_number"),
+  );
+}
+
+function numberContinuation($, leaf, base) {
+  return choice(
+    seq($[`_${base}_continuation`], numberPart($, leaf, base)),
+    prec.right(
+      seq(
+        $[`_${base}_junk_start`],
+        repeat1(
+          seq($[`_${base}_junk_continuation`], numberPart($, leaf, base)),
+        ),
+        optional($._number_junk_end),
+      ),
+    ),
+  );
+}
+
+function numberDigits($, leaf, base) {
+  const digits = seq(
+    leaf,
+    repeat(numberContinuation($, leaf, base)),
+    optional($._number_end),
+  );
+  return choice(
+    digits,
+    seq(
+      repeat1(invalidDigit($, base)),
+      optional(seq($._numeric_prefix_digits_start, digits)),
+    ),
+  );
+}
+
+function layout($) {
+  return optional($._ws_comment_newline);
+}
+
+function list($, item, separator, itemEnd = []) {
+  const stray = issue($, "stray_close");
+  const extra = seq(layout($), choice(stray, issue($, "unexpected_separator")));
+  return choice(
+    seq(
+      repeat(extra),
+      layout($),
+      item,
+      repeat(
+        choice(
+          seq(layout($), stray, ...itemEnd),
+          seq(
+            layout($),
+            choice(",", issue($, `missing_${separator}`)),
+            repeat(extra),
+            layout($),
+            item,
+          ),
+        ),
+      ),
+      optional(seq(layout($), ",", repeat(extra))),
+    ),
+    repeat1(extra),
+  );
+}
+
+function header($, open, close, name, ...partialClose) {
+  return seq(
+    open,
+    optional($._ws),
+    choice(field("key", $.key), absent($, "key")),
+    repeat(
+      seq(
+        optional($._ws),
+        choice(
+          issue($, "unexpected_header_key"),
+          issue($, "invalid_header_character"),
+        ),
+      ),
+    ),
+    optional($._ws),
+    choice(close, absent($, `${name}_close`), ...partialClose),
+  );
+}
+
+function multiline($, delimiter, body, name) {
+  return prec(
+    1,
+    seq(
+      delimiter,
+      optional($.newline),
+      optional(body),
+      choice(delimiter, issue($, `missing_${name}_close`)),
+    ),
+  );
+}
+
+function quotes(quote, mark) {
+  return seq(alias(quote, mark), optional(alias(quote, mark)));
+}
+
+function multilineBody(content, quoteRun) {
+  return choice(
+    seq(
+      repeat1(content),
+      repeat(seq(quoteRun, repeat1(content))),
+      optional(quoteRun),
+    ),
+    seq(
+      quoteRun,
+      repeat(seq(repeat1(content), quoteRun)),
+      optional(repeat1(content)),
+    ),
+  );
+}

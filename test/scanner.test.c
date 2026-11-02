@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "tree_sitter/parser.h"
+#include "../src/tree_sitter/parser.h"
 
 #define COUNT(array) (sizeof(array) / sizeof((array)[0]))
 
