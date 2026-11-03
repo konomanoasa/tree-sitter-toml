@@ -64,5 +64,5 @@ jobs:
         if: runner.os == 'macOS'
         shell: sh
         run: |
-          npm run build
+          npm run build:parser
           npm run check:queries
